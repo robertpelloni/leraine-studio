@@ -25,6 +25,16 @@ bool EditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
 	return false;
 }
 
+bool EditMode::OnExpand()
+{
+	return false;
+}
+
+bool EditMode::OnCompress()
+{
+	return false;
+}
+
 bool EditMode::OnMouseLeftButtonReleased()
 {
 	return false;
