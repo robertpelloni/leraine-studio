@@ -31,6 +31,8 @@ public: //edit-mode overrides
 	bool OnCopy() override;
 	bool OnPaste() override;
 	bool OnMirror() override;
+	bool OnExpand() override;
+	bool OnCompress() override;
 	bool OnDelete() override;
 	bool OnSelectAll() override;
 

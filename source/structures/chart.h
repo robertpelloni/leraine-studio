@@ -130,6 +130,7 @@ public: //accessors
 	void BulkPlaceNotes(const std::vector<std::pair<Column, Note>>& InNotes, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	void MirrorNotes(NoteReferenceCollection& OutNotes);
 	void MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes);
+	void ScaleNotes(NoteReferenceCollection& OutNotes, float Factor);
 
 	bool RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks = false, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	bool RemoveBpmPoint(BpmPoint& InBpmPoint, const bool InSkipHistoryRegistering = false);

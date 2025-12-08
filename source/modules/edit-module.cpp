@@ -35,6 +35,16 @@ bool EditModule::OnMirror()
 	return _EditModes[_SelectedEditMode]->OnMirror();
 }
 
+bool EditModule::OnExpand()
+{
+	return _EditModes[_SelectedEditMode]->OnExpand();
+}
+
+bool EditModule::OnCompress()
+{
+	return _EditModes[_SelectedEditMode]->OnCompress();
+}
+
 bool EditModule::OnDelete() 
 {
 	return _EditModes[_SelectedEditMode]->OnDelete();

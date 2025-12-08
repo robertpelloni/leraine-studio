@@ -177,6 +177,28 @@ bool SelectEditMode::OnMirror()
     return true;
 }
 
+bool SelectEditMode::OnExpand()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Expanded %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ScaleNotes(_SelectedNotes, 2.0f);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnCompress()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Compressed %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ScaleNotes(_SelectedNotes, 0.5f);
+        return true;
+    }
+    return false;
+}
+
 bool SelectEditMode::OnDelete() 
 {
     if(_SelectedNotes.HasNotes)

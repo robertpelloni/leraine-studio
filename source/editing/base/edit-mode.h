@@ -22,6 +22,8 @@ public:
 	virtual bool OnCopy();
 	virtual bool OnPaste();
 	virtual bool OnMirror();
+	virtual bool OnExpand();
+	virtual bool OnCompress();
 	virtual bool OnDelete();
 	virtual bool OnSelectAll();
 

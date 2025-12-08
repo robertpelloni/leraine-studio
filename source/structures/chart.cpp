@@ -146,6 +146,65 @@ void Chart::MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes)
 		column = (KeyAmount - 1) - column;
 }
 
+void Chart::ScaleNotes(NoteReferenceCollection& OutNotes, float Factor)
+{
+	if (!OutNotes.HasNotes)
+		return;
+
+	// Use the minimum time in the selection as the pivot point
+	Time pivotTime = OutNotes.MinTimePoint;
+
+	// Prepare new notes list
+	std::vector<std::pair<Column, Note>> scaledNotes;
+
+	// Also we need to register history for the range we are modifying.
+	// We are modifying the range [MinTime, MaxTime] -> [MinTime, MinTime + (Max-Min)*Factor]
+	Time scaledMaxTime = pivotTime + (Time)((OutNotes.MaxTimePoint - pivotTime) * Factor);
+	RegisterTimeSliceHistoryRanged(pivotTime, std::max(OutNotes.MaxTimePoint, scaledMaxTime) + TIMESLICE_LENGTH);
+
+	for (auto& [column, notes] : OutNotes.Notes)
+	{
+		// Need to copy notes because we are going to remove them from the chart
+		std::vector<Note> copiedNotes;
+		for (auto& notePtr : notes)
+			copiedNotes.push_back(*notePtr);
+
+		for (auto& note : copiedNotes)
+		{
+			// Remove the old note
+			RemoveNote(note.TimePoint, column, false, true, true);
+
+			// Calculate new time
+			Time newTime = pivotTime + (Time)((note.TimePoint - pivotTime) * Factor);
+			note.TimePoint = newTime;
+
+			// Reset beat snap as it likely changes (unless factor is integer, but safer to reset)
+			note.BeatSnap = -1;
+
+			if (note.Type == Note::EType::HoldBegin)
+			{
+				Time newEnd = pivotTime + (Time)((note.TimePointEnd - pivotTime) * Factor);
+				note.TimePointBegin = newTime;
+				note.TimePointEnd = newEnd;
+			}
+
+			scaledNotes.push_back({column, note});
+		}
+	}
+
+	// Place new notes
+	BulkPlaceNotes(scaledNotes, true, true);
+
+	// Notify modification
+	IterateTimeSlicesInTimeRange(pivotTime, std::max(OutNotes.MaxTimePoint, scaledMaxTime) + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+
+	// Clear selection as pointers are invalid now
+	OutNotes.Clear();
+}
+
 bool Chart::RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks, const bool InSkipHistoryRegistering, const bool InSkipOnModified)
 {
 	auto &timeSlice = FindOrAddTimeSlice(InTime);
