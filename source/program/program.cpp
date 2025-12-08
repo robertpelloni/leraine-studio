@@ -224,6 +224,18 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Mirror", sf::Keyboard::Key::LControl, sf::Keyboard::Key::H) && SelectedChart)
 				MOD(EditModule).OnMirror();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
+				MOD(EditModule).OnReverse();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Shuffle", sf::Keyboard::Key::LControl, sf::Keyboard::Key::J) && SelectedChart)
+				MOD(EditModule).OnShuffle();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
+				MOD(EditModule).OnExpand();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Compress", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Down) && SelectedChart)
+				MOD(EditModule).OnCompress();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Go To Timepoint", sf::Keyboard::Key::LControl, sf::Keyboard::Key::T) && SelectedChart)
 				GoToTimePoint();
 				

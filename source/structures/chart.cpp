@@ -5,6 +5,7 @@
 #include <set>
 #include <unordered_set>
 #include <limits>
+#include <random>
 
 void NoteReferenceCollection::PushNote(Column InColumn, Note* InNote) 
 {
@@ -144,6 +145,166 @@ void Chart::MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes)
 {
 	for(auto& [column, notes] : OutNotes)
 		column = (KeyAmount - 1) - column;
+}
+
+void Chart::ScaleNotes(NoteReferenceCollection& OutNotes, float Factor)
+{
+	if (!OutNotes.HasNotes)
+		return;
+
+	// Use the minimum time in the selection as the pivot point
+	Time pivotTime = OutNotes.MinTimePoint;
+
+	// Prepare new notes list
+	std::vector<std::pair<Column, Note>> scaledNotes;
+
+	// Also we need to register history for the range we are modifying.
+	// We are modifying the range [MinTime, MaxTime] -> [MinTime, MinTime + (Max-Min)*Factor]
+	Time scaledMaxTime = pivotTime + (Time)((OutNotes.MaxTimePoint - pivotTime) * Factor);
+	RegisterTimeSliceHistoryRanged(pivotTime, std::max(OutNotes.MaxTimePoint, scaledMaxTime) + TIMESLICE_LENGTH);
+
+	for (auto& [column, notes] : OutNotes.Notes)
+	{
+		// Need to copy notes because we are going to remove them from the chart
+		std::vector<Note> copiedNotes;
+		for (auto& notePtr : notes)
+			copiedNotes.push_back(*notePtr);
+
+		for (auto& note : copiedNotes)
+		{
+			// Remove the old note
+			RemoveNote(note.TimePoint, column, false, true, true);
+
+			// Calculate new time
+			Time newTime = pivotTime + (Time)((note.TimePoint - pivotTime) * Factor);
+			note.TimePoint = newTime;
+
+			// Reset beat snap as it likely changes (unless factor is integer, but safer to reset)
+			note.BeatSnap = -1;
+
+			if (note.Type == Note::EType::HoldBegin)
+			{
+				Time newEnd = pivotTime + (Time)((note.TimePointEnd - pivotTime) * Factor);
+				note.TimePointBegin = newTime;
+				note.TimePointEnd = newEnd;
+			}
+
+			scaledNotes.push_back({column, note});
+		}
+	}
+
+	// Place new notes
+	BulkPlaceNotes(scaledNotes, true, true);
+
+	// Notify modification
+	IterateTimeSlicesInTimeRange(pivotTime, std::max(OutNotes.MaxTimePoint, scaledMaxTime) + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+
+	// Clear selection as pointers are invalid now
+	OutNotes.Clear();
+}
+
+void Chart::ReverseNotes(NoteReferenceCollection& OutNotes)
+{
+	if (!OutNotes.HasNotes)
+		return;
+
+	Time minTime = OutNotes.MinTimePoint;
+	Time maxTime = OutNotes.MaxTimePoint;
+
+	RegisterTimeSliceHistoryRanged(minTime, maxTime + TIMESLICE_LENGTH);
+
+	std::vector<std::pair<Column, Note>> reversedNotes;
+
+	for (auto& [column, notes] : OutNotes.Notes)
+	{
+		std::vector<Note> copiedNotes;
+		for (auto& notePtr : notes)
+			copiedNotes.push_back(*notePtr);
+
+		for (auto& note : copiedNotes)
+		{
+			RemoveNote(note.TimePoint, column, false, true, true);
+
+			// Logic: newTime = max + min - oldTime
+			Time newTime = maxTime + minTime - note.TimePoint;
+
+			note.TimePoint = newTime;
+			note.BeatSnap = -1;
+
+			if (note.Type == Note::EType::HoldBegin)
+			{
+				// Hold end also flips
+				Time newStart = maxTime + minTime - note.TimePointEnd;
+				// note.TimePoint (newTime) is actually the new End of the reversed hold
+				// Wait, if note.TimePoint is Start:
+				// Old: Start -> End.
+				// New Start = Max + Min - End.
+				// New End   = Max + Min - Start.
+
+				note.TimePointEnd = newTime;
+				note.TimePointBegin = newStart;
+
+				// Fix main TimePoint to be the Begin
+				note.TimePoint = newStart;
+			}
+
+			reversedNotes.push_back({column, note});
+		}
+	}
+
+	BulkPlaceNotes(reversedNotes, true, true);
+
+	IterateTimeSlicesInTimeRange(minTime, maxTime + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+
+	OutNotes.Clear();
+}
+
+void Chart::ShuffleNotes(NoteReferenceCollection& OutNotes)
+{
+	if (!OutNotes.HasNotes)
+		return;
+
+	RegisterTimeSliceHistoryRanged(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + TIMESLICE_LENGTH);
+
+	// Generate permutation
+	std::vector<int> p(KeyAmount);
+	std::iota(p.begin(), p.end(), 0);
+
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::shuffle(p.begin(), p.end(), g);
+
+	std::vector<std::pair<Column, Note>> shuffledNotes;
+
+	for (auto& [column, notes] : OutNotes.Notes)
+	{
+		Column newColumn = p[column];
+
+		std::vector<Note> copiedNotes;
+		for (auto& notePtr : notes)
+			copiedNotes.push_back(*notePtr);
+
+		for (auto& note : copiedNotes)
+		{
+			RemoveNote(note.TimePoint, column, false, true, true);
+			shuffledNotes.push_back({newColumn, note});
+		}
+	}
+
+	BulkPlaceNotes(shuffledNotes, true, true);
+
+	IterateTimeSlicesInTimeRange(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+
+	OutNotes.Clear();
 }
 
 bool Chart::RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks, const bool InSkipHistoryRegistering, const bool InSkipOnModified)
