@@ -772,44 +772,6 @@ void ChartParserModule::ExportChartOsuImpl(Chart* InChart, std::ofstream& InOfSt
 	InOfStream << chartStream.str();
 	InOfStream.close();
 }
-// Helper to convert time to beat
-double GetBeatFromTime(Time InTime, const std::vector<BpmPoint*>& InBpmPoints, double InOffset)
-{
-	// Sort by time just in case (though Chart usually keeps them sorted or we should copy and sort)
-	// Assuming InBpmPoints are sorted.
-
-	if (InBpmPoints.empty()) return 0.0;
-
-	// Start time (Beat 0) is -Offset
-	double timeBase = -InOffset * 1000.0;
-	double currentBeat = 0.0;
-	double currentBpm = InBpmPoints[0]->Bpm; // Default if time is before first BPM? Usually first BPM is at 0 or earlier.
-
-	// Find the BPM point segment where InTime falls
-	for (size_t i = 0; i < InBpmPoints.size(); ++i)
-	{
-		double nextTime = (i + 1 < InBpmPoints.size()) ? InBpmPoints[i+1]->TimePoint : std::numeric_limits<double>::max();
-		double ptTime = InBpmPoints[i]->TimePoint;
-
-		// If InTime is before this BPM point (shouldn't happen if sorted and covering from start),
-		// but if so, we assume constant BPM from previous.
-
-		// We need to integrate from timeBase to InTime.
-		// Actually, we can just calculate the beat at each BPM point.
-
-		// But let's do it segment by segment relative to the BPM points.
-		// However, the SM Beat=BPM map logic is: At Beat X, BPM changes to Y.
-		// We have Time=BPM map.
-		// We need to calculate the Beat value for each BPM point first?
-		// Yes, to generate #BPMS tag, we need Beat=BPM.
-	}
-
-	// Re-think: We need two things:
-	// 1. Generate #BPMS list (Beat -> BPM)
-	// 2. Convert every Note Time -> Beat using that list.
-
-	return 0.0; // Placeholder
-}
 
 void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& InOfStream)
 {
