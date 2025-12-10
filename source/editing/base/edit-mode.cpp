@@ -40,6 +40,11 @@ bool EditMode::OnShuffle()
 	return false;
 }
 
+bool EditMode::OnQuantize(int InDivisor)
+{
+	return false;
+}
+
 bool EditMode::OnCompress()
 {
 	return false;

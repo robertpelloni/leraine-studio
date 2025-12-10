@@ -188,6 +188,17 @@ bool SelectEditMode::OnExpand()
     return false;
 }
 
+bool SelectEditMode::OnQuantize(int InDivisor)
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Quantized %d Notes to 1/%d", _SelectedNotes.NoteAmount, InDivisor);
+        static_Chart->QuantizeNotes(_SelectedNotes, InDivisor);
+        return true;
+    }
+    return false;
+}
+
 bool SelectEditMode::OnReverse()
 {
     if(_SelectedNotes.HasNotes)

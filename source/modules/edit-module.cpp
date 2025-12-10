@@ -55,6 +55,11 @@ bool EditModule::OnShuffle()
 	return _EditModes[_SelectedEditMode]->OnShuffle();
 }
 
+bool EditModule::OnQuantize(int InDivisor)
+{
+	return _EditModes[_SelectedEditMode]->OnQuantize(InDivisor);
+}
+
 bool EditModule::OnDelete() 
 {
 	return _EditModes[_SelectedEditMode]->OnDelete();

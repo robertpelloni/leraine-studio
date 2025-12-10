@@ -230,6 +230,9 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Shuffle", sf::Keyboard::Key::LControl, sf::Keyboard::Key::J) && SelectedChart)
 				MOD(EditModule).OnShuffle();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Quantize", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Q) && SelectedChart)
+				MOD(EditModule).OnQuantize(CurrentSnap);
+
 			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
 				MOD(EditModule).OnExpand();
 

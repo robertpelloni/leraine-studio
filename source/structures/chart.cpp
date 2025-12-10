@@ -265,6 +265,153 @@ void Chart::ReverseNotes(NoteReferenceCollection& OutNotes)
 	OutNotes.Clear();
 }
 
+double Chart::GetBeatFromTime(Time InTime)
+{
+	if (!_BpmPointCounter)
+		return 0.0;
+
+	BpmPoint* bpmPoint = GetPreviousBpmPointFromTimePoint(InTime);
+
+	if (!bpmPoint)
+	{
+		// Find first BPM point to approximate
+		BpmPoint* first = GetNextBpmPointFromTimePoint(-1000000);
+		if (first)
+		{
+			// Time < First BPM Point. Extrapolate backwards.
+			// Beat = 0 - (FirstTime - Time) / (BeatLength)
+			return - (double(first->TimePoint - InTime) / first->BeatLength);
+		}
+		return 0.0; // Should not happen if counter > 0
+	}
+
+	// We need the cumulative beat sum up to this BPM point.
+	// This is expensive to calculate every time.
+	// However, for Quantize, we just need the beat relative to the current BPM point to snap it?
+	// No, to snap to a global grid (e.g. measure lines), we need absolute beats.
+	// But usually Quantize snaps to the "local" grid defined by the current timing point.
+	// StepMania snaps to the measure.
+
+	// Let's implement a simple integration.
+	double beat = 0.0;
+	Time lastTime = 0; // Assuming 0 start? Or finding first BPM point.
+
+	// Find all BPM points up to InTime
+	std::vector<BpmPoint*> points;
+	// We can't easily get all points in order without iterating everything.
+	// Chart stores BPM points in TimeSlices.
+
+	// Optimization: For "Quantize", we usually care about the fractional part relative to the current BPM measure.
+	// If meter is 4/4, we align to 1/Divisor beats.
+	// Current BPM point defines the grid anchor.
+
+	// So:
+	double timeDelta = double(InTime - bpmPoint->TimePoint);
+	double beatsSinceBpm = timeDelta / bpmPoint->BeatLength;
+
+	// We assume the BPM point itself is on a beat (usually beat 0 or start of a measure).
+	// Ideally we should know the absolute beat of the BPM point.
+	// But if we assume the user placed BPM points on beats, we can snap relative to them.
+
+	return beatsSinceBpm;
+}
+
+Time Chart::GetTimeFromBeat(double InBeat)
+{
+	// Inverse of above, strictly local to current BPM point logic for now.
+	// This might be insufficient for complex multi-BPM songs if we cross boundaries,
+	// but Quantize usually works on individual notes.
+	// If we quantize a note, we find its BPM point, snap the local beat, and convert back.
+
+	// This function signature implies global beat, but we only have local logic easily available.
+	// Let's rely on the caller to handle the context or make this "GetTimeFromLocalBeat(Beat, BpmPoint)".
+
+	return 0; // Not used directly in this simplified logic
+}
+
+void Chart::QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor)
+{
+	if (!OutNotes.HasNotes || Divisor <= 0)
+		return;
+
+	RegisterTimeSliceHistoryRanged(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + TIMESLICE_LENGTH);
+
+	std::vector<std::pair<Column, Note>> quantizedNotes;
+
+	for (auto& [column, notes] : OutNotes.Notes)
+	{
+		std::vector<Note> copiedNotes;
+		for (auto& notePtr : notes)
+			copiedNotes.push_back(*notePtr);
+
+		for (auto& note : copiedNotes)
+		{
+			RemoveNote(note.TimePoint, column, false, true, true);
+
+			// Find BPM point
+			BpmPoint* bpm = GetPreviousBpmPointFromTimePoint(note.TimePoint);
+			if (!bpm) bpm = GetNextBpmPointFromTimePoint(-1000000);
+
+			if (bpm)
+			{
+				double beatLen = bpm->BeatLength;
+				double timeDelta = double(note.TimePoint - bpm->TimePoint);
+				double beat = timeDelta / beatLen;
+
+				// Snap beat
+				// Divisor 4 = 1/4th beats.
+				// beat * 4 -> round -> / 4.
+				double snappedBeat = std::round(beat * Divisor) / double(Divisor);
+
+				Time newTime = bpm->TimePoint + Time(snappedBeat * beatLen);
+				note.TimePoint = newTime;
+
+				// Calculate snap for metadata
+				// 1/4 -> 1, 1/8 -> 2?
+				// Note::BeatSnap is usually 1, 2, 3, 4, 6, 8, 12, 16...
+				// Logic in BeatModule::GetBeatSnap.
+				// We can try to set it or leave -1 (auto).
+				// We will leave -1 or try to derive it.
+				note.BeatSnap = -1;
+
+				if (note.Type == Note::EType::HoldBegin)
+				{
+					// Quantize end too? Yes usually.
+					// Or maintain length? ArrowVortex "Quantize" snaps both ends.
+
+					// Recalculate for end
+					BpmPoint* bpmEnd = GetPreviousBpmPointFromTimePoint(note.TimePointEnd);
+					if (!bpmEnd) bpmEnd = GetNextBpmPointFromTimePoint(-1000000);
+
+					if (bpmEnd)
+					{
+						double beatLenEnd = bpmEnd->BeatLength;
+						double timeDeltaEnd = double(note.TimePointEnd - bpmEnd->TimePoint);
+						double beatEnd = timeDeltaEnd / beatLenEnd;
+						double snappedBeatEnd = std::round(beatEnd * Divisor) / double(Divisor);
+						note.TimePointEnd = bpmEnd->TimePoint + Time(snappedBeatEnd * beatLenEnd);
+					}
+
+					// Safety: End > Start
+					if (note.TimePointEnd <= note.TimePoint)
+						note.TimePointEnd = note.TimePoint + Time(bpm->BeatLength / Divisor); // min length
+				}
+			}
+
+			quantizedNotes.push_back({column, note});
+		}
+	}
+
+	BulkPlaceNotes(quantizedNotes, true, true);
+
+	IterateTimeSlicesInTimeRange(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+
+	OutNotes.Clear();
+}
+
 void Chart::ShuffleNotes(NoteReferenceCollection& OutNotes)
 {
 	if (!OutNotes.HasNotes)

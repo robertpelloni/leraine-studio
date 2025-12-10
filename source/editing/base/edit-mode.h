@@ -26,6 +26,7 @@ public:
 	virtual bool OnCompress();
 	virtual bool OnReverse();
 	virtual bool OnShuffle();
+	virtual bool OnQuantize(int InDivisor);
 	virtual bool OnDelete();
 	virtual bool OnSelectAll();
 

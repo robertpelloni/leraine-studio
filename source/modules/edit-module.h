@@ -35,6 +35,7 @@ public: //edit-mode overrides
 	bool OnCompress() override;
 	bool OnReverse() override;
 	bool OnShuffle() override;
+	bool OnQuantize(int InDivisor) override;
 	bool OnDelete() override;
 	bool OnSelectAll() override;
 
