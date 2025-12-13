@@ -131,6 +131,12 @@ public: //accessors
 	void MirrorNotes(NoteReferenceCollection& OutNotes);
 	void MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes);
 	void ScaleNotes(NoteReferenceCollection& OutNotes, float Factor);
+	void ReverseNotes(NoteReferenceCollection& OutNotes);
+	void ShuffleNotes(NoteReferenceCollection& OutNotes);
+	void QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor);
+
+	double GetBeatFromTime(Time InTime);
+	Time GetTimeFromBeat(double InBeat);
 
 	bool RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks = false, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	bool RemoveBpmPoint(BpmPoint& InBpmPoint, const bool InSkipHistoryRegistering = false);

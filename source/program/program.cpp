@@ -224,6 +224,19 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Mirror", sf::Keyboard::Key::LControl, sf::Keyboard::Key::H) && SelectedChart)
 				MOD(EditModule).OnMirror();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
+				MOD(EditModule).OnReverse();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Shuffle", sf::Keyboard::Key::LControl, sf::Keyboard::Key::J) && SelectedChart)
+				MOD(EditModule).OnShuffle();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Quantize", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Q) && SelectedChart)
+				MOD(EditModule).OnQuantize(CurrentSnap);
+
+            // Using Ctrl+B for Estimate BPM (usually B is taken, but maybe Ctrl+Shift+B)
+			if (MOD(ShortcutMenuModule).MenuItem("Estimate BPM", sf::Keyboard::Key::LControl, sf::Keyboard::Key::B) && SelectedChart)
+				MOD(EditModule).OnEstimateBPM();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
 				MOD(EditModule).OnExpand();
 

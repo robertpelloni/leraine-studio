@@ -188,6 +188,39 @@ bool SelectEditMode::OnExpand()
     return false;
 }
 
+bool SelectEditMode::OnQuantize(int InDivisor)
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Quantized %d Notes to 1/%d", _SelectedNotes.NoteAmount, InDivisor);
+        static_Chart->QuantizeNotes(_SelectedNotes, InDivisor);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnReverse()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Reversed %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ReverseNotes(_SelectedNotes);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnShuffle()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Shuffled %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ShuffleNotes(_SelectedNotes);
+        return true;
+    }
+    return false;
+}
+
 bool SelectEditMode::OnCompress()
 {
     if(_SelectedNotes.HasNotes)
