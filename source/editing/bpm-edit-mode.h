@@ -11,6 +11,8 @@ public:
 
 	bool OnMouseRightButtonClicked(const bool InIsShiftDown) override;
 
+    void OnEstimateBPM();
+
 	void SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTimeBegin, const Time InTimeEnd) override;
 	void Tick() override;
 
@@ -28,7 +30,7 @@ private:
 	BpmPoint* _MovableBpmPoint = nullptr;
 
 	BpmPoint _MovableBpmPointInitialValue;
-	
+
 	BpmPoint* _PreviousBpmPoint = nullptr;
 	BpmPoint* _NextBpmPoint = nullptr;
 

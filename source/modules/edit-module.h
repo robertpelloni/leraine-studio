@@ -39,6 +39,8 @@ public: //edit-mode overrides
 	bool OnDelete() override;
 	bool OnSelectAll() override;
 
+    void OnEstimateBPM();
+
 	void SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTimeBegin, const Time InTimeEnd) override;
 
 public:

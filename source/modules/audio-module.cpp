@@ -15,6 +15,8 @@ void AudioModule::LoadAudio(const std::filesystem::path& InPath)
 	BASS_Free();
 	BASS_Init(_Device, _Freq, 0, 0, NULL);
 
+	_CurrentAudioPath = InPath;
+
 	_StreamHandle = BASS_FX_TempoCreate(BASS_StreamCreateFile(FALSE, InPath.string().c_str(), 0, 0, BASS_STREAM_DECODE | BASS_STREAM_PRESCAN), BASS_FX_FREESOURCE);
 
 	auto error = BASS_ErrorGetCode();
@@ -22,7 +24,7 @@ void AudioModule::LoadAudio(const std::filesystem::path& InPath)
 	{
 		std::cout << BASS_ErrorGetCode() << std::endl;
 	}
-	
+
 	BASS_ChannelPlay(_StreamHandle, FALSE);
 	BASS_ChannelPause(_StreamHandle);
 
@@ -88,7 +90,7 @@ void AudioModule::MoveDelta(const int InDeltaMilliSeconds)
 void AudioModule::ChangeSpeed(const float InDeltaSpeed)
 {
 	_Speed += InDeltaSpeed;
-	
+
 	if (_Speed < 0.05f)
 		_Speed = 0.05f;
 
@@ -119,17 +121,40 @@ Time AudioModule::GetTimeMilliSeconds()
 	return _CurrentTime * 1000;
 }
 
-Time AudioModule::GetSongLengthMilliSeconds() 
+Time AudioModule::GetSongLengthMilliSeconds()
 {
 	return BASS_ChannelBytes2Seconds(_StreamHandle, BASS_ChannelGetLength(_StreamHandle, BASS_POS_BYTE)) * 1000;
 }
 
-float AudioModule::GetPlaybackSpeed() 
+float AudioModule::GetPlaybackSpeed()
 {
 	return _Speed;
 }
 
-WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::path& InPath) 
+float AudioModule::EstimateBPM(Time Start, Time End)
+{
+    if (_CurrentAudioPath.empty())
+        return 0.0f;
+
+    HSTREAM decodeStream = BASS_StreamCreateFile(FALSE, _CurrentAudioPath.string().c_str(), 0, 0, BASS_STREAM_DECODE);
+    if (!decodeStream)
+        return 0.0f;
+
+    double startSec = double(Start) / 1000.0;
+    double endSec = double(End) / 1000.0;
+
+    // Use default min/max hints (e.g. 45 to 230)
+    // MAKELONG(low, high)
+    DWORD minMaxBpm = MAKELONG(45, 230);
+
+    float bpm = BASS_FX_BPM_DecodeGet(decodeStream, startSec, endSec, minMaxBpm, BASS_FX_BPM_BKGRND | BASS_FX_BPM_MULT2, NULL, NULL);
+
+    BASS_StreamFree(decodeStream);
+
+    return bpm;
+}
+
+WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::path& InPath)
 {
 	HSTREAM decoder = BASS_StreamCreateFile(FALSE, InPath.string().c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE);
 
@@ -146,7 +171,7 @@ WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::pat
 	}
 
 	_SongByteLength = BASS_ChannelGetLength(decoder, BASS_POS_BYTE);
-	_WaveFormData = (float*)std::malloc(_SongByteLength); 
+	_WaveFormData = (float*)std::malloc(_SongByteLength);
 	_SongByteLength = BASS_ChannelGetData(decoder, _WaveFormData, _SongByteLength);
 
 	_ReadableWaveFormData = new WaveFormData[GetSongLengthMilliSeconds()]();
@@ -169,7 +194,7 @@ WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::pat
 	return _ReadableWaveFormData;
 }
 
-const WaveFormData& AudioModule::SampleWaveFormData(const Time InTimePoint) 
+const WaveFormData& AudioModule::SampleWaveFormData(const Time InTimePoint)
 {
 	return _ReadableWaveFormData[std::max(0, std::min(GetSongLengthMilliSeconds(), InTimePoint))];
 }
