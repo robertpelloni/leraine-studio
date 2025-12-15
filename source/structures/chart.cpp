@@ -354,6 +354,65 @@ void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Patt
 	});
 }
 
+std::vector<float> Chart::CalculateNPSGraph(int WindowSizeMs)
+{
+	if (!_BpmPointCounter || WindowSizeMs <= 0)
+		return {};
+
+	// Find song length (approximate from max time point of notes)
+	Time maxTime = 0;
+	IterateAllNotes([&maxTime](Note& n, Column c) {
+		maxTime = std::max(maxTime, n.TimePoint);
+	});
+
+	int numWindows = (maxTime / WindowSizeMs) + 2;
+	std::vector<int> counts(numWindows, 0);
+
+	IterateAllNotes([&counts, WindowSizeMs](Note& n, Column c) {
+		if (n.TimePoint >= 0)
+		{
+			int idx = n.TimePoint / WindowSizeMs;
+			if (idx < counts.size())
+				counts[idx]++;
+		}
+	});
+
+	std::vector<float> nps(numWindows);
+	for (size_t i = 0; i < counts.size(); ++i)
+	{
+		nps[i] = float(counts[i]) * (1000.0f / float(WindowSizeMs));
+	}
+
+	return nps;
+}
+
+float Chart::GetAverageNPS()
+{
+	// Total notes / Total drain time
+	int noteCount = 0;
+	Time firstNote = std::numeric_limits<int>::max();
+	Time lastNote = std::numeric_limits<int>::min();
+
+	IterateAllNotes([&](Note& n, Column c) {
+		noteCount++;
+		firstNote = std::min(firstNote, n.TimePoint);
+		lastNote = std::max(lastNote, n.TimePoint);
+	});
+
+	if (noteCount == 0 || lastNote <= firstNote) return 0.0f;
+
+	double seconds = double(lastNote - firstNote) / 1000.0;
+	return float(noteCount) / float(seconds);
+}
+
+float Chart::GetPeakNPS()
+{
+	std::vector<float> graph = CalculateNPSGraph(1000); // 1s window
+	float peak = 0.0f;
+	for (float v : graph) peak = std::max(peak, v);
+	return peak;
+}
+
 double Chart::GetBeatFromTime(Time InTime)
 {
 	if (!_BpmPointCounter)

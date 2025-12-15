@@ -144,6 +144,10 @@ public: //accessors
 	void QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor);
 	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
 
+	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
+	float GetAverageNPS();
+	float GetPeakNPS();
+
 	double GetBeatFromTime(Time InTime);
 	Time GetTimeFromBeat(double InBeat);
 

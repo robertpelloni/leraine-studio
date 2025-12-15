@@ -227,6 +227,9 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Stream Generator", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
 				OpenStreamGenerator();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Difficulty Analyzer", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+				OpenDifficultyAnalyzer();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
 				MOD(EditModule).OnReverse();
 
@@ -452,8 +455,6 @@ void Program::OpenStreamGenerator()
 	static int divisor = 4;
 	static int pattern = 0;
 
-	// Initialize defaults from current view or selection if possible
-	// For now, init from window view
 	if (start == 0 && end == 0)
 	{
 		start = WindowTimeBegin;
@@ -480,6 +481,31 @@ void Program::OpenStreamGenerator()
 		ImGui::SameLine();
 
 		if(ImGui::Button("Cancel") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
+			OutOpen = false;
+	});
+}
+
+void Program::OpenDifficultyAnalyzer()
+{
+	MOD(PopupModule).OpenPopup("Difficulty Analyzer", [this](bool& OutOpen)
+	{
+		static int windowSize = 1000;
+		ImGui::InputInt("Window Size (ms)", &windowSize);
+		if (windowSize < 100) windowSize = 100;
+
+		std::vector<float> graph = SelectedChart->CalculateNPSGraph(windowSize);
+		if (!graph.empty())
+		{
+			ImGui::PlotLines("NPS", graph.data(), graph.size(), 0, NULL, 0.0f, FLT_MAX, ImVec2(0, 100));
+		}
+
+		float avg = SelectedChart->GetAverageNPS();
+		float peak = SelectedChart->GetPeakNPS();
+
+		ImGui::Text("Average NPS: %.2f", avg);
+		ImGui::Text("Peak NPS (1s): %.2f", peak);
+
+		if(ImGui::Button("Close") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
 			OutOpen = false;
 	});
 }
