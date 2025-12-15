@@ -177,6 +177,61 @@ bool SelectEditMode::OnMirror()
     return true;
 }
 
+bool SelectEditMode::OnExpand()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Expanded %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ScaleNotes(_SelectedNotes, 2.0f);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnQuantize(int InDivisor)
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Quantized %d Notes to 1/%d", _SelectedNotes.NoteAmount, InDivisor);
+        static_Chart->QuantizeNotes(_SelectedNotes, InDivisor);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnReverse()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Reversed %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ReverseNotes(_SelectedNotes);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnShuffle()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Shuffled %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ShuffleNotes(_SelectedNotes);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnCompress()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Compressed %d Notes", _SelectedNotes.NoteAmount);
+        static_Chart->ScaleNotes(_SelectedNotes, 0.5f);
+        return true;
+    }
+    return false;
+}
+
 bool SelectEditMode::OnDelete() 
 {
     if(_SelectedNotes.HasNotes)
