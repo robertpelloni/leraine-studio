@@ -28,14 +28,20 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
     *   Implemented `EstimateBPM(Start, End)` which creates a temporary decoding stream to analyze BPM without interrupting playback.
     *   Added `Estimate BPM` (`Ctrl+B`) command in `Edit` menu (active in `BpmEditMode` context, or globally via module dispatch).
 
+4.  **Automatic Stream Generation**
+    *   Implemented `GenerateStream` in `Chart`.
+    *   Supports patterns: `Staircase`, `Trill`, `Spiral`, `Random`.
+    *   Added "Stream Generator" popup UI in `Program` to configure range, divisor, and pattern.
+
+5.  **Difficulty Estimation**
+    *   Implemented `CalculateNPSGraph`, `GetAverageNPS`, `GetPeakNPS` in `Chart`.
+    *   Added "Difficulty Analyzer" popup UI in `Program` visualizing NPS graph and stats.
+
 ## Current State
+*   **Feature Parity Achieved:** The editor now supports StepMania files and includes all requested editing, timing, and analysis tools found in ArrowVortex (except Dancing Bot).
 *   **Codebase:** C++17 with SFML, ImGui, BASS/BASS_FX.
 *   **Architecture:** Modules (Audio, Edit, Render, etc.) managed by `ModuleManager`. `Chart` struct holds data. `EditMode` handles interaction.
 *   **Build:** CMake. `vcpkg` dependencies.
-
-## Remaining Roadmap Items
-1.  **Automatic Stream Generation:** Procedurally generate note patterns (Streams, Trills, Stairs) in a selected range.
-2.  **Difficulty Estimation:** Calculate and display difficulty metrics (NPS, or MSD-like algorithm).
 
 ## Notes for Next Engineer
 *   **Audio Module Header:** Ensure `audio-module.h` remains synced with `.cpp`. It was fixed in the last patch.
