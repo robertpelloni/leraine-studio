@@ -18,6 +18,7 @@ public: //abstractions
 	void SetUpMetadata();
 	void ShowShortCuts();
 	void GoToTimePoint();
+	void OpenStreamGenerator();
 	void ScrollShortcutRoutines();
 	void InputActions();
 	void GlobalInputActions();

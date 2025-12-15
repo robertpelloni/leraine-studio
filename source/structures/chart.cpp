@@ -265,6 +265,95 @@ void Chart::ReverseNotes(NoteReferenceCollection& OutNotes)
 	OutNotes.Clear();
 }
 
+void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern)
+{
+	if (Start >= End || Divisor <= 0) return;
+
+	RegisterTimeSliceHistoryRanged(Start - TIMESLICE_LENGTH, End + TIMESLICE_LENGTH);
+
+	// Create beats
+	// Find starting BPM point
+	BpmPoint* bpm = GetPreviousBpmPointFromTimePoint(Start);
+	if (!bpm) bpm = GetNextBpmPointFromTimePoint(-1000000);
+
+	if (!bpm) return; // No timing info
+
+	// Start placing notes
+	Time currentTime = Start;
+	int noteIndex = 0;
+
+	// Setup randomness
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::uniform_int_distribution<> distrib(0, KeyAmount - 1);
+
+	int lastCol = -1;
+	int lastLastCol = -1;
+
+	while (currentTime < End)
+	{
+		Column col = 0;
+
+		switch (Pattern)
+		{
+			case StreamPattern::Staircase:
+				col = noteIndex % KeyAmount;
+				// Optional: zig-zag
+				// 0 1 2 3 2 1 0...
+				// For 4 keys: 0 1 2 3 (0 1 2 3)... simple staircase
+				break;
+
+			case StreamPattern::Trill:
+				col = (noteIndex % 2); // 0 1 0 1. Need customizable trill keys?
+				// Simple 0/1 trill for now. Or spread trill.
+				// Let's do (index % 2 == 0) ? 1 : 2. Middle trill.
+				if (KeyAmount >= 2) col = (noteIndex % 2) + (KeyAmount / 2 - 1);
+				else col = 0;
+				break;
+
+			case StreamPattern::Spiral:
+				// 0 1 2 3 ...
+				col = noteIndex % KeyAmount;
+				break;
+
+			case StreamPattern::Random:
+				do {
+					col = distrib(g);
+				} while (col == lastCol || (col == lastLastCol && KeyAmount > 2)); // Avoid jacks and simple trills if possible
+				break;
+		}
+
+		if (col < KeyAmount)
+		{
+			if (!FindNote(currentTime, col)) // Don't overwrite existing
+				InjectNote(currentTime, col, Note::EType::Common);
+		}
+
+		lastLastCol = lastCol;
+		lastCol = col;
+		noteIndex++;
+
+		// Advance time based on current BPM
+		// We need to re-check BPM at current time?
+		// Yes, if BPM changes.
+		BpmPoint* currentBpm = GetPreviousBpmPointFromTimePoint(currentTime);
+		if (currentBpm)
+		{
+			double step = currentBpm->BeatLength / Divisor;
+			currentTime += Time(step);
+		}
+		else
+		{
+			break; // Should not happen if we started with one
+		}
+	}
+
+	IterateTimeSlicesInTimeRange(Start - TIMESLICE_LENGTH, End + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+}
+
 double Chart::GetBeatFromTime(Time InTime)
 {
 	if (!_BpmPointCounter)

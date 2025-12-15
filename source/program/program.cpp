@@ -224,6 +224,9 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Mirror", sf::Keyboard::Key::LControl, sf::Keyboard::Key::H) && SelectedChart)
 				MOD(EditModule).OnMirror();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Stream Generator", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+				OpenStreamGenerator();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
 				MOD(EditModule).OnReverse();
 
@@ -438,6 +441,45 @@ void Program::ShowShortCuts()
 		MOD(ShortcutMenuModule).ShowCheatSheet();
 
 		if(ImGui::Button("close"))
+			OutOpen = false;
+	});
+}
+
+void Program::OpenStreamGenerator()
+{
+	static int start = 0;
+	static int end = 0;
+	static int divisor = 4;
+	static int pattern = 0;
+
+	// Initialize defaults from current view or selection if possible
+	// For now, init from window view
+	if (start == 0 && end == 0)
+	{
+		start = WindowTimeBegin;
+		end = WindowTimeEnd;
+	}
+
+	MOD(PopupModule).OpenPopup("Stream Generator", [this](bool& OutOpen)
+	{
+		ImGui::InputInt("Start Time (ms)", &start);
+		ImGui::InputInt("End Time (ms)", &end);
+
+		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random" };
+		ImGui::Combo("Pattern", &pattern, patterns, IM_ARRAYSIZE(patterns));
+
+		ImGui::InputInt("Divisor (1/X)", &divisor);
+		if (divisor < 1) divisor = 1;
+
+		if(ImGui::Button("Generate"))
+		{
+			SelectedChart->GenerateStream(start, end, divisor, (StreamPattern)pattern);
+			OutOpen = false;
+		}
+
+		ImGui::SameLine();
+
+		if(ImGui::Button("Cancel") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
 			OutOpen = false;
 	});
 }
