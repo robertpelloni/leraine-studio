@@ -298,39 +298,56 @@ void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Patt
 		{
 			case StreamPattern::Staircase:
 				col = noteIndex % KeyAmount;
-				// Optional: zig-zag
-				// 0 1 2 3 2 1 0...
-				// For 4 keys: 0 1 2 3 (0 1 2 3)... simple staircase
 				break;
 
 			case StreamPattern::Trill:
-				col = (noteIndex % 2); // 0 1 0 1. Need customizable trill keys?
-				// Simple 0/1 trill for now. Or spread trill.
-				// Let's do (index % 2 == 0) ? 1 : 2. Middle trill.
 				if (KeyAmount >= 2) col = (noteIndex % 2) + (KeyAmount / 2 - 1);
 				else col = 0;
 				break;
 
 			case StreamPattern::Spiral:
-				// 0 1 2 3 ...
 				col = noteIndex % KeyAmount;
 				break;
 
 			case StreamPattern::Random:
 				do {
 					col = distrib(g);
-				} while (col == lastCol || (col == lastLastCol && KeyAmount > 2)); // Avoid jacks and simple trills if possible
+				} while (col == lastCol || (col == lastLastCol && KeyAmount > 2));
 				break;
+
+            case StreamPattern::Jumpstream:
+            case StreamPattern::Handstream:
+                // Special handling below
+                break;
 		}
 
-		if (col < KeyAmount)
-		{
-			if (!FindNote(currentTime, col)) // Don't overwrite existing
-				InjectNote(currentTime, col, Note::EType::Common);
-		}
+        if (Pattern == StreamPattern::Jumpstream || Pattern == StreamPattern::Handstream)
+        {
+            int count = (Pattern == StreamPattern::Jumpstream) ? 2 : 3;
+            if (count > KeyAmount) count = KeyAmount;
 
-		lastLastCol = lastCol;
-		lastCol = col;
+            // Pick 'count' distinct columns
+            std::vector<int> cols(KeyAmount);
+            std::iota(cols.begin(), cols.end(), 0);
+            std::shuffle(cols.begin(), cols.end(), g);
+
+            for(int i=0; i<count; ++i)
+            {
+                Column c = cols[i];
+                if (!FindNote(currentTime, c))
+                    InjectNote(currentTime, c, Note::EType::Common);
+            }
+        }
+        else
+        {
+            if (col < KeyAmount)
+            {
+                if (!FindNote(currentTime, col))
+                    InjectNote(currentTime, col, Note::EType::Common);
+            }
+            lastLastCol = lastCol;
+            lastCol = col;
+        }
 		noteIndex++;
 
 		// Advance time based on current BPM

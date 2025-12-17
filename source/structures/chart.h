@@ -76,7 +76,9 @@ enum class StreamPattern
 	Staircase,
 	Trill,
 	Spiral,
-	Random
+	Random,
+    Jumpstream,
+    Handstream
 };
 
 struct NoteReferenceCollection
