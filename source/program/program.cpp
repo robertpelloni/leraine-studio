@@ -493,7 +493,7 @@ void Program::OpenStreamGenerator()
 		ImGui::InputInt("Start Time (ms)", &start);
 		ImGui::InputInt("End Time (ms)", &end);
 
-		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random", "Jumpstream", "Handstream" };
+		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random", "Jumpstream", "Handstream", "Chordjack" };
 		ImGui::Combo("Pattern", &pattern, patterns, IM_ARRAYSIZE(patterns));
 
 		ImGui::InputInt("Divisor (1/X)", &divisor);

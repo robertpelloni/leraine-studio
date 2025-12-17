@@ -34,7 +34,7 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
 
 4.  **Automatic Stream Generation**
     *   Implemented `GenerateStream` in `Chart`.
-    *   Supports patterns: `Staircase`, `Trill`, `Spiral`, `Random`.
+    *   Supports patterns: `Staircase`, `Trill`, `Spiral`, `Random`, `Jumpstream`, `Handstream`, `Chordjack`.
     *   Added "Stream Generator" popup UI in `Program` to configure range, divisor, and pattern.
 
 5.  **Difficulty Estimation**

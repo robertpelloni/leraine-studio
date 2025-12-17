@@ -317,13 +317,17 @@ void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Patt
 
             case StreamPattern::Jumpstream:
             case StreamPattern::Handstream:
+            case StreamPattern::Chordjack:
                 // Special handling below
                 break;
 		}
 
-        if (Pattern == StreamPattern::Jumpstream || Pattern == StreamPattern::Handstream)
+        if (Pattern == StreamPattern::Jumpstream || Pattern == StreamPattern::Handstream || Pattern == StreamPattern::Chordjack)
         {
-            int count = (Pattern == StreamPattern::Jumpstream) ? 2 : 3;
+            int count = 2;
+            if (Pattern == StreamPattern::Handstream) count = 3;
+            if (Pattern == StreamPattern::Chordjack) count = std::min(4, KeyAmount); // Usually 3-4
+
             if (count > KeyAmount) count = KeyAmount;
 
             // Pick 'count' distinct columns

@@ -78,7 +78,8 @@ enum class StreamPattern
 	Spiral,
 	Random,
     Jumpstream,
-    Handstream
+    Handstream,
+    Chordjack
 };
 
 struct NoteReferenceCollection
