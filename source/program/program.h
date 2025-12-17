@@ -20,6 +20,7 @@ public: //abstractions
 	void GoToTimePoint();
 	void OpenStreamGenerator();
 	void OpenDifficultyAnalyzer();
+    void SnapToPeak();
 	void ScrollShortcutRoutines();
 	void InputActions();
 	void GlobalInputActions();

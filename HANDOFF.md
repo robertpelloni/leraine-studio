@@ -22,12 +22,15 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
         *   `Reverse`: `Ctrl+R`
         *   `Shuffle`: `Ctrl+J` (avoided `Ctrl+S` Save conflict)
         *   `Quantize`: `Ctrl+Q` (uses current snap)
+        *   `Play Selection`: `Shift+Space`
 
 3.  **Automatic BPM Estimation**
+    *   Integrated `BASS_FX` in `source/modules/audio-module.cpp`.
     *   Integrated `BASS_FX` in `source/modules/audio-module.cpp`.
     *   Implemented `EstimateBPM(Start, End)` which creates a temporary decoding stream to analyze BPM without interrupting playback.
     *   Added `Estimate BPM` (`Ctrl+B`) command in `Edit` menu (active in `BpmEditMode` context, or globally via module dispatch).
     *   Added `Tap BPM` (`Shift+T`) tool for manual BPM tapping in `BpmEditMode`.
+    *   Added `Snap to Peak` (`Ctrl+P`) to align cursor with local waveform peak.
 
 4.  **Automatic Stream Generation**
     *   Implemented `GenerateStream` in `Chart`.

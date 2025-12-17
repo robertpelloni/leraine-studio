@@ -31,6 +31,7 @@ public:
 	float GetPlaybackSpeed();
 
 	float EstimateBPM(Time Start, Time End);
+    Time FindNearestPeak(Time Center, int WindowMs);
 
 	[[nodiscard]] WaveFormData* GenerateAndGetWaveformData(const std::filesystem::path& InPath);
 

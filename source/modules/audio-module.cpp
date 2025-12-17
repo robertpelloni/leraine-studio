@@ -170,6 +170,35 @@ float AudioModule::EstimateBPM(Time Start, Time End)
     return bpm;
 }
 
+Time AudioModule::FindNearestPeak(Time Center, int WindowMs)
+{
+    if (!_ReadableWaveFormData || WindowMs <= 0)
+        return Center;
+
+    Time songLen = GetSongLengthMilliSeconds();
+    Time start = std::max(0, Center - WindowMs);
+    Time end = std::min(songLen, Center + WindowMs);
+
+    float maxAmp = -1.0f;
+    Time peakTime = Center;
+
+    for (Time t = start; t <= end; ++t)
+    {
+        // SampleWaveFormData handles index checks, but direct access is faster if we are sure
+        // Let's use direct access for loop
+        const WaveFormData& data = _ReadableWaveFormData[t];
+        float amp = std::abs(data.Left) + std::abs(data.Right);
+
+        if (amp > maxAmp)
+        {
+            maxAmp = amp;
+            peakTime = t;
+        }
+    }
+
+    return peakTime;
+}
+
 WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::path& InPath)
 {
 	HSTREAM decoder = BASS_StreamCreateFile(FALSE, InPath.string().c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE);

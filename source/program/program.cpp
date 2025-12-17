@@ -252,6 +252,10 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Compress", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Down) && SelectedChart)
 				MOD(EditModule).OnCompress();
 
+            // Snap to Peak: Ctrl+P
+			if (MOD(ShortcutMenuModule).MenuItem("Snap to Peak", sf::Keyboard::Key::LControl, sf::Keyboard::Key::P) && SelectedChart)
+				SnapToPeak();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Go To Timepoint", sf::Keyboard::Key::LControl, sf::Keyboard::Key::T) && SelectedChart)
 				GoToTimePoint();
 
@@ -511,6 +515,14 @@ void Program::OpenDifficultyAnalyzer()
 		if(ImGui::Button("Close") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
 			OutOpen = false;
 	});
+}
+
+void Program::SnapToPeak()
+{
+    Time current = MOD(AudioModule).GetTimeMilliSeconds();
+    Time peak = MOD(AudioModule).FindNearestPeak(current, 50); // +/- 50ms window
+    MOD(AudioModule).SetTimeMilliSeconds(peak);
+    PUSH_NOTIFICATION("Snapped to Peak: %d -> %d", current, peak);
 }
 
 void Program::GoToTimePoint()
