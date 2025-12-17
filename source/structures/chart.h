@@ -71,6 +71,14 @@ struct TimeSlice
 	std::vector<ScrollVelocityMultiplier> SvMultipliers;
 };
 
+enum class StreamPattern
+{
+	Staircase,
+	Trill,
+	Spiral,
+	Random
+};
+
 struct NoteReferenceCollection
 {
 	void PushNote(Column InColumn, Note* InNote);
@@ -130,6 +138,18 @@ public: //accessors
 	void BulkPlaceNotes(const std::vector<std::pair<Column, Note>>& InNotes, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	void MirrorNotes(NoteReferenceCollection& OutNotes);
 	void MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes);
+	void ScaleNotes(NoteReferenceCollection& OutNotes, float Factor);
+	void ReverseNotes(NoteReferenceCollection& OutNotes);
+	void ShuffleNotes(NoteReferenceCollection& OutNotes);
+	void QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor);
+	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
+
+	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
+	float GetAverageNPS();
+	float GetPeakNPS();
+
+	double GetBeatFromTime(Time InTime);
+	Time GetTimeFromBeat(double InBeat);
 
 	bool RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks = false, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	bool RemoveBpmPoint(BpmPoint& InBpmPoint, const bool InSkipHistoryRegistering = false);

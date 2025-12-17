@@ -20,29 +20,70 @@ bool EditModule::OnMouseDrag()
 	return _EditModes[_SelectedEditMode]->OnMouseDrag();
 }
 
-bool EditModule::OnCopy() 
+bool EditModule::OnCopy()
 {
 	return _EditModes[_SelectedEditMode]->OnCopy();
 }
 
-bool EditModule::OnPaste() 
+bool EditModule::OnPaste()
 {
 	return _EditModes[_SelectedEditMode]->OnPaste();
 }
 
-bool EditModule::OnMirror() 
+bool EditModule::OnMirror()
 {
 	return _EditModes[_SelectedEditMode]->OnMirror();
 }
 
-bool EditModule::OnDelete() 
+bool EditModule::OnExpand()
+{
+	return _EditModes[_SelectedEditMode]->OnExpand();
+}
+
+bool EditModule::OnCompress()
+{
+	return _EditModes[_SelectedEditMode]->OnCompress();
+}
+
+bool EditModule::OnReverse()
+{
+	return _EditModes[_SelectedEditMode]->OnReverse();
+}
+
+bool EditModule::OnShuffle()
+{
+	return _EditModes[_SelectedEditMode]->OnShuffle();
+}
+
+bool EditModule::OnQuantize(int InDivisor)
+{
+	return _EditModes[_SelectedEditMode]->OnQuantize(InDivisor);
+}
+
+bool EditModule::OnDelete()
 {
 	return _EditModes[_SelectedEditMode]->OnDelete();
 }
 
-bool EditModule::OnSelectAll() 
+bool EditModule::OnSelectAll()
 {
 	return _EditModes[_SelectedEditMode]->OnSelectAll();
+}
+
+void EditModule::OnEstimateBPM()
+{
+    if (IsEditModeActive<BpmEditMode>())
+    {
+        ((BpmEditMode*)_EditModes[_SelectedEditMode])->OnEstimateBPM();
+    }
+}
+
+void EditModule::OnTap()
+{
+    if (IsEditModeActive<BpmEditMode>())
+    {
+        ((BpmEditMode*)_EditModes[_SelectedEditMode])->OnTap();
+    }
 }
 
 bool EditModule::OnMouseLeftButtonClicked(const bool InIsShiftDown)
@@ -65,7 +106,7 @@ void EditModule::SetCursorData(const Cursor& InCursor)
 	EditMode::SetCursorData(InCursor);
 }
 
-bool EditModule::Tick(const float& InDeltaTime) 
+bool EditModule::Tick(const float& InDeltaTime)
 {
 	_EditModes[_SelectedEditMode]->Tick();
 

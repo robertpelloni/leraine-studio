@@ -9,13 +9,13 @@
 class AudioModule : public Module
 {
 public:
-	
+
 	virtual bool Tick(const float& InDeltaTime) override;
 
 public:
 
 	void LoadAudio(const std::filesystem::path& InPath);
-	
+
 	void TogglePause();
 	void SetPause(bool InPause);
 	void ResetSpeed();
@@ -28,7 +28,9 @@ public:
 	Time GetTimeMilliSeconds();
 	Time GetSongLengthMilliSeconds();
 	float GetPlaybackSpeed();
-	
+
+	float EstimateBPM(Time Start, Time End);
+
 	[[nodiscard]] WaveFormData* GenerateAndGetWaveformData(const std::filesystem::path& InPath);
 
 	bool UsePitch = true;
@@ -38,6 +40,8 @@ private:
 	const WaveFormData& SampleWaveFormData(const Time InTimePoint);
 
 	WaveFormData* _ReadableWaveFormData = nullptr;
+
+    std::filesystem::path _CurrentAudioPath;
 
 	double _CurrentTime = 0;
 	float _Speed = 1.f;

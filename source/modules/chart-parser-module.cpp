@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <limits>
 
 #include <math.h>
 
@@ -373,9 +374,292 @@ Chart* ChartParserModule::ParseChartOsuImpl(std::ifstream& InIfstream, std::file
 	return chart;
 }
 
+// Helper to keep track of holds
+struct SmHoldTracker
+{
+	Time TimePointBegin;
+	Column Col;
+};
+
+// Helper struct for beat-based bpm points needed during parsing
+struct SmBpmPoint
+{
+	double Beat;
+	double Bpm;
+};
+
 Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std::filesystem::path InPath)
 {
-	return nullptr;
+	Chart* chart = new Chart();
+	chart->KeyAmount = 4; // Default to 4 keys for dance-single
+
+	std::string line;
+	std::string buffer; // To accumulate multiline values
+
+	double offset = 0.0;
+	std::vector<SmBpmPoint> smBpmPoints;
+	bool inNotes = false;
+
+	// Helper to calculate time from beat using smBpmPoints and offset
+	auto GetTimeFromBeat = [&](double InBeat) -> Time
+	{
+		double time = offset * 1000.0;
+		double currentBeat = 0.0;
+
+		if (smBpmPoints.empty()) return Time(time);
+
+		double currentBpm = smBpmPoints[0].Bpm;
+
+		for (size_t i = 0; i < smBpmPoints.size(); ++i)
+		{
+			double nextBeat = (i + 1 < smBpmPoints.size()) ? smBpmPoints[i+1].Beat : InBeat;
+
+			// If our target beat is before the next change, we stop here
+			if (InBeat < nextBeat)
+			{
+				time += (InBeat - currentBeat) * (60000.0 / currentBpm);
+				return Time(time);
+			}
+
+			// Add time for this segment
+			time += (nextBeat - currentBeat) * (60000.0 / currentBpm);
+			currentBeat = nextBeat;
+			currentBpm = (i + 1 < smBpmPoints.size()) ? smBpmPoints[i+1].Bpm : currentBpm;
+		}
+
+		// If we are past the last defined BPM change
+		if (InBeat > currentBeat)
+		{
+			time += (InBeat - currentBeat) * (60000.0 / currentBpm);
+		}
+
+		return Time(time);
+	};
+
+	std::filesystem::path path = InPath;
+	std::string parentPath = path.parent_path().string();
+
+	while (std::getline(InIfstream, line))
+	{
+		// Basic comment stripping
+		size_t commentPos = line.find("//");
+		if (commentPos != std::string::npos)
+			line = line.substr(0, commentPos);
+
+		// Trim
+		line.erase(0, line.find_first_not_of(" \t\r\n"));
+		line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+		if (line.empty()) continue;
+
+		if (line[0] == '#')
+		{
+			// Tag parsing
+			size_t colonPos = line.find(':');
+			if (colonPos != std::string::npos)
+			{
+				std::string key = line.substr(1, colonPos - 1);
+				std::string value = line.substr(colonPos + 1);
+
+				// Read until semicolon if not present
+				while (value.find(';') == std::string::npos && InIfstream.peek() != EOF)
+				{
+					std::string nextLine;
+					std::getline(InIfstream, nextLine);
+					value += nextLine + "\n";
+				}
+
+				if (!value.empty() && value.back() == ';') value.pop_back();
+
+				if (key == "TITLE") chart->SongTitle = value;
+				else if (key == "ARTIST") chart->Artist = value;
+				else if (key == "CREDIT") chart->Charter = value;
+				else if (key == "MUSIC")
+				{
+					std::filesystem::path songPath = std::filesystem::path(parentPath) / value;
+					chart->AudioPath = songPath;
+				}
+				else if (key == "BANNER" || key == "BACKGROUND")
+				{
+					std::filesystem::path bgPath = std::filesystem::path(parentPath) / value;
+					chart->BackgroundPath = bgPath;
+				}
+				else if (key == "OFFSET")
+				{
+					offset = std::stod(value);
+				}
+				else if (key == "BPMS")
+				{
+					// beat=bpm, beat=bpm
+					std::string pairStr;
+					std::stringstream ss(value);
+					while (std::getline(ss, pairStr, ','))
+					{
+						size_t eqPos = pairStr.find('=');
+						if (eqPos != std::string::npos)
+						{
+							double beat = std::stod(pairStr.substr(0, eqPos));
+							double bpm = std::stod(pairStr.substr(eqPos + 1));
+							smBpmPoints.push_back({beat, bpm});
+						}
+					}
+					// Ensure sorted
+					std::sort(smBpmPoints.begin(), smBpmPoints.end(), [](const SmBpmPoint& a, const SmBpmPoint& b){ return a.Beat < b.Beat; });
+
+					// Inject into Chart
+					for (const auto& pt : smBpmPoints)
+					{
+						Time t = GetTimeFromBeat(pt.Beat);
+						chart->InjectBpmPoint(t, pt.Bpm, 60000.0 / pt.Bpm);
+					}
+				}
+				else if (key == "NOTES")
+				{
+					inNotes = true;
+					// Notes format is complex, we need to read section by section
+					// The #NOTES line itself usually doesn't contain data, the data follows
+					// But our logic above might have slurped it into `value`.
+
+					// Re-construct the buffer to parse specific note fields
+					buffer = value;
+				}
+			}
+		}
+
+		if (inNotes)
+		{
+			// Parse Note Data
+			// Structure: Type:Desc:Diff:Meter:Radar:Data
+			std::vector<std::string> sections;
+			std::stringstream ss(buffer);
+			std::string segment;
+
+			// We might have multiple charts in one file.
+			// Current logic just takes the buffer which contains *one* chart definition (until semicolon)
+			// But wait, my slurping logic above stopped at ';'.
+			// StepMania #NOTES ends with ';'.
+
+			// Split by ':'
+			while (std::getline(ss, segment, ':'))
+			{
+				// trim segment
+				segment.erase(0, segment.find_first_not_of(" \t\r\n"));
+				segment.erase(segment.find_last_not_of(" \t\r\n") + 1);
+				sections.push_back(segment);
+			}
+
+			if (sections.size() >= 6)
+			{
+				std::string chartType = sections[0]; // dance-single
+				// Only parse dance-single for now
+				if (chartType.find("dance-single") != std::string::npos)
+				{
+					chart->DifficultyName = sections[2]; // Difficulty Class (Hard, etc)
+
+					// Note Data is in sections[5] (and subsequent if split failed on colons inside data, but data usually doesn't have colons)
+					// Actually, sections might be wrong if data contains colons? No, data uses 0123M and newlines/commas.
+
+					std::string noteData = sections[5];
+					// If there were more colons, append them back? unlikely for standard SM.
+
+					// Process Measures
+					std::vector<SmHoldTracker> holds;
+					double currentMeasureIndex = 0;
+
+					std::stringstream measureStream(noteData);
+					std::string measureStr;
+
+					while (std::getline(measureStream, measureStr, ','))
+					{
+						// Process one measure
+						// Split into rows
+						std::vector<std::string> rows;
+						std::stringstream rowStream(measureStr);
+						std::string rowStr;
+						while (std::getline(rowStream, rowStr))
+						{
+							// Clean row
+							rowStr.erase(0, rowStr.find_first_not_of(" \t\r"));
+							rowStr.erase(rowStr.find_last_not_of(" \t\r") + 1);
+							// Remove comments in note data?
+							if (rowStr.substr(0, 2) == "//") continue;
+
+							// Check for semicolon terminator
+							size_t semiPos = rowStr.find(';');
+							if (semiPos != std::string::npos)
+							{
+								rowStr = rowStr.substr(0, semiPos);
+								if (rowStr.empty())
+								{
+									// Semicolon found on empty line (or start of line).
+									break;
+								}
+							}
+
+							if (rowStr.empty()) continue;
+							rows.push_back(rowStr);
+						}
+
+						int numRows = rows.size();
+						if (numRows == 0)
+						{
+							currentMeasureIndex++;
+							continue;
+						}
+
+						for (int r = 0; r < numRows; ++r)
+						{
+							double beatIndex = (currentMeasureIndex * 4.0) + ((double)r / (double)numRows) * 4.0;
+							Time t = GetTimeFromBeat(beatIndex);
+
+							std::string& row = rows[r];
+							for (int c = 0; c < 4 && c < (int)row.size(); ++c) // 4 columns
+							{
+								char type = row[c];
+								if (type == '1') // Tap
+								{
+									chart->InjectNote(t, c, Note::EType::Common);
+								}
+								else if (type == '2') // Hold Head
+								{
+									holds.push_back({t, (Column)c});
+								}
+								else if (type == '3') // Hold Tail
+								{
+									// Find matching head
+									for (auto it = holds.begin(); it != holds.end(); ++it)
+									{
+										if (it->Col == (Column)c)
+										{
+											chart->InjectHold(it->TimePointBegin, t, c);
+											holds.erase(it);
+											break;
+										}
+									}
+								}
+								else if (type == 'M') // Mine
+								{
+									// Treat as common note or specialized?
+									// chart->InjectNote(t, c, Note::EType::Mine); // If supported
+								}
+							}
+						}
+						currentMeasureIndex++;
+					}
+
+					// Found and parsed one chart, we return it.
+					// If file has multiple difficulties, this picks the first dance-single one.
+					return chart;
+				}
+			}
+
+			// If not dance-single or failed parse, reset inNotes to look for next #NOTES
+			inNotes = false;
+			buffer.clear();
+		}
+	}
+
+	return chart;
 }
 
 void ChartParserModule::ExportChartSet(Chart* InChart)
@@ -488,7 +772,232 @@ void ChartParserModule::ExportChartOsuImpl(Chart* InChart, std::ofstream& InOfSt
 	InOfStream << chartStream.str();
 	InOfStream.close();
 }
+
 void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& InOfStream)
 {
-	return;
+	// 1. Calculate Beats for all BPM Points to generate #BPMS and for note conversion
+	struct ProcessedBpmPoint
+	{
+		double Beat;
+		double Bpm;
+		Time TimePoint;
+	};
+	std::vector<ProcessedBpmPoint> processedBpmPoints;
+
+	// Sort BPM points from Chart
+	std::vector<BpmPoint> sortedBpmPoints;
+	InChart->IterateAllBpmPoints([&sortedBpmPoints](BpmPoint& pt){ sortedBpmPoints.push_back(pt); });
+	std::sort(sortedBpmPoints.begin(), sortedBpmPoints.end(), [](const BpmPoint& a, const BpmPoint& b){ return a.TimePoint < b.TimePoint; });
+
+	// Offset logic:
+	// SM Offset is "Time of Beat 0".
+	// If the first note or BPM point is at 1000ms, and that is Beat 0, then Offset = 1.0.
+	// We need to decide where "Beat 0" is.
+	// Usually, the first BPM point determines the grid.
+	// If sortedBpmPoints[0].TimePoint is 1000ms, let's say that's Beat 0.
+	// Then Offset = sortedBpmPoints[0].TimePoint / 1000.0.
+
+	double offset = 0.0;
+	if (!sortedBpmPoints.empty())
+		offset = sortedBpmPoints[0].TimePoint / 1000.0;
+
+	double currentBeat = 0.0;
+	double lastTime = offset * 1000.0; // This is Time of Beat 0
+	double currentBpm = 120.0;
+
+	if (!sortedBpmPoints.empty())
+	{
+		// Initial BPM is the one at Beat 0 (or the first one)
+		currentBpm = sortedBpmPoints[0].Bpm;
+		processedBpmPoints.push_back({0.0, currentBpm, (Time)lastTime});
+	}
+
+	for (size_t i = 1; i < sortedBpmPoints.size(); ++i)
+	{
+		double timeDelta = sortedBpmPoints[i].TimePoint - lastTime;
+		double beatDelta = timeDelta / (60000.0 / currentBpm);
+		currentBeat += beatDelta;
+
+		processedBpmPoints.push_back({currentBeat, sortedBpmPoints[i].Bpm, sortedBpmPoints[i].TimePoint});
+
+		lastTime = sortedBpmPoints[i].TimePoint;
+		currentBpm = sortedBpmPoints[i].Bpm;
+	}
+
+	// 2. Write Header
+	std::stringstream ss;
+	ss << "#TITLE:" << InChart->SongTitle << ";\n";
+	ss << "#SUBTITLE:;\n";
+	ss << "#ARTIST:" << InChart->Artist << ";\n";
+	ss << "#TITLETRANSLIT:" << InChart->SongtitleUnicode << ";\n";
+	ss << "#ARTISTTRANSLIT:" << InChart->ArtistUnicode << ";\n";
+	ss << "#GENRE:;\n";
+	ss << "#CREDIT:" << InChart->Charter << ";\n";
+	ss << "#MUSIC:" << InChart->AudioPath.filename().string() << ";\n";
+	ss << "#BANNER:" << InChart->BackgroundPath.filename().string() << ";\n";
+	ss << "#BACKGROUND:;\n";
+	ss << "#LYRICSPATH:;\n";
+	ss << "#CDTITLE:;\n";
+	ss << "#OFFSET:" << offset << ";\n";
+	ss << "#SAMPLESTART:0.000;\n";
+	ss << "#SAMPLELENGTH:10.000;\n";
+	ss << "#SELECTABLE:YES;\n";
+
+	ss << "#BPMS:";
+	for (size_t i = 0; i < processedBpmPoints.size(); ++i)
+	{
+		ss << processedBpmPoints[i].Beat << "=" << processedBpmPoints[i].Bpm;
+		if (i < processedBpmPoints.size() - 1) ss << ",";
+		else ss << ";\n";
+	}
+
+	ss << "#STOPS:;\n";
+	ss << "#BGCHANGES:;\n";
+	ss << "#FGCHANGES:;\n"; // Fixed typo key -> FGCHANGES
+
+	// 3. Convert Notes to Beat Positions
+	struct SmNote
+	{
+		double Beat;
+		int Column;
+		char Type; // 1=Tap, 2=Head, 3=Tail
+	};
+	std::vector<SmNote> smNotes;
+
+	auto TimeToBeat = [&](Time t) -> double {
+		// Find relevant BPM segment
+		// processedBpmPoints has (Beat, Bpm, TimePoint).
+		// We want to map Time t -> Beat.
+
+		if (processedBpmPoints.empty()) return 0.0;
+
+		// Find the segment that starts <= t
+		int idx = -1;
+		for (int i = processedBpmPoints.size() - 1; i >= 0; --i)
+		{
+			if (processedBpmPoints[i].TimePoint <= t + 1) // +1 epsilon
+			{
+				idx = i;
+				break;
+			}
+		}
+
+		if (idx == -1) // Time is before first BPM point (before offset?)
+		{
+			// Extrapolate backwards using first BPM
+			double delta = t - processedBpmPoints[0].TimePoint;
+			return processedBpmPoints[0].Beat + delta / (60000.0 / processedBpmPoints[0].Bpm);
+		}
+
+		double delta = t - processedBpmPoints[idx].TimePoint;
+		return processedBpmPoints[idx].Beat + delta / (60000.0 / processedBpmPoints[idx].Bpm);
+	};
+
+	InChart->IterateAllNotes([&](Note& n, const Column& col) {
+		// Only support 4 keys for now
+		if (col >= 4) return;
+
+		double b = TimeToBeat(n.TimePoint);
+		if (n.Type == Note::EType::Common)
+		{
+			smNotes.push_back({b, (int)col, '1'});
+		}
+		else if (n.Type == Note::EType::HoldBegin)
+		{
+			smNotes.push_back({b, (int)col, '2'});
+			double bEnd = TimeToBeat(n.TimePointEnd);
+			smNotes.push_back({bEnd, (int)col, '3'});
+		}
+	});
+
+	std::sort(smNotes.begin(), smNotes.end(), [](const SmNote& a, const SmNote& b){
+		if (std::abs(a.Beat - b.Beat) > 0.001) return a.Beat < b.Beat;
+		return a.Column < b.Column;
+	});
+
+	// 4. Write #NOTES
+	ss << "//---------------" << InChart->DifficultyName << " - " << InChart->Charter << "---------------\n";
+	ss << "#NOTES:\n";
+	ss << "     dance-single:\n";
+	ss << "     " << InChart->Charter << ":\n";
+	ss << "     " << InChart->DifficultyName << ":\n"; // Difficulty Class needs mapping? Or just use name
+	ss << "     8:\n"; // Meter hardcoded for now
+	ss << "     0.000,0.000,0.000,0.000,0.000:\n";
+
+	// 5. Write Measures
+	int currentMeasure = 0;
+	size_t noteIdx = 0;
+
+	// Determine last measure
+	double lastBeat = smNotes.empty() ? 0.0 : smNotes.back().Beat;
+	int totalMeasures = (int)ceil(lastBeat / 4.0);
+	if (totalMeasures == 0 && !smNotes.empty()) totalMeasures = 1;
+
+	for (int m = 0; m < totalMeasures; ++m)
+	{
+		// Find notes in this measure [m*4, (m+1)*4)
+		std::vector<SmNote*> measureNotes;
+		while (noteIdx < smNotes.size() && smNotes[noteIdx].Beat < (m + 1) * 4)
+		{
+			if (smNotes[noteIdx].Beat >= m * 4 - 0.001) // Tolerance
+				measureNotes.push_back(&smNotes[noteIdx]);
+			noteIdx++;
+		}
+
+		// Determine quantization
+		int divs[] = {4, 8, 12, 16, 24, 32, 48, 64, 192};
+		int bestDiv = 4;
+
+		for (int div : divs)
+		{
+			bool fit = true;
+			for (auto* n : measureNotes)
+			{
+				double relativeBeat = n->Beat - (m * 4);
+				double pos = relativeBeat * div;
+				// Check if pos is close to integer
+				if (std::abs(pos - std::round(pos)) > 0.01)
+				{
+					fit = false;
+					break;
+				}
+			}
+			if (fit)
+			{
+				bestDiv = div;
+				break;
+			}
+			bestDiv = 192; // Fallback
+		}
+
+		// Write rows
+		for (int r = 0; r < bestDiv; ++r)
+		{
+			char rowStr[5] = "0000";
+
+			// Check for notes at this row
+			double rowBeatStart = (m * 4) + (double)r / bestDiv * 4.0;
+			// We check for notes approximately at this beat
+
+			for (auto* n : measureNotes)
+			{
+				if (std::abs(n->Beat - rowBeatStart) < 0.01) // Tolerance
+				{
+					if (n->Column < 4)
+						rowStr[n->Column] = n->Type;
+				}
+			}
+
+			ss << rowStr << "\n";
+		}
+
+		if (m < totalMeasures - 1)
+			ss << ",\n";
+		else
+			ss << ";\n";
+	}
+
+	InOfStream.clear();
+	InOfStream << ss.str();
+	InOfStream.close();
 }

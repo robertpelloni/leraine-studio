@@ -11,6 +11,9 @@ public:
 
 	bool OnMouseRightButtonClicked(const bool InIsShiftDown) override;
 
+    void OnEstimateBPM();
+    void OnTap();
+
 	void SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTimeBegin, const Time InTimeEnd) override;
 	void Tick() override;
 
@@ -28,9 +31,12 @@ private:
 	BpmPoint* _MovableBpmPoint = nullptr;
 
 	BpmPoint _MovableBpmPointInitialValue;
-	
+
 	BpmPoint* _PreviousBpmPoint = nullptr;
 	BpmPoint* _NextBpmPoint = nullptr;
 
 	BpmPoint* _PinnedBpmPoint = nullptr;
+
+    std::vector<long long> _TapTimes;
+    float _TappedBPM = 0.0f;
 };
