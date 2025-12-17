@@ -41,6 +41,10 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
     *   Implemented `CalculateNPSGraph`, `GetAverageNPS`, `GetPeakNPS` in `Chart`.
     *   Added "Difficulty Analyzer" popup UI in `Program` visualizing NPS graph and stats.
 
+6.  **Metronome**
+    *   Implemented synthesized metronome tick in `AudioModule`.
+    *   Added toggle in Options menu.
+
 ## Current State
 *   **Feature Parity Achieved:** The editor now supports StepMania files and includes all requested editing, timing, and analysis tools found in ArrowVortex (except Dancing Bot).
 *   **Codebase:** C++17 with SFML, ImGui, BASS/BASS_FX.

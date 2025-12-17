@@ -108,6 +108,24 @@ void Program::InnerTick()
 	MOD(TimefieldRenderModule).UpdateMetrics(_WindowMetrics);
 	MOD(BeatModule).GenerateTimeRangeBeatLines(WindowTimeBegin, WindowTimeEnd, SelectedChart, CurrentSnap);
 
+    // Metronome Logic
+    if (_MetronomeEnabled)
+    {
+        Time currentTime = MOD(AudioModule).GetTimeMilliSeconds();
+        if (_LastTickTime != 0 && currentTime > _LastTickTime)
+        {
+            // Check for beats between _LastTickTime and currentTime
+            // We can ask BeatModule for the next beat line after LastTickTime
+            BeatLine nextBeat = MOD(BeatModule).GetNextBeatLine(_LastTickTime);
+            if (nextBeat.TimePoint <= currentTime && nextBeat.BeatSnap == 1) // Only major beats (4th)?
+            {
+                // Play tick
+                MOD(AudioModule).PlayMetronomeTick();
+            }
+        }
+        _LastTickTime = currentTime;
+    }
+
 	SelectedChart->IterateNotesInTimeRange(WindowTimeBegin - TIMESLICE_LENGTH, WindowTimeEnd, [this](Note &InNote, const Column InColumn) {
 		sf::Int8 alpha = 255;
 
@@ -316,6 +334,8 @@ void Program::MenuBar()
 				EditMode::static_Flags.ShowColumnHeatmap = Config.ShowColumnHeatmap;
 				Config.Save();
 			}
+
+            ImGui::Checkbox("Metronome", &_MetronomeEnabled);
 
 			ImGui::EndMenu();
 		}

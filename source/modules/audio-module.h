@@ -34,6 +34,9 @@ public:
     Time EstimateOffset(double BPM, Time Start, Time End);
     Time FindNearestPeak(Time Center, int WindowMs);
 
+    void InitMetronome();
+    void PlayMetronomeTick();
+
 	[[nodiscard]] WaveFormData* GenerateAndGetWaveformData(const std::filesystem::path& InPath);
 
 	bool UsePitch = true;
@@ -59,4 +62,5 @@ private:
 	int _Freq = 44100; // Sample rate (Hz)
 
 	HSAMPLE _StreamHandle; // Handle for open stream
+    HSAMPLE _MetronomeSample = 0;
 };

@@ -35,7 +35,10 @@ void AudioModule::LoadAudio(const std::filesystem::path& InPath)
 	BASS_ChannelPause(_StreamHandle);
 
 	BASS_ChannelSetAttribute(_StreamHandle, BASS_ATTRIB_TEMPO_OPTION_SEQUENCE_MS, 32);
+	BASS_ChannelSetAttribute(_StreamHandle, BASS_ATTRIB_TEMPO_OPTION_SEQUENCE_MS, 32);
 	BASS_ChannelSetAttribute(_StreamHandle, BASS_ATTRIB_TEMPO_OPTION_SEEKWINDOW_MS, 4);
+
+    InitMetronome();
 
 	ResetSpeed();
 
@@ -254,6 +257,32 @@ Time AudioModule::FindNearestPeak(Time Center, int WindowMs)
     }
 
     return peakTime;
+}
+
+void AudioModule::InitMetronome()
+{
+    if (_MetronomeSample) return;
+
+    // Generate a simple sine wave tick
+    int length = 44100 / 20; // 50ms
+    short* data = new short[length];
+    for (int i = 0; i < length; ++i)
+    {
+        data[i] = (short)(30000.0 * sin(i * 0.5)); // High pitch
+    }
+
+    _MetronomeSample = BASS_SampleCreate(length, 44100, 1, 1, BASS_SAMPLE_OVER_POS);
+    BASS_SampleSetData(_MetronomeSample, data);
+    delete[] data;
+}
+
+void AudioModule::PlayMetronomeTick()
+{
+    if (_MetronomeSample)
+    {
+        HCHANNEL ch = BASS_SampleGetChannel(_MetronomeSample, FALSE);
+        BASS_ChannelPlay(ch, FALSE);
+    }
 }
 
 WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::path& InPath)
