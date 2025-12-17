@@ -82,12 +82,23 @@ void BpmEditMode::OnEstimateBPM()
 
     if (bpm > 0.0f)
     {
-        PUSH_NOTIFICATION("Estimated BPM: %.2f", bpm);
+        // Estimate Offset
+        Time offset = MOD(AudioModule).EstimateOffset(bpm, 0, length);
+
+        PUSH_NOTIFICATION("Estimated BPM: %.2f, Offset: %d", bpm, offset);
 
         if (_MovableBpmPoint)
         {
              _MovableBpmPoint->Bpm = bpm;
              _MovableBpmPoint->BeatLength = 60000.0 / bpm;
+             _MovableBpmPoint->TimePoint = offset;
+        }
+        else
+        {
+            // If no point hovered, maybe place one at offset?
+            // For now, let's just notify. The user might want to drag a point there.
+            // Or we could snap the cursor?
+            // MOD(AudioModule).SetTimeMilliSeconds(offset); // Auto-seek to offset
         }
     }
     else

@@ -170,6 +170,63 @@ float AudioModule::EstimateBPM(Time Start, Time End)
     return bpm;
 }
 
+Time AudioModule::EstimateOffset(double BPM, Time Start, Time End)
+{
+    if (!_ReadableWaveFormData || BPM <= 0.0)
+        return Start;
+
+    double beatInterval = 60000.0 / BPM;
+
+    // We only need to check offsets within one beat interval [0, beatInterval)
+    // Actually, we want to find the offset *relative to Start* that aligns with peaks.
+    // We search for phase phi in [0, beatInterval).
+
+    // Algorithm:
+    // Iterate phi from 0 to beatInterval with step (e.g. 10ms or 5ms).
+    // For each phi, sum the energy at (Start + phi + k * beatInterval) for all k.
+    // Pick phi with max energy.
+
+    int step = 5; // 5ms step for precision
+    int maxPhi = int(beatInterval);
+
+    float bestEnergy = -1.0f;
+    int bestPhi = 0;
+
+    Time songLen = GetSongLengthMilliSeconds();
+    Time searchEnd = std::min(End, songLen);
+
+    for (int phi = 0; phi < maxPhi; phi += step)
+    {
+        float energy = 0.0f;
+        int count = 0;
+
+        for (double t = Start + phi; t < searchEnd; t += beatInterval)
+        {
+            Time timeIdx = Time(t);
+            if (timeIdx < songLen)
+            {
+                // Simple energy: amplitude
+                const WaveFormData& data = _ReadableWaveFormData[timeIdx];
+                energy += (std::abs(data.Left) + std::abs(data.Right));
+                count++;
+            }
+        }
+
+        if (count > 0)
+        {
+            // We might want average energy to avoid bias if count differs (though it shouldn't differ much)
+            // But sum is fine if range is large.
+            if (energy > bestEnergy)
+            {
+                bestEnergy = energy;
+                bestPhi = phi;
+            }
+        }
+    }
+
+    return Start + bestPhi;
+}
+
 Time AudioModule::FindNearestPeak(Time Center, int WindowMs)
 {
     if (!_ReadableWaveFormData || WindowMs <= 0)
