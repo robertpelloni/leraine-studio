@@ -27,6 +27,7 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
     *   Integrated `BASS_FX` in `source/modules/audio-module.cpp`.
     *   Implemented `EstimateBPM(Start, End)` which creates a temporary decoding stream to analyze BPM without interrupting playback.
     *   Added `Estimate BPM` (`Ctrl+B`) command in `Edit` menu (active in `BpmEditMode` context, or globally via module dispatch).
+    *   Added `Tap BPM` (`Shift+T`) tool for manual BPM tapping in `BpmEditMode`.
 
 4.  **Automatic Stream Generation**
     *   Implemented `GenerateStream` in `Chart`.

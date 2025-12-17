@@ -243,6 +243,9 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Estimate BPM", sf::Keyboard::Key::LControl, sf::Keyboard::Key::B) && SelectedChart)
 				MOD(EditModule).OnEstimateBPM();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Tap BPM", sf::Keyboard::Key::LShift, sf::Keyboard::Key::T) && SelectedChart)
+				MOD(EditModule).OnTap();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
 				MOD(EditModule).OnExpand();
 
