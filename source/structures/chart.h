@@ -71,6 +71,14 @@ struct TimeSlice
 	std::vector<ScrollVelocityMultiplier> SvMultipliers;
 };
 
+enum class StreamPattern
+{
+	Staircase,
+	Trill,
+	Spiral,
+	Random
+};
+
 struct NoteReferenceCollection
 {
 	void PushNote(Column InColumn, Note* InNote);
@@ -134,6 +142,11 @@ public: //accessors
 	void ReverseNotes(NoteReferenceCollection& OutNotes);
 	void ShuffleNotes(NoteReferenceCollection& OutNotes);
 	void QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor);
+	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
+
+	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
+	float GetAverageNPS();
+	float GetPeakNPS();
 
 	double GetBeatFromTime(Time InTime);
 	Time GetTimeFromBeat(double InBeat);

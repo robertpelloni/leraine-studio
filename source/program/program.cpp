@@ -224,6 +224,31 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Mirror", sf::Keyboard::Key::LControl, sf::Keyboard::Key::H) && SelectedChart)
 				MOD(EditModule).OnMirror();
 
+			if (MOD(ShortcutMenuModule).MenuItem("Stream Generator", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+				OpenStreamGenerator();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Difficulty Analyzer", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+				OpenDifficultyAnalyzer();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
+				MOD(EditModule).OnReverse();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Shuffle", sf::Keyboard::Key::LControl, sf::Keyboard::Key::J) && SelectedChart)
+				MOD(EditModule).OnShuffle();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Quantize", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Q) && SelectedChart)
+				MOD(EditModule).OnQuantize(CurrentSnap);
+
+            // Using Ctrl+B for Estimate BPM (usually B is taken, but maybe Ctrl+Shift+B)
+			if (MOD(ShortcutMenuModule).MenuItem("Estimate BPM", sf::Keyboard::Key::LControl, sf::Keyboard::Key::B) && SelectedChart)
+				MOD(EditModule).OnEstimateBPM();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
+				MOD(EditModule).OnExpand();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Compress", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Down) && SelectedChart)
+				MOD(EditModule).OnCompress();
+
 			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
 				MOD(EditModule).OnReverse();
 
@@ -438,6 +463,68 @@ void Program::ShowShortCuts()
 		MOD(ShortcutMenuModule).ShowCheatSheet();
 
 		if(ImGui::Button("close"))
+			OutOpen = false;
+	});
+}
+
+void Program::OpenStreamGenerator()
+{
+	static int start = 0;
+	static int end = 0;
+	static int divisor = 4;
+	static int pattern = 0;
+
+	if (start == 0 && end == 0)
+	{
+		start = WindowTimeBegin;
+		end = WindowTimeEnd;
+	}
+
+	MOD(PopupModule).OpenPopup("Stream Generator", [this](bool& OutOpen)
+	{
+		ImGui::InputInt("Start Time (ms)", &start);
+		ImGui::InputInt("End Time (ms)", &end);
+
+		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random" };
+		ImGui::Combo("Pattern", &pattern, patterns, IM_ARRAYSIZE(patterns));
+
+		ImGui::InputInt("Divisor (1/X)", &divisor);
+		if (divisor < 1) divisor = 1;
+
+		if(ImGui::Button("Generate"))
+		{
+			SelectedChart->GenerateStream(start, end, divisor, (StreamPattern)pattern);
+			OutOpen = false;
+		}
+
+		ImGui::SameLine();
+
+		if(ImGui::Button("Cancel") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
+			OutOpen = false;
+	});
+}
+
+void Program::OpenDifficultyAnalyzer()
+{
+	MOD(PopupModule).OpenPopup("Difficulty Analyzer", [this](bool& OutOpen)
+	{
+		static int windowSize = 1000;
+		ImGui::InputInt("Window Size (ms)", &windowSize);
+		if (windowSize < 100) windowSize = 100;
+
+		std::vector<float> graph = SelectedChart->CalculateNPSGraph(windowSize);
+		if (!graph.empty())
+		{
+			ImGui::PlotLines("NPS", graph.data(), graph.size(), 0, NULL, 0.0f, FLT_MAX, ImVec2(0, 100));
+		}
+
+		float avg = SelectedChart->GetAverageNPS();
+		float peak = SelectedChart->GetPeakNPS();
+
+		ImGui::Text("Average NPS: %.2f", avg);
+		ImGui::Text("Peak NPS (1s): %.2f", peak);
+
+		if(ImGui::Button("Close") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
 			OutOpen = false;
 	});
 }

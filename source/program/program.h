@@ -18,6 +18,8 @@ public: //abstractions
 	void SetUpMetadata();
 	void ShowShortCuts();
 	void GoToTimePoint();
+	void OpenStreamGenerator();
+	void OpenDifficultyAnalyzer();
 	void ScrollShortcutRoutines();
 	void InputActions();
 	void GlobalInputActions();

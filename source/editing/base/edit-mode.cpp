@@ -50,6 +50,31 @@ bool EditMode::OnCompress()
 	return false;
 }
 
+bool EditMode::OnExpand()
+{
+	return false;
+}
+
+bool EditMode::OnReverse()
+{
+	return false;
+}
+
+bool EditMode::OnShuffle()
+{
+	return false;
+}
+
+bool EditMode::OnQuantize(int InDivisor)
+{
+	return false;
+}
+
+bool EditMode::OnCompress()
+{
+	return false;
+}
+
 bool EditMode::OnMouseLeftButtonReleased()
 {
 	return false;
