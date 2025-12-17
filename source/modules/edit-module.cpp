@@ -86,6 +86,11 @@ void EditModule::OnTap()
     }
 }
 
+bool EditModule::GetSelectionRange(Time& OutStart, Time& OutEnd)
+{
+    return _EditModes[_SelectedEditMode]->GetSelectionRange(OutStart, OutEnd);
+}
+
 bool EditModule::OnMouseLeftButtonClicked(const bool InIsShiftDown)
 {
 	return _EditModes[_SelectedEditMode]->OnMouseLeftButtonClicked(InIsShiftDown);

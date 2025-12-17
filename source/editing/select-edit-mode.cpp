@@ -8,7 +8,7 @@
 #include "imgui.h"
 
 
-bool SelectEditMode::OnCopy() 
+bool SelectEditMode::OnCopy()
 {
     std::string clipboard =  "LeraineStudio:";
 
@@ -47,9 +47,9 @@ bool SelectEditMode::OnCopy()
     return true;
 }
 
-bool SelectEditMode::OnPaste() 
+bool SelectEditMode::OnPaste()
 {
-    //I hate parsing strings in c++ 
+    //I hate parsing strings in c++
 
     _MostRightColumn = 0;
     _MostLeftColumn = static_Chart->KeyAmount - 1;
@@ -120,7 +120,7 @@ bool SelectEditMode::OnPaste()
 
                 std::string parsedTimePointBegin = "";
                 std::string parsedTimePointEnd = "";
-                
+
                 bool endParse = false;
 
                 while(character != ';')
@@ -145,7 +145,7 @@ bool SelectEditMode::OnPaste()
                 _PastePreviewNotes.push_back({column, note});
             }
             break;
-            
+
             default:
                 break;
             }
@@ -158,16 +158,16 @@ bool SelectEditMode::OnPaste()
     return true;
 }
 
-bool SelectEditMode::OnMirror() 
+bool SelectEditMode::OnMirror()
 {
     if(_IsPreviewingPaste)
     {
         static_Chart->MirrorNotes(_PastePreviewNotes);
         PUSH_NOTIFICATION("Mirrored %d Paste Notes", _PastePreviewNotes.size());
-        
+
         return true;
     }
-    
+
     if(_SelectedNotes.HasNotes)
     {
         PUSH_NOTIFICATION("Mirrored %d Notes", _SelectedNotes.NoteAmount);
@@ -232,7 +232,7 @@ bool SelectEditMode::OnCompress()
     return false;
 }
 
-bool SelectEditMode::OnDelete() 
+bool SelectEditMode::OnDelete()
 {
     if(_SelectedNotes.HasNotes)
     {
@@ -243,7 +243,7 @@ bool SelectEditMode::OnDelete()
     return true;
 }
 
-bool SelectEditMode::OnSelectAll() 
+bool SelectEditMode::OnSelectAll()
 {
     static_Chart->FillNoteCollectionWithAllNotes(_SelectedNotes);
     PUSH_NOTIFICATION("Selected %d Notes", _SelectedNotes.NoteAmount);
@@ -251,7 +251,18 @@ bool SelectEditMode::OnSelectAll()
     return true;
 }
 
-void SelectEditMode::OnReset() 
+bool SelectEditMode::GetSelectionRange(Time& OutStart, Time& OutEnd)
+{
+    if (_SelectedNotes.HasNotes)
+    {
+        OutStart = _SelectedNotes.MinTimePoint;
+        OutEnd = _SelectedNotes.MaxTimePoint;
+        return true;
+    }
+    return false;
+}
+
+void SelectEditMode::OnReset()
 {
     _PastePreviewNotes.reserve(100);
 
@@ -262,7 +273,7 @@ void SelectEditMode::OnReset()
     _PastePreviewNotes.clear();
 }
 
-void SelectEditMode::Tick() 
+void SelectEditMode::Tick()
 {
     if(_IsMovingNote)
         return;
@@ -304,20 +315,20 @@ bool SelectEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
                     }
                 }
         }
-    
+
         _SelectedNotes.Clear();
-        
+
         _DraggingNote = _HoveredNote;
         return _IsMovingNote = true;
     }
 
-    _SelectedNotes.Clear();  
-    
+    _SelectedNotes.Clear();
+
     _IsAreaSelecting = true;
 
     if(!_IsPreviewingPaste)
         return true;
-    
+
     SetNewPreviewPasteLocation();
 
     PUSH_NOTIFICATION("Placed %d Notes", _PastePreviewNotes.size());
@@ -334,12 +345,12 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
     if(_IsMovingNote)
     {
         if(_PastePreviewNotes.size() > 0)
-        {   
+        {
             SetNewPreviewPasteLocation();
-            
+
             Time minTimePoint = (_HighestPasteTimepoint < _DraggingNotes.MaxTimePoint) ? _HighestPasteTimepoint - (_DraggingNotes.MaxTimePoint - _DraggingNotes.MinTimePoint) : _DraggingNotes.MinTimePoint;
             Time maxTimePoint = (_HighestPasteTimepoint < _DraggingNotes.MaxTimePoint) ? _DraggingNotes.MaxTimePoint : _HighestPasteTimepoint;
-            
+
             static_Chart->RegisterTimeSliceHistoryRanged(minTimePoint - TIMESLICE_LENGTH, maxTimePoint + TIMESLICE_LENGTH);
             static_Chart->BulkRemoveNotes(_DraggingNotes, true);
             static_Chart->BulkPlaceNotes(_PastePreviewNotes, true);
@@ -353,7 +364,7 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
             _MostLeftColumn = static_Chart->KeyAmount - 1;
 
             _PastePreviewNotes.clear();
-            
+
             return _IsMovingNote = false;
         }
 
@@ -381,7 +392,7 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
         _HoveredNoteColumn = static_Cursor.CursorColumn;
 
         return _IsMovingNote = false;
-    } 
+    }
 
     if(!(static_Cursor.TimefieldSide != _AnchoredCursor.TimefieldSide || static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle && _AnchoredCursor.TimefieldSide == Cursor::FieldPosition::Middle))
         return _IsAreaSelecting = false;
@@ -390,7 +401,7 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
         return false;
 
     _IsAreaSelecting = false;
-    
+
     const Time timeBegin = std::min(_AnchoredCursor.UnsnappedTimePoint, static_Cursor.UnsnappedTimePoint);
     const Time timeEnd   = std::max(_AnchoredCursor.UnsnappedTimePoint, static_Cursor.UnsnappedTimePoint);
 
@@ -424,7 +435,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 break;
 
                 case Note::EType::HoldBegin:
-                    InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint, 
+                    InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint,
                                                                                      static_Cursor.TimePoint + note.TimePointEnd   - _LowestPasteTimePoint, -1, -1, 128);
                 break;
             }
@@ -452,7 +463,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 rectangle.setOutlineThickness(1.0f);
 
                 InRenderTarget->draw(rectangle);
-            }); 
+            });
         }
     }
 
@@ -461,7 +472,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
          for(const auto& [column, count] : _SelectedNotes.ColumnNoteCount)
          {
              sf::Uint8 alpha = sf::Uint8(std::pow(float(count) / float(_SelectedNotes.HighestColumnAmount), 1.f) * 255.f);
-            
+
             //TODO: rendercommand for multiple timepoints and columns since this is extremely hacky
             int* minY = new int();
 
@@ -483,7 +494,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 InRenderTarget->draw(rectangle);
 
                 delete minY;
-            }); 
+            });
          }
     }
 
@@ -506,7 +517,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
             case Note::EType::HoldEnd:
                 InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(column, _DraggingNote->TimePointBegin, timePoint, -1, -1, 128);
                 break;
-            
+
             default:
                 InOutTimefieldRenderGraph.SubmitCommonNoteRenderCommand(column, timePoint, -1, 128);
                 break;
@@ -528,18 +539,18 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 rectangle.setOutlineThickness(1.0f);
 
                 InRenderTarget->draw(rectangle);
-            }); 
+            });
         }
     }
 
     if(!_IsAreaSelecting)
         return;
 
-    InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(_AnchoredCursor.CursorColumn, _AnchoredCursor.UnsnappedTimePoint, 
+    InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(_AnchoredCursor.CursorColumn, _AnchoredCursor.UnsnappedTimePoint,
     [this](sf::RenderTarget* const InRenderTarget, const TimefieldMetrics& InTimefieldMetrics, const int InScreenX, const int InScreenY)
     {
         sf::RectangleShape rectangle;
-        
+
         rectangle.setPosition(_AnchoredCursor.X, InScreenY);
         rectangle.setSize(sf::Vector2f(static_Cursor.X - _AnchoredCursor.X, static_Cursor.Y - InScreenY));
 
@@ -551,7 +562,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
     });
 }
 
-int SelectEditMode::GetDelteColumn() 
+int SelectEditMode::GetDelteColumn()
 {
     int deltaColumn = int(static_Cursor.CursorColumn) - int(_MostLeftColumn);
     int keyAmount = static_Chart->KeyAmount - 1;
@@ -565,7 +576,7 @@ int SelectEditMode::GetDelteColumn()
     return deltaColumn;
 }
 
-void SelectEditMode::SetNewPreviewPasteLocation() 
+void SelectEditMode::SetNewPreviewPasteLocation()
 {
     for(auto& [column, note] : _PastePreviewNotes)
     {

@@ -30,6 +30,11 @@ bool EditMode::OnExpand()
 	return false;
 }
 
+bool EditMode::GetSelectionRange(Time& OutStart, Time& OutEnd)
+{
+    return false;
+}
+
 bool EditMode::OnReverse()
 {
 	return false;

@@ -28,6 +28,7 @@ public:
 	virtual bool OnShuffle();
 	virtual bool OnQuantize(int InDivisor);
 	virtual bool OnDelete();
+    virtual bool GetSelectionRange(Time& OutStart, Time& OutEnd);
 	virtual bool OnSelectAll();
 
 	virtual void OnReset();

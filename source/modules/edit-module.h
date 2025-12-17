@@ -42,6 +42,8 @@ public: //edit-mode overrides
     void OnEstimateBPM();
     void OnTap();
 
+    bool GetSelectionRange(Time& OutStart, Time& OutEnd);
+
 	void SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTimeBegin, const Time InTimeEnd) override;
 
 public:

@@ -18,6 +18,7 @@ public:
 
 	void TogglePause();
 	void SetPause(bool InPause);
+    void PlayRange(Time Start, Time End);
 	void ResetSpeed();
 	void SetTimeMilliSeconds(const Time InTime);
 
@@ -44,6 +45,7 @@ private:
     std::filesystem::path _CurrentAudioPath;
 
 	double _CurrentTime = 0;
+    double _PlayEndTime = -1.0;
 	float _Speed = 1.f;
 	bool _Paused = true;
 

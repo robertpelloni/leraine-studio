@@ -7,6 +7,12 @@ bool AudioModule::Tick(const float& InDeltaTime)
 	BASS_Update(_StreamHandle);
 	_CurrentTime = GetTimeSeconds();
 
+    if (_PlayEndTime >= 0.0 && _CurrentTime >= _PlayEndTime && !_Paused)
+    {
+        SetPause(true);
+        _PlayEndTime = -1.0;
+    }
+
 	return true;
 }
 
@@ -47,12 +53,22 @@ void AudioModule::SetPause(bool InPause)
 {
 	_Paused = InPause;
 
-	if (_Paused)
-		BASS_ChannelPause(_StreamHandle);
+    if (_Paused)
+    {
+        BASS_ChannelPause(_StreamHandle);
+        _PlayEndTime = -1.0; // Clear play range if manually paused
+    }
 	else
 		BASS_ChannelPlay(_StreamHandle, FALSE);
 
 	_CurrentTime = GetTimeSeconds();
+}
+
+void AudioModule::PlayRange(Time Start, Time End)
+{
+    SetTimeMilliSeconds(Start);
+    _PlayEndTime = double(End) / 1000.0;
+    SetPause(false);
 }
 
 void AudioModule::ResetSpeed()

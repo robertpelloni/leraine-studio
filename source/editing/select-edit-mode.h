@@ -26,6 +26,7 @@ public:
 	bool OnShuffle() override;
 	bool OnQuantize(int InDivisor) override;
 	bool OnDelete() override;
+    bool GetSelectionRange(Time& OutStart, Time& OutEnd) override;
 	bool OnSelectAll() override;
 
 	void OnReset() override;

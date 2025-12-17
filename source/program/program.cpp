@@ -23,7 +23,7 @@ namespace
 
 	float ZoomLevel = 1.0f;
 	int CurrentSnap = 2;
-	
+
 	ChartMetadata ChartMetadataSetup;
 
 	Configuration Config;
@@ -177,14 +177,14 @@ void Program::MenuBar()
 
 			if (MOD(ShortcutMenuModule).MenuItem("Open", sf::Keyboard::Key::LControl, sf::Keyboard::Key::O))
 			{
-				MOD(DialogModule).OpenFileDialog(".osu;.sm", [this](const std::string &InPath) 
+				MOD(DialogModule).OpenFileDialog(".osu;.sm", [this](const std::string &InPath)
 				{
 					OpenChart(InPath);
 				});
 			}
 
 			MOD(ShortcutMenuModule).Separator();
-			
+
 			if (MOD(ShortcutMenuModule).MenuItem("Edit Metadata", sf::Keyboard::Key::LControl, sf::Keyboard::Key::E) && SelectedChart)
 				ShouldSetUpMetadata = true;
 
@@ -204,7 +204,7 @@ void Program::MenuBar()
 		{
 			if (MOD(ShortcutMenuModule).MenuItem("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Z) && SelectedChart && SelectedChart->Undo())
 				PUSH_NOTIFICATION("Undo");
-			
+
 			if (MOD(ShortcutMenuModule).MenuItem("Select All", sf::Keyboard::Key::LControl, sf::Keyboard::Key::A))
 				MOD(EditModule).OnSelectAll();
 
@@ -214,7 +214,7 @@ void Program::MenuBar()
 				MOD(EditModule).OnCopy();
 
 			if (MOD(ShortcutMenuModule).MenuItem("Paste", sf::Keyboard::Key::LControl, sf::Keyboard::Key::V) && SelectedChart)
-			 	MOD(EditModule).OnPaste();
+				MOD(EditModule).OnPaste();
 
 			if (MOD(ShortcutMenuModule).MenuItem("Delete", sf::Keyboard::Unknown, sf::Keyboard::Key::Delete) && SelectedChart)
 				MOD(EditModule).OnDelete();
@@ -254,7 +254,7 @@ void Program::MenuBar()
 
 			if (MOD(ShortcutMenuModule).MenuItem("Go To Timepoint", sf::Keyboard::Key::LControl, sf::Keyboard::Key::T) && SelectedChart)
 				GoToTimePoint();
-				
+
 			MOD(ShortcutMenuModule).EndMenu();
 		}
 
@@ -277,8 +277,8 @@ void Program::MenuBar()
 			ImGui::Separator();
 
 			if(ImGui::MenuItem("Select Skin"))
-			{ 
-				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath) 
+			{
+				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath)
 				{
 					Config.SkinFolderPath = InPath;
 					Config.Save();
@@ -323,10 +323,10 @@ void Program::MenuBar()
 
 			MOD(ShortcutMenuModule).EndMenu();
 		}
-		
+
 		if (ImGui::BeginMenu("Debug"))
 		{
-			ImGui::Checkbox("Show TimeSlice Boundaries", &MOD(DebugModule).ShowTimeSliceBoundaries);		
+			ImGui::Checkbox("Show TimeSlice Boundaries", &MOD(DebugModule).ShowTimeSliceBoundaries);
 
 			ImGui::EndMenu();
 		}
@@ -336,11 +336,11 @@ void Program::MenuBar()
 	}
 }
 
-void Program::SetUpMetadata() 
+void Program::SetUpMetadata()
 {
 	std::string titleName;
 
-	if (ShouldSetUpNewChart) 
+	if (ShouldSetUpNewChart)
 		titleName = "New Chart";
 	else
 		titleName = "Edit Metadata";
@@ -371,14 +371,14 @@ void Program::SetUpMetadata()
 			std::string audioButtonName =  ChartMetadataSetup.AudioPath.string() == "" ? "Pick an audio file" : ChartMetadataSetup.AudioPath.string();
 			std::string chartButtonName =  ChartMetadataSetup.ChartFolderPath.string() == "" ? "Pick a chart folder path" : ChartMetadataSetup.ChartFolderPath.string();
 			std::string backgroundButtonName =  ChartMetadataSetup.BackgroundPath.string() == "" ? "Pick a background (optional)" : ChartMetadataSetup.BackgroundPath.string();
-			
+
 			ImGui::Text("Relevant Paths");
-			
+
 			if(ImGui::Button(audioButtonName.c_str()))
 			{
 				ShouldSetUpMetadata = OutOpen = false;
 
-				MOD(DialogModule).OpenFileDialog(".mp3;.ogg;.wav", [this](const std::string &InPath) 
+				MOD(DialogModule).OpenFileDialog(".mp3;.ogg;.wav", [this](const std::string &InPath)
 				{
 					ChartMetadataSetup.AudioPath = InPath;
 					ShouldSetUpMetadata = true;
@@ -389,7 +389,7 @@ void Program::SetUpMetadata()
 			{
 				ShouldSetUpMetadata = OutOpen = false;
 
-				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath) 
+				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath)
 				{
 					ChartMetadataSetup.ChartFolderPath = InPath;
 					ShouldSetUpMetadata = true;
@@ -400,7 +400,7 @@ void Program::SetUpMetadata()
 			{
 				ShouldSetUpMetadata = OutOpen = false;
 
-				MOD(DialogModule).OpenFileDialog(".png;.jpg", [this](const std::string &InPath) 
+				MOD(DialogModule).OpenFileDialog(".png;.jpg", [this](const std::string &InPath)
 				{
 					ChartMetadataSetup.BackgroundPath = InPath;
 					ShouldSetUpMetadata = true;
@@ -430,7 +430,7 @@ void Program::SetUpMetadata()
 			}
 
 			ImGui::SameLine();
-			
+
 			if(ImGui::Button("Close"))
 			{
 				if (ShouldSetUpNewChart) ChartMetadataSetup = ChartMetadata();
@@ -440,7 +440,7 @@ void Program::SetUpMetadata()
 	});
 }
 
-void Program::ShowShortCuts() 
+void Program::ShowShortCuts()
 {
 	MOD(PopupModule).OpenPopup("New Chart", [this](bool& OutOpen)
 	{
@@ -513,7 +513,7 @@ void Program::OpenDifficultyAnalyzer()
 	});
 }
 
-void Program::GoToTimePoint() 
+void Program::GoToTimePoint()
 {
 	MOD(PopupModule).OpenPopup("Go To Timepoint", [this](bool& OutOpen)
 	{
@@ -538,7 +538,18 @@ void Program::InputActions()
 	MOD(EditModule).SetShiftKeyState(MOD(InputModule).IsShiftKeyDown());
 
 	if (MOD(InputModule).IsTogglingPause())
+    {
+        if (MOD(InputModule).IsShiftKeyDown())
+        {
+             Time start, end;
+             if (MOD(EditModule).GetSelectionRange(start, end))
+             {
+                 MOD(AudioModule).PlayRange(start, end);
+                 return;
+             }
+        }
 		MOD(AudioModule).TogglePause();
+    }
 
 	if (MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Num1))
 	{
@@ -631,10 +642,10 @@ void Program::InputActions()
 		return void(MOD(EditModule).OnMouseRightButtonClicked(MOD(InputModule).IsShiftKeyDown()));
 }
 
-void Program::OpenChart(const std::string& InPath) 
+void Program::OpenChart(const std::string& InPath)
 {
 	SelectedChart = MOD(ChartParserModule).ParseAndGenerateChartSet(InPath);
-	
+
 	if (!SelectedChart)
 	{
 		PUSH_NOTIFICATION("File not found! It might have been deleted?");
@@ -655,7 +666,7 @@ void Program::OpenChart(const std::string& InPath)
 	MOD(WaveFormModule).SetWaveFormData(MOD(AudioModule).GenerateAndGetWaveformData(SelectedChart->AudioPath), MOD(AudioModule).GetSongLengthMilliSeconds());
 	ChartMetadataSetup = MOD(ChartParserModule).GetChartMetadata(SelectedChart);
 
-	SelectedChart->RegisterOnModifiedCallback([this](TimeSlice &InTimeSlice) 
+	SelectedChart->RegisterOnModifiedCallback([this](TimeSlice &InTimeSlice)
 	{
 		//TODO: replicate the timeslice method to optimize when "re-generating"
 		MOD(BeatModule).AssignNotesToSnapsInTimeSlice(SelectedChart, InTimeSlice);
