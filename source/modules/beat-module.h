@@ -30,7 +30,7 @@ public:
 	void AssignNotesToSnapsInTimeSlice(Chart* const InChart, TimeSlice& InOutTimeSlice);
 	void GenerateTimeRangeBeatLines(const Time InTimeBegin, const Time InTimeEnd, Chart* const InChart, const int InBeatDivision, const bool InSkipClearCollection = false);
 	void IterateThroughBeatlines(std::function<void(const BeatLine&)> InWork);
-	
+
 	int GetBeatSnap(const BeatLine& InBeatLine, const int InBeatDivision);
 	int GetBeatSnap(const int InBeatCount, const int InBeatDivision);
 
@@ -41,13 +41,14 @@ public:
 	const int GetNextSnap(const int InCurrentSnap);
 	const int GetPreviousSnap(const int InCurrentSnap);
 
+    BeatLine GetClosestBeatLineToTimePoint(const Time InTimePoint);
+
 private:
 
 	bool IsBeatThisDivision(const int InBeatCount, const int InBeatDivision, const int InDenominator);
-	BeatLine GetClosestBeatLineToTimePoint(const Time InTimePoint);
 	void GenerateBeatLinesFromTimePointIfInvalid(Chart* const InChart, const Time InTime);
 
 	std::vector<BeatLine> _OnFieldBeatLines;
-	
+
 	std::set<int> _LegalSnaps;
 };

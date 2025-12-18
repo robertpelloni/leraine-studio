@@ -22,8 +22,11 @@ list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX "main.cpp$")
 set(LIB_SOURCES ${ALL_SOURCE_FILES})
 
 find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
-find_package(ImGui-SFML CONFIG REQUIRED)
-find_package(ImGui CONFIG REQUIRED)
+
+# Manually add ImGui-SFML and ImGui since we are not using vcpkg
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/imgui")
+add_subdirectory(libraries/imgui-sfml)
+
 find_package(ZLIB REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
@@ -31,10 +34,7 @@ find_package(yaml-cpp REQUIRED)
 add_library(leraine_lib STATIC ${LIB_SOURCES} ${HEADER_FILES})
 target_link_libraries(leraine_lib PRIVATE
     ImGui-SFML::ImGui-SFML
-    FLAC
-    OpenAL
-    OpenGL
-    Vorbis
+    # FLAC OpenAL Vorbis are usually pulled by SFML
     sfml-graphics
     sfml-window
     sfml-audio

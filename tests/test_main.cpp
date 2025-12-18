@@ -43,7 +43,10 @@ int TestStreamGen() {
     chart.InjectBpmPoint(0, 120.0, 500.0);
 
     // Generate Stream
-    chart.GenerateStream(0, 500, 4, StreamPattern::Staircase);
+    // Divisor 16 means 16th notes (4 notes per beat).
+    // BeatLength = 500ms.
+    // Step = 500 * (4/16) = 125ms.
+    chart.GenerateStream(0, 500, 16, StreamPattern::Staircase);
 
     // 0, 125, 250, 375
     ASSERT(chart.FindNote(0, 0) != nullptr);

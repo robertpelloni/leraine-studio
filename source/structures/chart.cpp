@@ -7,7 +7,7 @@
 #include <limits>
 #include <random>
 
-void NoteReferenceCollection::PushNote(Column InColumn, Note* InNote) 
+void NoteReferenceCollection::PushNote(Column InColumn, Note* InNote)
 {
 	HasNotes = true;
 	NoteAmount++;
@@ -32,7 +32,7 @@ void NoteReferenceCollection::PushNote(Column InColumn, Note* InNote)
 	}
 }
 
-void NoteReferenceCollection::Clear() 
+void NoteReferenceCollection::Clear()
 {
 	HasNotes = false;
 	NoteAmount = 0;
@@ -45,7 +45,7 @@ void NoteReferenceCollection::Clear()
 	MaxTimePoint = std::numeric_limits<int>::min();
 }
 
-void NoteReferenceCollection::TrySetMinMaxTime(Time InTime) 
+void NoteReferenceCollection::TrySetMinMaxTime(Time InTime)
 {
 	MinTimePoint = std::min(MinTimePoint, InTime);
 	MaxTimePoint = std::max(MaxTimePoint, InTime);
@@ -141,7 +141,7 @@ void Chart::MirrorNotes(NoteReferenceCollection& OutNotes)
 	OutNotes.Clear();
 }
 
-void Chart::MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes) 
+void Chart::MirrorNotes(std::vector<std::pair<Column, Note>>& OutNotes)
 {
 	for(auto& [column, notes] : OutNotes)
 		column = (KeyAmount - 1) - column;
@@ -764,7 +764,7 @@ bool Chart::RemoveBpmPoint(BpmPoint &InBpmPoint, const bool InSkipHistoryRegiste
 	return true;
 }
 
-bool Chart::BulkRemoveNotes(NoteReferenceCollection& InNotes, const bool InSkipHistoryRegistering) 
+bool Chart::BulkRemoveNotes(NoteReferenceCollection& InNotes, const bool InSkipHistoryRegistering)
 {
 	if (!InSkipHistoryRegistering)
 		RegisterTimeSliceHistoryRanged(InNotes.MinTimePoint, InNotes.MaxTimePoint);
@@ -987,7 +987,7 @@ TimeSlice &Chart::FindOrAddTimeSlice(const Time InTime)
 	return TimeSlices[index];
 }
 
-void Chart::FillNoteCollectionWithAllNotes(NoteReferenceCollection& OutNotes) 
+void Chart::FillNoteCollectionWithAllNotes(NoteReferenceCollection& OutNotes)
 {
 	OutNotes.Clear();
 
@@ -1172,7 +1172,7 @@ BpmPoint *Chart::GetPreviousBpmPointFromTimePoint(const Time InTime)
 										 return;
 
 									 for (auto &bpmPoint : InTimeSlice.BpmPoints)
-										 if (bpmPoint.TimePoint < InTime)
+										 if (bpmPoint.TimePoint <= InTime)
 											 previousBpmPoint = &bpmPoint;
 								 });
 
@@ -1208,4 +1208,3 @@ Chart::Chart()
 {
 	_OnModified = [](TimeSlice &InOutTimeSlice) {};
 }
-

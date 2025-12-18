@@ -1,7 +1,7 @@
 #include "bpm-edit-mode.h"
 #include "imgui.h"
 
-#include "../modules/base/module-manager.h"
+#include "../modules/manager/module-manager.h"
 #include "../modules/audio-module.h"
 
 

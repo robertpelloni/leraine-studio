@@ -1,6 +1,7 @@
 #include "audio-module.h"
 
 #include <algorithm>
+#include <cmath>
 
 bool AudioModule::Tick(const float& InDeltaTime)
 {
