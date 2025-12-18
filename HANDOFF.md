@@ -59,6 +59,6 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
 *   **Build:** CMake. `vcpkg` dependencies.
 
 ## Notes for Next Engineer
-*   **Audio Module Header:** Ensure `audio-module.h` remains synced with `.cpp`. It was fixed in the last patch.
-*   **Testing:** There is no persistent test suite. Ad-hoc tests were created in `tests/` and deleted. Consider establishing a proper test framework (Catch2 or GTest).
+*   **Audio Module Header:** Ensure `audio-module.h` remains synced with `.cpp`.
+*   **Testing:** A basic test runner exists in `tests/test_main.cpp`. It verifies Chart logic. Future work should integrate a proper framework like Catch2 or GTest.
 *   **Frontend Verification:** Visual verification is hard in the headless environment. Rely on logic tests for data structures.
