@@ -22,8 +22,8 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
         *   `Reverse`: `Ctrl+R`
         *   `Shuffle`: `Ctrl+J` (avoided `Ctrl+S` Save conflict)
         *   `Quantize`: `Ctrl+Q` (uses current snap)
-        *   `Convert to Holds`: (Menu)
-        *   `Convert to Taps`: (Menu)
+        *   `Convert to Holds`: (Menu) - Convert selected taps to holds with length based on snap.
+        *   `Convert to Taps`: (Menu) - Convert selected holds to taps.
         *   `Play Selection`: `Shift+Space`
 
 3.  **Automatic BPM Estimation**
@@ -46,6 +46,11 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
 6.  **Metronome**
     *   Implemented synthesized metronome tick in `AudioModule`.
     *   Added toggle in Options menu.
+
+7.  **Testing Infrastructure**
+    *   Refactored `CMakeLists.txt` to separate core logic into `leraine_lib`.
+    *   Added persistent `tests/` directory with `test_main.cpp` runner.
+    *   Tests verify Chart logic (Transformations, Generation).
 
 ## Current State
 *   **Feature Parity Achieved:** The editor now supports StepMania files and includes all requested editing, timing, and analysis tools found in ArrowVortex (except Dancing Bot).
