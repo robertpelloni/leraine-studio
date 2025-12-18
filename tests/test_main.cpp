@@ -3,14 +3,6 @@
 #include <vector>
 #include <cmath>
 
-// We need to include relevant headers from the library.
-// Since include paths are set in CMake, we can include relative to 'source/' or 'include/'?
-// CMake 'include_directories' has 'include'. But source code is in 'source/'.
-// The project structure is a bit weird. 'source/' contains headers too.
-// Let's assume we need to include "../source/..." if not in include path.
-// But `leraine_lib` compiles `source/` files.
-// Let's try including using "../source/..." style.
-
 #include "../source/structures/chart.h"
 #include "../source/modules/chart-parser-module.h"
 

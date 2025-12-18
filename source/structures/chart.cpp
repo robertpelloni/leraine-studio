@@ -265,6 +265,80 @@ void Chart::ReverseNotes(NoteReferenceCollection& OutNotes)
 	OutNotes.Clear();
 }
 
+void Chart::ConvertToHolds(NoteReferenceCollection& OutNotes, Time Length)
+{
+    if (!OutNotes.HasNotes || Length <= 0) return;
+
+    RegisterTimeSliceHistoryRanged(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + Length + TIMESLICE_LENGTH);
+
+    std::vector<std::pair<Column, Note>> newNotes;
+
+    for (auto& [column, notes] : OutNotes.Notes)
+    {
+        std::vector<Note> copiedNotes;
+        for (auto& notePtr : notes)
+            copiedNotes.push_back(*notePtr);
+
+        for (auto& note : copiedNotes)
+        {
+            RemoveNote(note.TimePoint, column, false, true, true);
+
+            note.Type = Note::EType::HoldBegin;
+            note.TimePointBegin = note.TimePoint;
+            // If already hold, extend? Or reset?
+            // "Convert to Hold" usually means set length.
+            note.TimePointEnd = note.TimePoint + Length;
+
+            newNotes.push_back({column, note});
+        }
+    }
+
+    BulkPlaceNotes(newNotes, true, true);
+
+    IterateTimeSlicesInTimeRange(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + Length + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+    {
+        _OnModified(InTimeSlice);
+    });
+
+    OutNotes.Clear();
+}
+
+void Chart::ConvertToTaps(NoteReferenceCollection& OutNotes)
+{
+    if (!OutNotes.HasNotes) return;
+
+    RegisterTimeSliceHistoryRanged(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + TIMESLICE_LENGTH);
+
+    std::vector<std::pair<Column, Note>> newNotes;
+
+    for (auto& [column, notes] : OutNotes.Notes)
+    {
+        std::vector<Note> copiedNotes;
+        for (auto& notePtr : notes)
+            copiedNotes.push_back(*notePtr);
+
+        for (auto& note : copiedNotes)
+        {
+            RemoveNote(note.TimePoint, column, false, true, true);
+
+            note.Type = Note::EType::Common;
+            note.TimePointBegin = 0;
+            note.TimePointEnd = 0;
+
+            newNotes.push_back({column, note});
+        }
+    }
+
+    BulkPlaceNotes(newNotes, true, true);
+
+    IterateTimeSlicesInTimeRange(OutNotes.MinTimePoint, OutNotes.MaxTimePoint + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+    {
+        _OnModified(InTimeSlice);
+    });
+
+    OutNotes.Clear();
+}
+
 void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern)
 {
 	if (Start >= End || Divisor <= 0) return;

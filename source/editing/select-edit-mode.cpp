@@ -188,6 +188,28 @@ bool SelectEditMode::OnExpand()
     return false;
 }
 
+bool SelectEditMode::OnConvertToHolds(Time Length)
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Converted %d Notes to Holds", _SelectedNotes.NoteAmount);
+        static_Chart->ConvertToHolds(_SelectedNotes, Length);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnConvertToTaps()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Converted %d Notes to Taps", _SelectedNotes.NoteAmount);
+        static_Chart->ConvertToTaps(_SelectedNotes);
+        return true;
+    }
+    return false;
+}
+
 bool SelectEditMode::OnQuantize(int InDivisor)
 {
     if(_SelectedNotes.HasNotes)

@@ -22,6 +22,8 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
         *   `Reverse`: `Ctrl+R`
         *   `Shuffle`: `Ctrl+J` (avoided `Ctrl+S` Save conflict)
         *   `Quantize`: `Ctrl+Q` (uses current snap)
+        *   `Convert to Holds`: (Menu)
+        *   `Convert to Taps`: (Menu)
         *   `Play Selection`: `Shift+Space`
 
 3.  **Automatic BPM Estimation**

@@ -27,6 +27,8 @@ public:
 	virtual bool OnReverse();
 	virtual bool OnShuffle();
 	virtual bool OnQuantize(int InDivisor);
+    virtual bool OnConvertToHolds(Time Length);
+    virtual bool OnConvertToTaps();
 	virtual bool OnDelete();
     virtual bool GetSelectionRange(Time& OutStart, Time& OutEnd);
 	virtual bool OnSelectAll();

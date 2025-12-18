@@ -36,6 +36,8 @@ public: //edit-mode overrides
 	bool OnReverse() override;
 	bool OnShuffle() override;
 	bool OnQuantize(int InDivisor) override;
+    bool OnConvertToHolds(Time Length) override;
+    bool OnConvertToTaps() override;
 	bool OnDelete() override;
 	bool OnSelectAll() override;
 

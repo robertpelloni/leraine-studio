@@ -50,6 +50,16 @@ bool EditMode::OnQuantize(int InDivisor)
 	return false;
 }
 
+bool EditMode::OnConvertToHolds(Time Length)
+{
+    return false;
+}
+
+bool EditMode::OnConvertToTaps()
+{
+    return false;
+}
+
 bool EditMode::OnCompress()
 {
 	return false;

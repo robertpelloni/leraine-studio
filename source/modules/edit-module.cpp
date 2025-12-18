@@ -60,6 +60,16 @@ bool EditModule::OnQuantize(int InDivisor)
 	return _EditModes[_SelectedEditMode]->OnQuantize(InDivisor);
 }
 
+bool EditModule::OnConvertToHolds(Time Length)
+{
+    return _EditModes[_SelectedEditMode]->OnConvertToHolds(Length);
+}
+
+bool EditModule::OnConvertToTaps()
+{
+    return _EditModes[_SelectedEditMode]->OnConvertToTaps();
+}
+
 bool EditModule::OnDelete()
 {
 	return _EditModes[_SelectedEditMode]->OnDelete();

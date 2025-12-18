@@ -257,6 +257,38 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Quantize", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Q) && SelectedChart)
 				MOD(EditModule).OnQuantize(CurrentSnap);
 
+            if (MOD(ShortcutMenuModule).MenuItem("Convert to Holds", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+            {
+                // Calculate 1/4 length in ms based on current BPM
+                // We need current time point to get BPM.
+                Time currentTime = MOD(AudioModule).GetTimeMilliSeconds();
+                BpmPoint* bpm = MOD(BeatModule).GetClosestBeatLineToTimePoint(currentTime).TimePoint > 0 ? SelectedChart->GetPreviousBpmPointFromTimePoint(currentTime) : nullptr;
+                if (!bpm) bpm = SelectedChart->GetNextBpmPointFromTimePoint(-1000000);
+
+                double length = 0;
+                if (bpm) length = bpm->BeatLength; // 1 beat default? Or Snap?
+
+                // Let's use CurrentSnap divisor
+                if (CurrentSnap > 0 && bpm) length = bpm->BeatLength * (4.0 / CurrentSnap); // Snap is usually divisor of measure (48 = 1/48?)
+                // BeatModule::_LegalSnaps: 1, 2, 3, 4, ...
+                // 1 = 1/1 measure (4 beats). 4 = 1/4 measure (1 beat).
+                // Wait, BeatModule::GetBeatSnap uses 48 as base?
+                // BeatModule code: "const int relativeBeatCount = InBeatCount % InBeatDivision;"
+                // It seems snaps are divisors of a Measure (4 beats).
+                // So snap 4 = 4th note = 1 beat.
+                // snap 16 = 16th note = 0.25 beat.
+                // Length = (BPM_BeatLength * 4) / CurrentSnap?
+                // BPM_BeatLength is 1 beat duration.
+                // So Length = (BPM_BeatLength * 4) / Snap.
+
+                if (length <= 0) length = 500; // Fallback
+
+                MOD(EditModule).OnConvertToHolds(Time(length));
+            }
+
+            if (MOD(ShortcutMenuModule).MenuItem("Convert to Taps", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+                MOD(EditModule).OnConvertToTaps();
+
             // Using Ctrl+B for Estimate BPM (usually B is taken, but maybe Ctrl+Shift+B)
 			if (MOD(ShortcutMenuModule).MenuItem("Estimate BPM", sf::Keyboard::Key::LControl, sf::Keyboard::Key::B) && SelectedChart)
 				MOD(EditModule).OnEstimateBPM();
