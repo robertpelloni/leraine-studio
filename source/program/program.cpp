@@ -511,7 +511,7 @@ void Program::OpenStreamGenerator()
 {
 	static int start = 0;
 	static int end = 0;
-	static int divisor = 4;
+	static int divisor = 16;
 	static int pattern = 0;
 
 	if (start == 0 && end == 0)
@@ -528,7 +528,7 @@ void Program::OpenStreamGenerator()
 		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random", "Jumpstream", "Handstream", "Chordjack" };
 		ImGui::Combo("Pattern", &pattern, patterns, IM_ARRAYSIZE(patterns));
 
-		ImGui::InputInt("Divisor (1/X)", &divisor);
+		ImGui::InputInt("Snap (4, 8, 16...)", &divisor);
 		if (divisor < 1) divisor = 1;
 
 		if(ImGui::Button("Generate"))

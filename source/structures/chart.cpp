@@ -434,7 +434,9 @@ void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Patt
 		BpmPoint* currentBpm = GetPreviousBpmPointFromTimePoint(currentTime);
 		if (currentBpm)
 		{
-			double step = currentBpm->BeatLength / Divisor;
+            // Divisor is Measure Divisor (4, 8, 16...). BeatLength is 1 beat (1/4 measure).
+            // Step = BeatLength * (4.0 / Divisor)
+			double step = currentBpm->BeatLength * (4.0 / double(Divisor));
 			currentTime += Time(step);
 		}
 		else
@@ -602,9 +604,11 @@ void Chart::QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor)
 				double beat = timeDelta / beatLen;
 
 				// Snap beat
-				// Divisor 4 = 1/4th beats.
-				// beat * 4 -> round -> / 4.
-				double snappedBeat = std::round(beat * Divisor) / double(Divisor);
+				// Divisor is Measure Divisor (4 = Quarter Note = 1 Beat, 16 = 16th Note = 0.25 Beat)
+                // Grid in beats = 4.0 / Divisor.
+                // We want to snap 'beat' to multiples of 'grid'.
+                double grid = 4.0 / double(Divisor);
+				double snappedBeat = std::round(beat / grid) * grid;
 
 				Time newTime = bpm->TimePoint + Time(snappedBeat * beatLen);
 				note.TimePoint = newTime;
@@ -631,13 +635,14 @@ void Chart::QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor)
 						double beatLenEnd = bpmEnd->BeatLength;
 						double timeDeltaEnd = double(note.TimePointEnd - bpmEnd->TimePoint);
 						double beatEnd = timeDeltaEnd / beatLenEnd;
-						double snappedBeatEnd = std::round(beatEnd * Divisor) / double(Divisor);
+                        double gridEnd = 4.0 / double(Divisor);
+						double snappedBeatEnd = std::round(beatEnd / gridEnd) * gridEnd;
 						note.TimePointEnd = bpmEnd->TimePoint + Time(snappedBeatEnd * beatLenEnd);
 					}
 
 					// Safety: End > Start
 					if (note.TimePointEnd <= note.TimePoint)
-						note.TimePointEnd = note.TimePoint + Time(bpm->BeatLength / Divisor); // min length
+						note.TimePointEnd = note.TimePoint + Time(bpm->BeatLength * (4.0 / Divisor)); // min length
 				}
 			}
 
