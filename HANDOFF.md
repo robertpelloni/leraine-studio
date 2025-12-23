@@ -24,6 +24,8 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
         *   `Quantize`: `Ctrl+Q` (uses current snap)
         *   `Convert to Holds`: (Menu) - Convert selected taps to holds with length based on snap.
         *   `Convert to Taps`: (Menu) - Convert selected holds to taps.
+        *   `Move All Notes`: (Menu) - Shift entire chart by an offset.
+        *   `Undo/Redo`: `Ctrl+Z` / `Ctrl+Y` - Full history support.
         *   `Play Selection`: `Shift+Space`
 
 3.  **Automatic BPM Estimation**
@@ -56,7 +58,7 @@ This session focused on implementing feature parity with **ArrowVortex** and **D
 *   **Feature Parity Achieved:** The editor now supports StepMania files and includes all requested editing, timing, and analysis tools found in ArrowVortex (except Dancing Bot).
 *   **Codebase:** C++17 with SFML, ImGui, BASS/BASS_FX.
 *   **Architecture:** Modules (Audio, Edit, Render, etc.) managed by `ModuleManager`. `Chart` struct holds data. `EditMode` handles interaction.
-*   **Build:** CMake. `vcpkg` dependencies.
+*   **Build:** CMake. Dependencies are vendored in `libraries/` to ensure stability; `vcpkg` is optional/deprecated for this config.
 
 ## Notes for Next Engineer
 *   **Audio Module Header:** Ensure `audio-module.h` remains synced with `.cpp`.
