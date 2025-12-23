@@ -1130,11 +1130,16 @@ void Chart::RevaluateBpmPoint(BpmPoint &InFormerBpmPoint, BpmPoint &InMovedBpmPo
 
 void Chart::RegisterTimeSliceHistory(const Time InTime)
 {
+    // Clear future when making new changes
+    while (!TimeSliceFuture.empty()) TimeSliceFuture.pop();
 	TimeSliceHistory.push({FindOrAddTimeSlice(InTime)});
 }
 
 void Chart::RegisterTimeSliceHistoryRanged(const Time InTimeBegin, const Time InTimeEnd)
 {
+    // Clear future when making new changes
+    while (!TimeSliceFuture.empty()) TimeSliceFuture.pop();
+
 	std::vector<TimeSlice> timeSlices;
 
 	IterateTimeSlicesInTimeRange(InTimeBegin, InTimeEnd, [&timeSlices](TimeSlice &InTimeSlice)
@@ -1148,10 +1153,47 @@ bool Chart::Undo()
 	if (TimeSliceHistory.empty())
 		return false;
 
-	for (auto &timeSlice : TimeSliceHistory.top())
+    // Save current state of the slices we are about to restore into Future
+    std::vector<TimeSlice>& historySlices = TimeSliceHistory.top();
+    std::vector<TimeSlice> currentSlices;
+    for (auto& histSlice : historySlices)
+    {
+        // Find current version of this slice
+        // If it doesn't exist, we create a default (empty) one?
+        // Or if it exists, copy it.
+        // FindOrAddTimeSlice creates if not exists.
+        currentSlices.push_back(FindOrAddTimeSlice(histSlice.TimePoint));
+    }
+    TimeSliceFuture.push(currentSlices);
+
+    // Apply Undo
+	for (auto &timeSlice : historySlices)
 		_OnModified(TimeSlices[timeSlice.Index] = timeSlice);
 
 	TimeSliceHistory.pop();
+
+	return true;
+}
+
+bool Chart::Redo()
+{
+	if (TimeSliceFuture.empty())
+		return false;
+
+    // Save current state of slices we are about to restore into History
+    std::vector<TimeSlice>& futureSlices = TimeSliceFuture.top();
+    std::vector<TimeSlice> currentSlices;
+    for (auto& futSlice : futureSlices)
+    {
+        currentSlices.push_back(FindOrAddTimeSlice(futSlice.TimePoint));
+    }
+    TimeSliceHistory.push(currentSlices);
+
+    // Apply Redo
+	for (auto &timeSlice : futureSlices)
+		_OnModified(TimeSlices[timeSlice.Index] = timeSlice);
+
+	TimeSliceFuture.pop();
 
 	return true;
 }

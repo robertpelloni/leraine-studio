@@ -76,6 +76,16 @@ bool EditModule::OnMoveAllNotes(Time Offset)
     return true;
 }
 
+bool EditModule::OnUndo()
+{
+    return static_Chart->Undo();
+}
+
+bool EditModule::OnRedo()
+{
+    return static_Chart->Redo();
+}
+
 bool EditModule::OnDelete()
 {
 	return _EditModes[_SelectedEditMode]->OnDelete();

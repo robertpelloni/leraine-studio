@@ -220,8 +220,11 @@ void Program::MenuBar()
 
 		if (MOD(ShortcutMenuModule).BeginMenu("Edit"))
 		{
-			if (MOD(ShortcutMenuModule).MenuItem("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Z) && SelectedChart && SelectedChart->Undo())
+			if (MOD(ShortcutMenuModule).MenuItem("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Z) && SelectedChart && MOD(EditModule).OnUndo())
 				PUSH_NOTIFICATION("Undo");
+
+			if (MOD(ShortcutMenuModule).MenuItem("Redo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Y) && SelectedChart && MOD(EditModule).OnRedo())
+				PUSH_NOTIFICATION("Redo");
 
 			if (MOD(ShortcutMenuModule).MenuItem("Select All", sf::Keyboard::Key::LControl, sf::Keyboard::Key::A))
 				MOD(EditModule).OnSelectAll();

@@ -178,6 +178,7 @@ public: //accessors
 	void RegisterTimeSliceHistoryRanged(const Time InTimeBegin, const Time InTimeEnd);
 
 	bool Undo();
+    bool Redo();
 
 	void IterateTimeSlicesInTimeRange(const Time InTimeBegin, const Time InTimeEnd, std::function<void(TimeSlice&)> InWork);
 	void IterateNotesInTimeRange(const Time InTimeBegin, const Time InTimeEnd, std::function<void(Note&, const Column)> InWork);
@@ -197,6 +198,7 @@ public: //data ownership
 	std::map<int, TimeSlice> TimeSlices;
 
 	std::stack<std::vector<TimeSlice>> TimeSliceHistory;
+    std::stack<std::vector<TimeSlice>> TimeSliceFuture;
 
 	std::vector<BpmPoint*> CachedBpmPoints;
 
