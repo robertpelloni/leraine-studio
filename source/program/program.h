@@ -18,6 +18,7 @@ public: //abstractions
 	void SetUpMetadata();
 	void ShowShortCuts();
 	void GoToTimePoint();
+    void OpenMoveAllNotes();
 	void OpenStreamGenerator();
 	void OpenDifficultyAnalyzer();
     void SnapToPeak();

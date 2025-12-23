@@ -308,6 +308,9 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Go To Timepoint", sf::Keyboard::Key::LControl, sf::Keyboard::Key::T) && SelectedChart)
 				GoToTimePoint();
 
+            if (MOD(ShortcutMenuModule).MenuItem("Move All Notes", sf::Keyboard::Key::Unknown, sf::Keyboard::Key::Unknown) && SelectedChart)
+                OpenMoveAllNotes();
+
 			MOD(ShortcutMenuModule).EndMenu();
 		}
 
@@ -504,6 +507,32 @@ void Program::ShowShortCuts()
 		if(ImGui::Button("close"))
 			OutOpen = false;
 	});
+}
+
+void Program::OpenMoveAllNotes()
+{
+    static int offset = 0;
+    MOD(PopupModule).OpenPopup("Move All Notes", [this](bool& OutOpen)
+    {
+        ImGui::InputInt("Offset (ms)", &offset);
+        ImGui::Text("Positive = Move Right (Later)");
+        ImGui::Text("Negative = Move Left (Earlier)");
+
+        if(ImGui::Button("Apply"))
+        {
+            if (offset != 0)
+            {
+                MOD(EditModule).OnMoveAllNotes(offset);
+                PUSH_NOTIFICATION("Moved all notes by %d ms", offset);
+            }
+            OutOpen = false;
+        }
+
+        ImGui::SameLine();
+
+        if(ImGui::Button("Cancel") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
+            OutOpen = false;
+    });
 }
 
 void Program::OpenStreamGenerator()

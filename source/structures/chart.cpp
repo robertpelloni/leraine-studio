@@ -339,6 +339,99 @@ void Chart::ConvertToTaps(NoteReferenceCollection& OutNotes)
     OutNotes.Clear();
 }
 
+void Chart::MoveAllNotes(Time Offset)
+{
+    if (Offset == 0) return;
+
+    // Find full range of chart
+    Time minTime = std::numeric_limits<int>::max();
+    Time maxTime = std::numeric_limits<int>::min();
+
+    IterateAllNotes([&](Note& n, Column c){
+        minTime = std::min(minTime, n.TimePoint);
+        maxTime = std::max(maxTime, n.TimePoint);
+        if (n.Type == Note::EType::HoldBegin)
+            maxTime = std::max(maxTime, n.TimePointEnd);
+    });
+
+    // Also include BPM points
+    IterateAllBpmPoints([&](BpmPoint& b){
+        minTime = std::min(minTime, b.TimePoint);
+        maxTime = std::max(maxTime, b.TimePoint);
+    });
+
+    if (maxTime < minTime) return; // Empty chart
+
+    RegisterTimeSliceHistoryRanged(minTime, maxTime + abs(Offset) + TIMESLICE_LENGTH);
+
+    // We can't modify in place while iterating easily because of time slices (moving might change slice).
+    // So we collect everything, remove, then re-insert with offset.
+
+    // 1. Collect Notes
+    std::vector<std::pair<Column, Note>> notes;
+    IterateAllNotes([&](Note& n, Column c){
+        // Only collect "Head" notes (Common, HoldBegin). Intermediates/Ends are handled by InjectHold.
+        if (n.Type == Note::EType::Common || n.Type == Note::EType::HoldBegin)
+        {
+            notes.push_back({c, n});
+        }
+    });
+
+    // 2. Collect BPMs
+    std::vector<BpmPoint> bpms;
+    IterateAllBpmPoints([&](BpmPoint& b){
+        bpms.push_back(b);
+    });
+
+    // 3. Clear Chart (this is drastic but safe for integrity)
+    // Actually, iterating and removing is safer.
+    // Let's use BulkRemoveNotes logic? But that requires a selection.
+    // Let's just manually clear time slices? No, unsafe.
+
+    // Remove all notes
+    for (auto& [c, n] : notes)
+    {
+        RemoveNote(n.TimePoint, c, false, true, true);
+    }
+
+    // Remove all BPMs
+    for (auto& b : bpms)
+    {
+        RemoveBpmPoint(b, true); // true = skip history (we registered range)
+    }
+
+    // 4. Re-insert with offset
+    for (auto& [c, n] : notes)
+    {
+        n.TimePoint += Offset;
+        if (n.Type == Note::EType::HoldBegin)
+        {
+            n.TimePointBegin += Offset;
+            n.TimePointEnd += Offset;
+        }
+
+        // Safety check for negative time?
+        // Some games allow negative time (intro). Let's allow it.
+
+        if (n.Type == Note::EType::Common)
+            InjectNote(n.TimePoint, c, n.Type, -1, -1, -1, true);
+        else if (n.Type == Note::EType::HoldBegin)
+            InjectHold(n.TimePointBegin, n.TimePointEnd, c, -1, -1, true);
+    }
+
+    for (auto& b : bpms)
+    {
+        b.TimePoint += Offset;
+        InjectBpmPoint(b.TimePoint, b.Bpm, b.BeatLength);
+    }
+
+    // Notify modification on the whole range
+    IterateTimeSlicesInTimeRange(minTime + Offset, maxTime + Offset + TIMESLICE_LENGTH, [this](TimeSlice& InTimeSlice)
+	{
+		_OnModified(InTimeSlice);
+	});
+}
+
 void Chart::GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern)
 {
 	if (Start >= End || Divisor <= 0) return;

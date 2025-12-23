@@ -147,6 +147,7 @@ public: //accessors
 	void QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor);
     void ConvertToHolds(NoteReferenceCollection& OutNotes, Time Length);
     void ConvertToTaps(NoteReferenceCollection& OutNotes);
+    void MoveAllNotes(Time Offset);
 	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);

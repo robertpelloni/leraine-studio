@@ -38,6 +38,7 @@ public: //edit-mode overrides
 	bool OnQuantize(int InDivisor) override;
     bool OnConvertToHolds(Time Length) override;
     bool OnConvertToTaps() override;
+    bool OnMoveAllNotes(Time Offset);
 	bool OnDelete() override;
 	bool OnSelectAll() override;
 

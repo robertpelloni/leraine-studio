@@ -70,6 +70,12 @@ bool EditModule::OnConvertToTaps()
     return _EditModes[_SelectedEditMode]->OnConvertToTaps();
 }
 
+bool EditModule::OnMoveAllNotes(Time Offset)
+{
+    static_Chart->MoveAllNotes(Offset);
+    return true;
+}
+
 bool EditModule::OnDelete()
 {
 	return _EditModes[_SelectedEditMode]->OnDelete();
