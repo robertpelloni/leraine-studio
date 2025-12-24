@@ -6,7 +6,8 @@
 #include <cmath>
 
 #include "imgui.h"
-
+#include "../modules/manager/module-manager.h"
+#include "../modules/beat-module.h"
 
 bool SelectEditMode::OnCopy()
 {
@@ -226,6 +227,7 @@ bool SelectEditMode::OnQuantize(int InDivisor)
     {
         PUSH_NOTIFICATION("Quantized %d Notes to 1/%d", _SelectedNotes.NoteAmount, InDivisor);
         static_Chart->QuantizeNotes(_SelectedNotes, InDivisor);
+        MOD(BeatModule).RecalculateSnaps(static_Chart, _SelectedNotes.MinTimePoint - TIMESLICE_LENGTH, _SelectedNotes.MaxTimePoint + TIMESLICE_LENGTH);
         return true;
     }
     return false;
@@ -388,6 +390,19 @@ bool SelectEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
     PUSH_NOTIFICATION("Placed %d Notes", _PastePreviewNotes.size());
 
     static_Chart->BulkPlaceNotes(_PastePreviewNotes);
+
+    if (!_PastePreviewNotes.empty())
+    {
+        Time minT = INT_MAX, maxT = INT_MIN;
+        for(auto& p : _PastePreviewNotes) {
+            minT = std::min(minT, p.second.TimePoint);
+            maxT = std::max(maxT, p.second.TimePoint);
+            if(p.second.Type == Note::EType::HoldBegin || p.second.Type == Note::EType::RollBegin)
+                maxT = std::max(maxT, p.second.TimePointEnd);
+        }
+        MOD(BeatModule).RecalculateSnaps(static_Chart, minT - TIMESLICE_LENGTH, maxT + TIMESLICE_LENGTH);
+    }
+
     _IsPreviewingPaste = false;
     _PastePreviewNotes.clear();
 
@@ -408,6 +423,18 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
             static_Chart->RegisterTimeSliceHistoryRanged(minTimePoint - TIMESLICE_LENGTH, maxTimePoint + TIMESLICE_LENGTH);
             static_Chart->BulkRemoveNotes(_DraggingNotes, true);
             static_Chart->BulkPlaceNotes(_PastePreviewNotes, true);
+
+            if (!_PastePreviewNotes.empty())
+            {
+                Time minT = INT_MAX, maxT = INT_MIN;
+                for(auto& p : _PastePreviewNotes) {
+                    minT = std::min(minT, p.second.TimePoint);
+                    maxT = std::max(maxT, p.second.TimePoint);
+                    if(p.second.Type == Note::EType::HoldBegin || p.second.Type == Note::EType::RollBegin)
+                        maxT = std::max(maxT, p.second.TimePointEnd);
+                }
+                MOD(BeatModule).RecalculateSnaps(static_Chart, minT - TIMESLICE_LENGTH, maxT + TIMESLICE_LENGTH);
+            }
 
             PUSH_NOTIFICATION("Moved %d Notes", _PastePreviewNotes.size());
 

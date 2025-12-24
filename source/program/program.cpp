@@ -562,6 +562,7 @@ void Program::OpenMoveAllNotes()
             if (offset != 0)
             {
                 MOD(EditModule).OnMoveAllNotes(offset);
+                MOD(BeatModule).AssignNotesToSnapsInChart(SelectedChart);
                 PUSH_NOTIFICATION("Moved all notes by %d ms", offset);
             }
             OutOpen = false;
@@ -601,6 +602,7 @@ void Program::OpenStreamGenerator()
 		if(ImGui::Button("Generate"))
 		{
 			SelectedChart->GenerateStream(start, end, divisor, (StreamPattern)pattern);
+            MOD(BeatModule).RecalculateSnaps(SelectedChart, start, end);
 			OutOpen = false;
 		}
 
