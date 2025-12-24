@@ -405,6 +405,12 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
         double Length;
     };
     std::vector<SmStop> smStops;
+    struct SmSV
+    {
+        double Beat;
+        double Multiplier;
+    };
+    std::vector<SmSV> smSVs;
 	bool inNotes = false;
 
 	// Helper to calculate time from beat using smBpmPoints and offset
@@ -535,6 +541,21 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
                         }
                     }
                 }
+                else if (key == "SCROLLS")
+                {
+                    std::string pairStr;
+                    std::stringstream ss(value);
+                    while (std::getline(ss, pairStr, ','))
+                    {
+                        size_t eqPos = pairStr.find('=');
+                        if (eqPos != std::string::npos)
+                        {
+                            double beat = std::stod(pairStr.substr(0, eqPos));
+                            double mul = std::stod(pairStr.substr(eqPos + 1));
+                            smSVs.push_back({beat, mul});
+                        }
+                    }
+                }
                 else if (key == "BGCHANGES") chart->SmBgChanges = value;
                 else if (key == "FGCHANGES") chart->SmFgChanges = value;
 				else if (key == "NOTES")
@@ -578,6 +599,11 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
                 {
                     Time t = GetTimeFromBeat(stop.Beat);
                     chart->InjectStop(t, stop.Length);
+                }
+                for (const auto& sv : smSVs)
+                {
+                    Time t = GetTimeFromBeat(sv.Beat);
+                    chart->InjectSV(t, sv.Multiplier);
                 }
 
 				std::string chartType = sections[0]; // dance-single
@@ -937,6 +963,19 @@ void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& 
         if (i < stops.size() - 1) ss << ",";
     }
 	ss << ";\n";
+
+    ss << "#SCROLLS:";
+    std::vector<ScrollVelocityMultiplier> svs;
+    InChart->IterateAllSVs([&](ScrollVelocityMultiplier& s){ svs.push_back(s); });
+    std::sort(svs.begin(), svs.end(), [](const auto& a, const auto& b){ return a.TimePoint < b.TimePoint; });
+
+    for (size_t i = 0; i < svs.size(); ++i)
+    {
+        double beat = TimeToBeat(svs[i].TimePoint);
+        ss << beat << "=" << svs[i].Multiplier;
+        if (i < svs.size() - 1) ss << ",";
+    }
+    ss << ";\n";
 
 	ss << "#BGCHANGES:" << InChart->SmBgChanges << ";\n";
 	ss << "#FGCHANGES:" << InChart->SmFgChanges << ";\n";

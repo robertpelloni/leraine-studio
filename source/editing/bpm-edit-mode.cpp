@@ -22,13 +22,12 @@ bool BpmEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
         return false;
     }
 
-    if (MOD(InputModule).IsCtrlKeyDown())
+    if (_HoveredSV != nullptr)
     {
-        Time t = GetCursorTime();
-        StopPoint* stop = static_Chart->InjectStop(t, 1.0);
-        static_Chart->RegisterTimeSliceHistory(t);
-        _VisibleStops = nullptr;
-        return true;
+        _MovableSV = _HoveredSV;
+        _MovableSVInitialValue = *_MovableSV;
+        static_Chart->RegisterTimeSliceHistory(_MovableSV->TimePoint);
+        return false;
     }
 
     if(_HoveredBpmPoint != nullptr)
@@ -44,13 +43,30 @@ bool BpmEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
         return false;
     }
 
-    if(static_Flags.UseAutoTiming)
-        PlaceAutoTimePoint();
+    Time t = GetCursorTime();
+
+    if (_CurrentTool == EditTool::Stop)
+    {
+        static_Chart->InjectStop(t, 1.0);
+        static_Chart->RegisterTimeSliceHistory(t);
+        _VisibleStops = nullptr;
+        return true;
+    }
+    else if (_CurrentTool == EditTool::Sv)
+    {
+        static_Chart->InjectSV(t, 1.0); // Default 1.0x
+        static_Chart->RegisterTimeSliceHistory(t);
+        _VisibleSVs = nullptr;
+        return true;
+    }
     else
-        PlaceTimePoint();
-
-
-    return true;
+    {
+        if(static_Flags.UseAutoTiming)
+            PlaceAutoTimePoint();
+        else
+            PlaceTimePoint();
+        return true;
+    }
 }
 
 bool BpmEditMode::OnMouseLeftButtonReleased()
@@ -61,11 +77,15 @@ bool BpmEditMode::OnMouseLeftButtonReleased()
         _MovableStop = nullptr;
         return false;
     }
-
+    if(_MovableSV != nullptr)
+    {
+        static_Chart->RevaluateSV(_MovableSVInitialValue, *_MovableSV);
+        _MovableSV = nullptr;
+        return false;
+    }
     if(_MovableBpmPoint != nullptr)
     {
         static_Chart->RevaluateBpmPoint(_MovableBpmPointInitialValue, *_MovableBpmPoint);
-
         _MovableBpmPoint = nullptr;
         return false;
     }
@@ -82,7 +102,13 @@ bool BpmEditMode::OnMouseRightButtonClicked(const bool InIsShiftDown)
         _VisibleStops = nullptr;
         return true;
     }
-
+    if (_HoveredSV && !_MovableSV)
+    {
+        static_Chart->RemoveSV(*_HoveredSV);
+        _HoveredSV = nullptr;
+        _VisibleSVs = nullptr;
+        return true;
+    }
     if(_HoveredBpmPoint && !_MovableBpmPoint)
     {
         if(static_Flags.UseAutoTiming)
@@ -92,10 +118,8 @@ bool BpmEditMode::OnMouseRightButtonClicked(const bool InIsShiftDown)
                 if(BpmPoint* nextBpmPoint = static_Chart->GetNextBpmPointFromTimePoint(_HoveredBpmPoint->TimePoint))
                 {
                     Time deltaTime = abs((previousBpmPoint->TimePoint) - nextBpmPoint->TimePoint);
-
                     double beatLength = double(deltaTime);
                     double newBpm = 60000.0 / beatLength;
-
                     previousBpmPoint->BeatLength = beatLength;
                     previousBpmPoint->Bpm = newBpm;
                 }
@@ -104,8 +128,8 @@ bool BpmEditMode::OnMouseRightButtonClicked(const bool InIsShiftDown)
 
         static_Chart->RemoveBpmPoint(*_HoveredBpmPoint);
         _HoveredBpmPoint = nullptr;
-
         _VisibleBpmPoints->clear();
+        return true;
     }
 
     return false;
@@ -203,14 +227,29 @@ void BpmEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRender
             stopLine.setPosition(InTimefieldMetrics.LeftSidePosition, InScreenY - 2);
             stopLine.setSize(sf::Vector2f(InTimefieldMetrics.FieldWidth, 4));
 
-            if (_HoveredStop == stopPtr)
-                stopLine.setFillColor(sf::Color(255, 255, 128, 255));
-            else
-                stopLine.setFillColor(sf::Color(255, 255, 0, 255));
+            if (_HoveredStop == stopPtr) stopLine.setFillColor(sf::Color(255, 255, 128, 255));
+            else stopLine.setFillColor(sf::Color(255, 255, 0, 255));
 
             InRenderTarget->draw(stopLine);
-
             DisplayStopNode(*stopPtr, InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidth + 48, InScreenY);
+        });
+    }
+
+    _VisibleSVs = &(static_Chart->GetSVsRelatedToTimeRange(InTimeBegin, InTimeEnd));
+    for (auto& svPtr : *_VisibleSVs)
+    {
+        InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(0, svPtr->TimePoint,
+        [this, svPtr](sf::RenderTarget* const InRenderTarget, const TimefieldMetrics& InTimefieldMetrics, const int InScreenX, const int InScreenY)
+        {
+            sf::RectangleShape svLine;
+            svLine.setPosition(InTimefieldMetrics.LeftSidePosition, InScreenY - 2);
+            svLine.setSize(sf::Vector2f(InTimefieldMetrics.FieldWidth, 4));
+
+            if (_HoveredSV == svPtr) svLine.setFillColor(sf::Color(128, 255, 128, 255));
+            else svLine.setFillColor(sf::Color(0, 255, 0, 255));
+
+            InRenderTarget->draw(svLine);
+            DisplaySVNode(*svPtr, InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidth + 96, InScreenY);
         });
     }
 
@@ -252,7 +291,7 @@ void BpmEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRender
         });
     }
 
-    if(static_Cursor.TimefieldSide != Cursor::FieldPosition::Middle || _HoveredBpmPoint != nullptr || _HoveredStop != nullptr)
+    if(static_Cursor.TimefieldSide != Cursor::FieldPosition::Middle || _HoveredBpmPoint != nullptr || _HoveredStop != nullptr || _HoveredSV != nullptr)
         return;
 
     InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(0, GetCursorTime(),
@@ -271,12 +310,10 @@ void BpmEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRender
 
 void BpmEditMode::Tick()
 {
-    if(_MovableStop)
-    {
-        _MovableStop->TimePoint = GetCursorTime();
-        return;
-    }
+    DisplayToolSelector();
 
+    if(_MovableStop) { _MovableStop->TimePoint = GetCursorTime(); return; }
+    if(_MovableSV) { _MovableSV->TimePoint = GetCursorTime(); return; }
     if(_MovableBpmPoint)
     {
         _MovableBpmPoint->TimePoint = GetCursorTime();
@@ -287,10 +324,8 @@ void BpmEditMode::Tick()
         if(_PreviousBpmPoint)
         {
             Time deltaTime = abs((_PreviousBpmPoint->TimePoint) - _MovableBpmPoint->TimePoint);
-
             double beatLength = double(deltaTime);
             double newBpm = 60000.0 / beatLength;
-
             _PreviousBpmPoint->BeatLength = beatLength;
             _PreviousBpmPoint->Bpm = newBpm;
         }
@@ -298,33 +333,36 @@ void BpmEditMode::Tick()
         if(_NextBpmPoint)
         {
             Time deltaTime = abs(_NextBpmPoint->TimePoint - _MovableBpmPoint->TimePoint);
-
             double beatLength = double(deltaTime);
             double newBpm = 60000.0 / beatLength;
-
             _MovableBpmPoint->BeatLength = beatLength;
             _MovableBpmPoint->Bpm = newBpm;
         }
-
         return;
     }
 
     if (_VisibleStops)
     {
         for (auto& stopPtr : *_VisibleStops)
-        {
             if(abs(GetCursorTime() - stopPtr->TimePoint) < 20 && static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle)
                 return void(_HoveredStop = stopPtr);
-        }
     }
     _HoveredStop = nullptr;
 
-    for (auto& bpmPointPtr : *_VisibleBpmPoints)
-	{
-        if(abs(GetCursorTime() - bpmPointPtr->TimePoint) < 20 && static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle)
-            return void(_HoveredBpmPoint = bpmPointPtr);
+    if (_VisibleSVs)
+    {
+        for (auto& svPtr : *_VisibleSVs)
+            if(abs(GetCursorTime() - svPtr->TimePoint) < 20 && static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle)
+                return void(_HoveredSV = svPtr);
     }
+    _HoveredSV = nullptr;
 
+    if (_VisibleBpmPoints)
+    {
+        for (auto& bpmPointPtr : *_VisibleBpmPoints)
+            if(abs(GetCursorTime() - bpmPointPtr->TimePoint) < 20 && static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle)
+                return void(_HoveredBpmPoint = bpmPointPtr);
+    }
     _HoveredBpmPoint = nullptr;
 }
 
@@ -334,10 +372,8 @@ void BpmEditMode::PlaceAutoTimePoint()
     if(BpmPoint* previousBpmPoint = static_Chart->GetPreviousBpmPointFromTimePoint(GetCursorTime()))
     {
         Time deltaTime = abs(previousBpmPoint->TimePoint - cursorTime);
-
         double beatLength = double(deltaTime);
         double newBpm = 60000.0 / beatLength;
-
         previousBpmPoint->BeatLength = beatLength;
         previousBpmPoint->Bpm = newBpm;
     }
@@ -345,10 +381,8 @@ void BpmEditMode::PlaceAutoTimePoint()
     if(BpmPoint* nextBpmPoint =  static_Chart->GetNextBpmPointFromTimePoint(cursorTime))
     {
         Time deltaTime = abs(nextBpmPoint->TimePoint - cursorTime);
-
         double beatLength = double(deltaTime);
         double newBpm = 60000.0 / beatLength;
-
         static_Chart->PlaceBpmPoint(cursorTime, newBpm, beatLength);
     }
     else
@@ -368,32 +402,21 @@ void BpmEditMode::PlaceTimePoint()
 
 void BpmEditMode::DisplayBpmNode(BpmPoint& InBpmPoint, const int InScreenX, const int InScreenY, const bool InIsPinned)
 {
-    ImGuiWindowFlags windowFlags = 0;
-	windowFlags |= ImGuiWindowFlags_NoTitleBar;
-	windowFlags |= ImGuiWindowFlags_NoMove;
-	windowFlags |= ImGuiWindowFlags_NoResize;
-	windowFlags |= ImGuiWindowFlags_NoCollapse;
-	windowFlags |= ImGuiWindowFlags_AlwaysAutoResize;
-	windowFlags |= ImGuiWindowFlags_NoScrollbar;
-
-	bool open = true;
-
-	ImGui::SetNextWindowPos({ float(InScreenX), float(InScreenY) });
-	ImGui::Begin(std::to_string(reinterpret_cast<intptr_t>(&InBpmPoint)).c_str(), &open, windowFlags);
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar;
+    bool open = true;
+    ImGui::SetNextWindowPos({ float(InScreenX), float(InScreenY) });
+    ImGui::Begin(std::to_string(reinterpret_cast<intptr_t>(&InBpmPoint)).c_str(), &open, windowFlags);
 
     if(InIsPinned)
     {
-        if(ImGui::Button("Unpin"))
-            _PinnedBpmPoint = nullptr;
+        if(ImGui::Button("Unpin")) _PinnedBpmPoint = nullptr;
     }
     else
     {
-	    if(ImGui::Button("Pin"))
-            _PinnedBpmPoint = &InBpmPoint;
+	    if(ImGui::Button("Pin")) _PinnedBpmPoint = &InBpmPoint;
     }
 
 	ImGui::SameLine();
-
 	ImGui::Text("BPM");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(96);
@@ -405,42 +428,52 @@ void BpmEditMode::DisplayBpmNode(BpmPoint& InBpmPoint, const int InScreenX, cons
 
     if(InIsPinned)
     {
-        if(ImGui::Button("+1 MS"))
-            InBpmPoint.TimePoint++;
-
+        if(ImGui::Button("+1 MS")) InBpmPoint.TimePoint++;
         ImGui::SameLine();
-
-        if(ImGui::Button("-1 MS"))
-            InBpmPoint.TimePoint--;
+        if(ImGui::Button("-1 MS")) InBpmPoint.TimePoint--;
     }
-
 	ImGui::End();
 }
 
 void BpmEditMode::DisplayStopNode(StopPoint& InStop, const int InScreenX, const int InScreenY, const bool InIsPinned)
 {
-    ImGuiWindowFlags windowFlags = 0;
-	windowFlags |= ImGuiWindowFlags_NoTitleBar;
-	windowFlags |= ImGuiWindowFlags_NoMove;
-	windowFlags |= ImGuiWindowFlags_NoResize;
-	windowFlags |= ImGuiWindowFlags_NoCollapse;
-	windowFlags |= ImGuiWindowFlags_AlwaysAutoResize;
-	windowFlags |= ImGuiWindowFlags_NoScrollbar;
-
-	bool open = true;
-
-	ImGui::SetNextWindowPos({ float(InScreenX), float(InScreenY) });
-	ImGui::Begin(std::to_string(reinterpret_cast<intptr_t>(&InStop)).c_str(), &open, windowFlags);
-
-	ImGui::Text("Stop");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(96);
-
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar;
+    bool open = true;
+    ImGui::SetNextWindowPos({ float(InScreenX), float(InScreenY) });
+    ImGui::Begin(std::to_string(reinterpret_cast<intptr_t>(&InStop)).c_str(), &open, windowFlags);
+    ImGui::Text("Stop");
+    ImGui::SameLine();
+    ImGui::PushItemWidth(96);
     float len = float(InStop.Length);
-	ImGui::DragFloat("s", &len, 0.01f, 0.0f, 100.0f);
-	InStop.Length = double(len);
+    ImGui::DragFloat("s", &len, 0.01f, 0.0f, 100.0f);
+    InStop.Length = double(len);
+    ImGui::End();
+}
 
-	ImGui::End();
+void BpmEditMode::DisplaySVNode(ScrollVelocityMultiplier& InSV, const int InScreenX, const int InScreenY, const bool InIsPinned)
+{
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar;
+    bool open = true;
+    ImGui::SetNextWindowPos({ float(InScreenX), float(InScreenY) });
+    ImGui::Begin(std::to_string(reinterpret_cast<intptr_t>(&InSV)).c_str(), &open, windowFlags);
+    ImGui::Text("SV");
+    ImGui::SameLine();
+    ImGui::PushItemWidth(96);
+    float mul = float(InSV.Multiplier);
+    ImGui::DragFloat("x", &mul, 0.01f, 0.0f, 100.0f);
+    InSV.Multiplier = double(mul);
+    ImGui::End();
+}
+
+void BpmEditMode::DisplayToolSelector()
+{
+    ImGui::Begin("Timing Tool", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    if (ImGui::RadioButton("BPM", _CurrentTool == EditTool::Bpm)) _CurrentTool = EditTool::Bpm;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Stop", _CurrentTool == EditTool::Stop)) _CurrentTool = EditTool::Stop;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("SV", _CurrentTool == EditTool::Sv)) _CurrentTool = EditTool::Sv;
+    ImGui::End();
 }
 
 Time BpmEditMode::GetCursorTime()

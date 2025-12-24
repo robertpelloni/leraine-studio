@@ -24,6 +24,8 @@ private:
 
 	void DisplayBpmNode(BpmPoint& InBpmPoint, const int InScreenX, const int InScreenY, const bool InIsPinned = false);
     void DisplayStopNode(StopPoint& InStop, const int InScreenX, const int InScreenY, const bool InIsPinned = false);
+    void DisplaySVNode(ScrollVelocityMultiplier& InSV, const int InScreenX, const int InScreenY, const bool InIsPinned = false);
+    void DisplayToolSelector();
 
 	Time GetCursorTime();
 
@@ -43,6 +45,15 @@ private:
     StopPoint* _MovableStop = nullptr;
     StopPoint _MovableStopInitialValue;
     StopPoint* _PinnedStop = nullptr;
+
+    std::vector<ScrollVelocityMultiplier*>* _VisibleSVs = nullptr;
+    ScrollVelocityMultiplier* _HoveredSV = nullptr;
+    ScrollVelocityMultiplier* _MovableSV = nullptr;
+    ScrollVelocityMultiplier _MovableSVInitialValue;
+    ScrollVelocityMultiplier* _PinnedSV = nullptr;
+
+    enum class EditTool { Bpm, Stop, Sv };
+    EditTool _CurrentTool = EditTool::Bpm;
 
     std::vector<long long> _TapTimes;
     float _TappedBPM = 0.0f;

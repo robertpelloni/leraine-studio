@@ -63,6 +63,11 @@ struct ScrollVelocityMultiplier
 {
 	Time TimePoint;
 	double Multiplier;
+
+    bool operator==(const ScrollVelocityMultiplier& InOther)
+    {
+        return (TimePoint == InOther.TimePoint);
+    }
 };
 
 struct StopPoint
@@ -183,6 +188,7 @@ public: //accessors
 	bool RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks = false, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	bool RemoveBpmPoint(BpmPoint& InBpmPoint, const bool InSkipHistoryRegistering = false);
     bool RemoveStop(StopPoint& InStop, const bool InSkipHistoryRegistering = false);
+    bool RemoveSV(ScrollVelocityMultiplier& InSV, const bool InSkipHistoryRegistering = false);
 	bool BulkRemoveNotes(NoteReferenceCollection& InNotes, const bool InSkipHistoryRegistering = false);
 
 	Note& InjectNote(const Time InTime, const Column InColumn, const Note::EType InNoteType, const Time InTimeBegin = -1, const Time InTimeEnd = -1, const int InBeatSnap = -1, const bool InSkipOnModified = false);
@@ -190,9 +196,11 @@ public: //accessors
     Note& InjectRoll(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn,  const int InBeatSnapBegin = -1, const int InBeatSnapEnd = -1, const bool InSkipOnModified = false);
 	BpmPoint* InjectBpmPoint(const Time InTime, const double InBpm, const double InBeatLength);
     StopPoint* InjectStop(const Time InTime, const double Length);
+    ScrollVelocityMultiplier* InjectSV(const Time InTime, const double Multiplier);
 
 	Note* MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap);
     StopPoint* MoveStop(StopPoint& InStop, const Time NewTime);
+    ScrollVelocityMultiplier* MoveSV(ScrollVelocityMultiplier& InSV, const Time NewTime);
 	Note* FindNote(const Time InTime, const Column InColumn);
 	bool IsAPotentialNoteDuplicate(const Time InTime, const Column InColumn);
 	TimeSlice& FindOrAddTimeSlice(const Time InTime);
@@ -201,6 +209,7 @@ public: //accessors
 
 	void RevaluateBpmPoint(BpmPoint& InFormerBpmPoint, BpmPoint& InMovedBpmPoint);
     void RevaluateStop(StopPoint& InFormerStop, StopPoint& InMovedStop);
+    void RevaluateSV(ScrollVelocityMultiplier& InFormerSV, ScrollVelocityMultiplier& InMovedSV);
 	void PushTimeSliceHistoryIfNotAdded(const Time InTime);
 	void RegisterTimeSliceHistory(const Time InTime);
 	void RegisterTimeSliceHistoryRanged(const Time InTimeBegin, const Time InTimeEnd);
@@ -214,9 +223,11 @@ public: //accessors
 	void IterateAllNotes(std::function<void(Note&, const Column)> InWork);
 	void IterateAllBpmPoints(std::function<void(BpmPoint&)> InWork);
     void IterateAllStops(std::function<void(StopPoint&)> InWork);
+    void IterateAllSVs(std::function<void(ScrollVelocityMultiplier&)> InWork);
 
 	std::vector<BpmPoint*>& GetBpmPointsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
     std::vector<StopPoint*>& GetStopsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
+    std::vector<ScrollVelocityMultiplier*>& GetSVsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
 	BpmPoint* GetPreviousBpmPointFromTimePoint(const Time InTime);
 	BpmPoint* GetNextBpmPointFromTimePoint(const Time InTime);
 
@@ -232,6 +243,7 @@ public: //data ownership
 
 	std::vector<BpmPoint*> CachedBpmPoints;
     std::vector<StopPoint*> CachedStops;
+    std::vector<ScrollVelocityMultiplier*> CachedSVs;
 
 private:
 

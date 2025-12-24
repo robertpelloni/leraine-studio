@@ -76,6 +76,19 @@ bool Chart::RemoveStop(StopPoint &InStop, const bool InSkipHistoryRegistering)
 	return true;
 }
 
+bool Chart::RemoveSV(ScrollVelocityMultiplier &InSV, const bool InSkipHistoryRegistering)
+{
+	auto &timeSlice = FindOrAddTimeSlice(InSV.TimePoint);
+	auto &svCollection = timeSlice.SvMultipliers;
+
+	if (!InSkipHistoryRegistering)
+		RegisterTimeSliceHistory(InSV.TimePoint);
+
+	svCollection.erase(std::remove(svCollection.begin(), svCollection.end(), InSV), svCollection.end());
+
+	return true;
+}
+
 bool Chart::PlaceHold(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn, const int InBeatSnap, const int InBeatSnapEnd)
 {
 	if (InTimeBegin == InTimeEnd)
@@ -126,6 +139,17 @@ void Chart::BulkPlaceNotes(const std::vector<std::pair<Column, Note>> &InNotes, 
         case Note::EType::RollBegin:
             InjectRoll(note.TimePointBegin, note.TimePointEnd, column, -1, -1, InSkipOnModified);
             break;
+		}
+	}
+}
+
+void Chart::IterateAllSVs(std::function<void(ScrollVelocityMultiplier&)> InWork)
+{
+	for (auto &[ID, timeSlice] : TimeSlices)
+	{
+		for (auto &sv : timeSlice.SvMultipliers)
+		{
+			InWork(sv);
 		}
 	}
 }
@@ -1010,6 +1034,24 @@ StopPoint* Chart::InjectStop(const Time InTime, const double Length)
 	return stopPtr;
 }
 
+ScrollVelocityMultiplier* Chart::InjectSV(const Time InTime, const double Multiplier)
+{
+	auto &timeSlice = FindOrAddTimeSlice(InTime);
+
+	ScrollVelocityMultiplier sv;
+	sv.TimePoint = InTime;
+	sv.Multiplier = Multiplier;
+
+	timeSlice.SvMultipliers.push_back(sv);
+
+	ScrollVelocityMultiplier *svPtr = &(timeSlice.SvMultipliers.back());
+
+	std::sort(timeSlice.SvMultipliers.begin(), timeSlice.SvMultipliers.end(), [](const auto &lhs, const auto &rhs)
+			  { return lhs.TimePoint < rhs.TimePoint; });
+
+	return svPtr;
+}
+
 StopPoint* Chart::MoveStop(StopPoint& InStop, const Time NewTime)
 {
     StopPoint stop = InStop;
@@ -1018,6 +1060,14 @@ StopPoint* Chart::MoveStop(StopPoint& InStop, const Time NewTime)
 
     RemoveStop(InStop, true);
     return InjectStop(NewTime, stop.Length);
+}
+
+ScrollVelocityMultiplier* Chart::MoveSV(ScrollVelocityMultiplier& InSV, const Time NewTime)
+{
+    ScrollVelocityMultiplier sv = InSV;
+    RegisterTimeSliceHistoryRanged(sv.TimePoint, NewTime);
+    RemoveSV(InSV, true);
+    return InjectSV(NewTime, sv.Multiplier);
 }
 
 Note *Chart::MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap)
@@ -1255,6 +1305,31 @@ void Chart::RevaluateStop(StopPoint &InFormerStop, StopPoint &InMovedStop)
     }
 }
 
+void Chart::RevaluateSV(ScrollVelocityMultiplier &InFormerSV, ScrollVelocityMultiplier &InMovedSV)
+{
+	auto &formerTimeSlice = FindOrAddTimeSlice(InFormerSV.TimePoint);
+	auto &newTimeSlice = FindOrAddTimeSlice(InMovedSV.TimePoint);
+
+	auto &formerCollection = formerTimeSlice.SvMultipliers;
+
+	if (formerTimeSlice.Index != newTimeSlice.Index)
+	{
+		ScrollVelocityMultiplier svToAdd = InMovedSV;
+
+		formerCollection.erase(std::remove(formerCollection.begin(), formerCollection.end(), InMovedSV), formerCollection.end());
+		CachedSVs.clear();
+
+		TimeSliceHistory.top().push_back(newTimeSlice);
+
+		InjectSV(svToAdd.TimePoint, svToAdd.Multiplier);
+	}
+    else
+    {
+        std::sort(formerCollection.begin(), formerCollection.end(), [](const auto &lhs, const auto &rhs)
+                  { return lhs.TimePoint < rhs.TimePoint; });
+    }
+}
+
 void Chart::RegisterTimeSliceHistory(const Time InTime)
 {
     // Clear future when making new changes
@@ -1448,6 +1523,22 @@ std::vector<StopPoint *> &Chart::GetStopsRelatedToTimeRange(const Time InTimeBeg
 								 });
 
 	return CachedStops;
+}
+
+std::vector<ScrollVelocityMultiplier *> &Chart::GetSVsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd)
+{
+	CachedSVs.clear();
+
+	IterateTimeSlicesInTimeRange(InTimeBegin - TIMESLICE_LENGTH, InTimeEnd + TIMESLICE_LENGTH, [this](TimeSlice &InTimeSlice)
+								 {
+									 if (InTimeSlice.SvMultipliers.empty())
+										 return;
+
+									 for (auto &sv : InTimeSlice.SvMultipliers)
+										 CachedSVs.push_back(&sv);
+								 });
+
+	return CachedSVs;
 }
 
 BpmPoint *Chart::GetPreviousBpmPointFromTimePoint(const Time InTime)

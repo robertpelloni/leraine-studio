@@ -37,6 +37,37 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestSVEditing()
+{
+    Chart chart;
+    chart.InjectSV(1000, 2.0);
+
+    // Test Move
+    ScrollVelocityMultiplier* s = chart.GetSVsRelatedToTimeRange(0, 2000)[0];
+    ScrollVelocityMultiplier initial = *s;
+    chart.MoveSV(initial, 1500);
+
+    auto svs = chart.GetSVsRelatedToTimeRange(0, 2000);
+    ASSERT(svs.size() == 1);
+    ASSERT(svs[0]->TimePoint == 1500);
+    ASSERT(svs[0]->Multiplier == 2.0);
+
+    // Test Revaluate (In-Place)
+    ScrollVelocityMultiplier initial2 = *svs[0];
+    svs[0]->TimePoint = 1800;
+
+    chart.RevaluateSV(initial2, *svs[0]);
+    svs = chart.GetSVsRelatedToTimeRange(0, 2000);
+    ASSERT(svs[0]->TimePoint == 1800);
+
+    // Test Remove
+    chart.RemoveSV(*svs[0]);
+    svs = chart.GetSVsRelatedToTimeRange(0, 2000);
+    ASSERT(svs.empty());
+
+    return 0;
+}
+
 int TestStreamGen() {
     Chart chart;
     chart.KeyAmount = 4;
@@ -164,6 +195,7 @@ int main() {
     TEST(TestNewTypes);
     TEST(TestStops);
     TEST(TestStopEditing);
+    TEST(TestSVEditing);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
