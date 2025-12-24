@@ -63,6 +63,19 @@ bool Chart::PlaceNote(const Time InTime, const Column InColumn, const int InBeat
 	return true;
 }
 
+bool Chart::RemoveStop(StopPoint &InStop, const bool InSkipHistoryRegistering)
+{
+	auto &timeSlice = FindOrAddTimeSlice(InStop.TimePoint);
+	auto &stopCollection = timeSlice.Stops;
+
+	if (!InSkipHistoryRegistering)
+		RegisterTimeSliceHistory(InStop.TimePoint);
+
+	stopCollection.erase(std::remove(stopCollection.begin(), stopCollection.end(), InStop), stopCollection.end());
+
+	return true;
+}
+
 bool Chart::PlaceHold(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn, const int InBeatSnap, const int InBeatSnapEnd)
 {
 	if (InTimeBegin == InTimeEnd)
@@ -997,6 +1010,16 @@ StopPoint* Chart::InjectStop(const Time InTime, const double Length)
 	return stopPtr;
 }
 
+StopPoint* Chart::MoveStop(StopPoint& InStop, const Time NewTime)
+{
+    StopPoint stop = InStop;
+
+    RegisterTimeSliceHistoryRanged(stop.TimePoint, NewTime);
+
+    RemoveStop(InStop, true);
+    return InjectStop(NewTime, stop.Length);
+}
+
 Note *Chart::MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap)
 {
 	//have I mentioned that I really dislike handling edge-cases?
@@ -1207,6 +1230,31 @@ void Chart::RevaluateBpmPoint(BpmPoint &InFormerBpmPoint, BpmPoint &InMovedBpmPo
 	}
 }
 
+void Chart::RevaluateStop(StopPoint &InFormerStop, StopPoint &InMovedStop)
+{
+	auto &formerTimeSlice = FindOrAddTimeSlice(InFormerStop.TimePoint);
+	auto &newTimeSlice = FindOrAddTimeSlice(InMovedStop.TimePoint);
+
+	auto &formerCollection = formerTimeSlice.Stops;
+
+	if (formerTimeSlice.Index != newTimeSlice.Index)
+	{
+		StopPoint stopToAdd = InMovedStop;
+
+		formerCollection.erase(std::remove(formerCollection.begin(), formerCollection.end(), InMovedStop), formerCollection.end());
+		CachedStops.clear();
+
+		TimeSliceHistory.top().push_back(newTimeSlice);
+
+		InjectStop(stopToAdd.TimePoint, stopToAdd.Length);
+	}
+    else
+    {
+        std::sort(formerCollection.begin(), formerCollection.end(), [](const auto &lhs, const auto &rhs)
+                  { return lhs.TimePoint < rhs.TimePoint; });
+    }
+}
+
 void Chart::RegisterTimeSliceHistory(const Time InTime)
 {
     // Clear future when making new changes
@@ -1384,6 +1432,22 @@ std::vector<BpmPoint *> &Chart::GetBpmPointsRelatedToTimeRange(const Time InTime
 		return GetBpmPointsRelatedToTimeRange(InTimeBegin, InTimeEnd + TIMESLICE_LENGTH);
 
 	return CachedBpmPoints;
+}
+
+std::vector<StopPoint *> &Chart::GetStopsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd)
+{
+	CachedStops.clear();
+
+	IterateTimeSlicesInTimeRange(InTimeBegin - TIMESLICE_LENGTH, InTimeEnd + TIMESLICE_LENGTH, [this](TimeSlice &InTimeSlice)
+								 {
+									 if (InTimeSlice.Stops.empty())
+										 return;
+
+									 for (auto &stop : InTimeSlice.Stops)
+										 CachedStops.push_back(&stop);
+								 });
+
+	return CachedStops;
 }
 
 BpmPoint *Chart::GetPreviousBpmPointFromTimePoint(const Time InTime)

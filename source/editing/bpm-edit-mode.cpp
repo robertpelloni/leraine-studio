@@ -3,12 +3,33 @@
 
 #include "../modules/manager/module-manager.h"
 #include "../modules/audio-module.h"
+#include "../modules/input-module.h"
 
+#include <cmath>
+#include <algorithm>
+#include <chrono>
 
 bool BpmEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
 {
     if(static_Cursor.TimefieldSide != Cursor::FieldPosition::Middle)
         return false;
+
+    if (_HoveredStop != nullptr)
+    {
+        _MovableStop = _HoveredStop;
+        _MovableStopInitialValue = *_MovableStop;
+        static_Chart->RegisterTimeSliceHistory(_MovableStop->TimePoint);
+        return false;
+    }
+
+    if (MOD(InputModule).IsCtrlKeyDown())
+    {
+        Time t = GetCursorTime();
+        StopPoint* stop = static_Chart->InjectStop(t, 1.0);
+        static_Chart->RegisterTimeSliceHistory(t);
+        _VisibleStops = nullptr;
+        return true;
+    }
 
     if(_HoveredBpmPoint != nullptr)
     {
@@ -34,6 +55,13 @@ bool BpmEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
 
 bool BpmEditMode::OnMouseLeftButtonReleased()
 {
+    if(_MovableStop != nullptr)
+    {
+        static_Chart->RevaluateStop(_MovableStopInitialValue, *_MovableStop);
+        _MovableStop = nullptr;
+        return false;
+    }
+
     if(_MovableBpmPoint != nullptr)
     {
         static_Chart->RevaluateBpmPoint(_MovableBpmPointInitialValue, *_MovableBpmPoint);
@@ -47,6 +75,14 @@ bool BpmEditMode::OnMouseLeftButtonReleased()
 
 bool BpmEditMode::OnMouseRightButtonClicked(const bool InIsShiftDown)
 {
+    if (_HoveredStop && !_MovableStop)
+    {
+        static_Chart->RemoveStop(*_HoveredStop);
+        _HoveredStop = nullptr;
+        _VisibleStops = nullptr;
+        return true;
+    }
+
     if(_HoveredBpmPoint && !_MovableBpmPoint)
     {
         if(static_Flags.UseAutoTiming)
@@ -82,7 +118,6 @@ void BpmEditMode::OnEstimateBPM()
 
     if (bpm > 0.0f)
     {
-        // Estimate Offset
         Time offset = MOD(AudioModule).EstimateOffset(bpm, 0, length);
 
         PUSH_NOTIFICATION("Estimated BPM: %.2f, Offset: %d", bpm, offset);
@@ -93,13 +128,6 @@ void BpmEditMode::OnEstimateBPM()
              _MovableBpmPoint->BeatLength = 60000.0 / bpm;
              _MovableBpmPoint->TimePoint = offset;
         }
-        else
-        {
-            // If no point hovered, maybe place one at offset?
-            // For now, let's just notify. The user might want to drag a point there.
-            // Or we could snap the cursor?
-            // MOD(AudioModule).SetTimeMilliSeconds(offset); // Auto-seek to offset
-        }
     }
     else
     {
@@ -109,33 +137,10 @@ void BpmEditMode::OnEstimateBPM()
 
 void BpmEditMode::OnTap()
 {
-    // Need a reliable clock. AudioModule has GetTimeMilliSeconds() but that depends on song position which might be paused.
-    // We want real-time taps.
-    // SFML Clock would be ideal, or std::chrono.
-    // AudioModule has BASS, BASS has BASS_ChannelBytes2Seconds(BASS_ChannelGetPosition(..)) which is song time.
-    // If song is playing, song time is fine. If paused, it's not.
-    // Tapping is usually done while listening to the song.
-
-    // Logic:
-    // 1. Get current time (either song time or system time).
-    //    If we use song time, we can handle playback rate changes automatically if we tap to the heard beat.
-    //    But if we seek, taps become invalid.
-
-    // Let's use std::chrono::steady_clock for raw interval calculation.
-    // But then we need to know the playback rate to convert to BPM? No, if we tap to the beat, the interval is real-time interval.
-    // If playback is 1.0x, BPM = 60 / interval.
-    // If playback is 2.0x, we tap twice as fast. interval is half. 60/interval is 2*BPM.
-    // So calculated BPM is playback rate * true BPM? No.
-    // If song is 120 BPM.
-    // 1.0x: Beat every 0.5s. Tap interval 0.5s. 60/0.5 = 120. Correct.
-    // 2.0x: Beat every 0.25s. Tap interval 0.25s. 60/0.25 = 240. Correct (we are hearing 240 BPM).
-    // But we want the song BPM. So we must divide by playback speed.
-
     using namespace std::chrono;
     static auto lastTapTime = steady_clock::now();
     auto now = steady_clock::now();
 
-    // Reset if too long since last tap (e.g. 2 seconds)
     if (duration_cast<milliseconds>(now - lastTapTime).count() > 2000)
     {
         _TapTimes.clear();
@@ -148,35 +153,18 @@ void BpmEditMode::OnTap()
 
     if (_TapTimes.size() > 1)
     {
-        // Calculate average interval
         double sumIntervals = 0;
         for (size_t i = 1; i < _TapTimes.size(); ++i)
         {
             sumIntervals += (_TapTimes[i] - _TapTimes[i-1]);
         }
         double avgInterval = sumIntervals / (_TapTimes.size() - 1);
-
-        // Convert to seconds
         double intervalSec = avgInterval / 1000.0;
-
-        // Adjust for playback speed
         float speed = MOD(AudioModule).GetPlaybackSpeed();
         if (speed <= 0.001f) speed = 1.0f;
-
         double bpm = (60.0 / intervalSec) / speed;
         _TappedBPM = float(bpm);
-
         PUSH_NOTIFICATION("Tapped BPM: %.2f", _TappedBPM);
-
-        // If we have a movable point, update it?
-        // Or if we are hovering.
-        if (_HoveredBpmPoint)
-        {
-             // Update hovered BPM? Maybe risky.
-             // ArrowVortex usually has a separate "Tap" window.
-             // Let's just notify for now, user can manually input.
-             // Or update _MovableBpmPoint if dragging.
-        }
     }
 }
 
@@ -205,7 +193,27 @@ void BpmEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRender
         });
     }
 
-    //a bit hacky but if it works and is isolated it works for now I guess
+    _VisibleStops = &(static_Chart->GetStopsRelatedToTimeRange(InTimeBegin, InTimeEnd));
+    for (auto& stopPtr : *_VisibleStops)
+    {
+        InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(0, stopPtr->TimePoint,
+        [this, stopPtr](sf::RenderTarget* const InRenderTarget, const TimefieldMetrics& InTimefieldMetrics, const int InScreenX, const int InScreenY)
+        {
+            sf::RectangleShape stopLine;
+            stopLine.setPosition(InTimefieldMetrics.LeftSidePosition, InScreenY - 2);
+            stopLine.setSize(sf::Vector2f(InTimefieldMetrics.FieldWidth, 4));
+
+            if (_HoveredStop == stopPtr)
+                stopLine.setFillColor(sf::Color(255, 255, 128, 255));
+            else
+                stopLine.setFillColor(sf::Color(255, 255, 0, 255));
+
+            InRenderTarget->draw(stopLine);
+
+            DisplayStopNode(*stopPtr, InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidth + 48, InScreenY);
+        });
+    }
+
 	_VisibleBpmPoints = &(static_Chart->GetBpmPointsRelatedToTimeRange(InTimeBegin, InTimeEnd));
 
 	for (auto& bpmPointPtr : *_VisibleBpmPoints)
@@ -240,12 +248,11 @@ void BpmEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRender
 
             InRenderTarget->draw(indicator);
 
-            //god is dead
             DisplayBpmNode(*bpmPointPtr, InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidth + 8, InScreenY);
         });
     }
 
-    if(static_Cursor.TimefieldSide != Cursor::FieldPosition::Middle || _HoveredBpmPoint != nullptr)
+    if(static_Cursor.TimefieldSide != Cursor::FieldPosition::Middle || _HoveredBpmPoint != nullptr || _HoveredStop != nullptr)
         return;
 
     InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(0, GetCursorTime(),
@@ -264,6 +271,12 @@ void BpmEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRender
 
 void BpmEditMode::Tick()
 {
+    if(_MovableStop)
+    {
+        _MovableStop->TimePoint = GetCursorTime();
+        return;
+    }
+
     if(_MovableBpmPoint)
     {
         _MovableBpmPoint->TimePoint = GetCursorTime();
@@ -296,6 +309,16 @@ void BpmEditMode::Tick()
         return;
     }
 
+    if (_VisibleStops)
+    {
+        for (auto& stopPtr : *_VisibleStops)
+        {
+            if(abs(GetCursorTime() - stopPtr->TimePoint) < 20 && static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle)
+                return void(_HoveredStop = stopPtr);
+        }
+    }
+    _HoveredStop = nullptr;
+
     for (auto& bpmPointPtr : *_VisibleBpmPoints)
 	{
         if(abs(GetCursorTime() - bpmPointPtr->TimePoint) < 20 && static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle)
@@ -308,8 +331,6 @@ void BpmEditMode::Tick()
 void BpmEditMode::PlaceAutoTimePoint()
 {
     Time cursorTime = GetCursorTime() ;
-    BpmPoint* placedBpmPoint = nullptr;
-
     if(BpmPoint* previousBpmPoint = static_Chart->GetPreviousBpmPointFromTimePoint(GetCursorTime()))
     {
         Time deltaTime = abs(previousBpmPoint->TimePoint - cursorTime);
@@ -392,6 +413,32 @@ void BpmEditMode::DisplayBpmNode(BpmPoint& InBpmPoint, const int InScreenX, cons
         if(ImGui::Button("-1 MS"))
             InBpmPoint.TimePoint--;
     }
+
+	ImGui::End();
+}
+
+void BpmEditMode::DisplayStopNode(StopPoint& InStop, const int InScreenX, const int InScreenY, const bool InIsPinned)
+{
+    ImGuiWindowFlags windowFlags = 0;
+	windowFlags |= ImGuiWindowFlags_NoTitleBar;
+	windowFlags |= ImGuiWindowFlags_NoMove;
+	windowFlags |= ImGuiWindowFlags_NoResize;
+	windowFlags |= ImGuiWindowFlags_NoCollapse;
+	windowFlags |= ImGuiWindowFlags_AlwaysAutoResize;
+	windowFlags |= ImGuiWindowFlags_NoScrollbar;
+
+	bool open = true;
+
+	ImGui::SetNextWindowPos({ float(InScreenX), float(InScreenY) });
+	ImGui::Begin(std::to_string(reinterpret_cast<intptr_t>(&InStop)).c_str(), &open, windowFlags);
+
+	ImGui::Text("Stop");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(96);
+
+    float len = float(InStop.Length);
+	ImGui::DragFloat("s", &len, 0.01f, 0.0f, 100.0f);
+	InStop.Length = double(len);
 
 	ImGui::End();
 }

@@ -23,6 +23,7 @@ private:
 	void PlaceTimePoint();
 
 	void DisplayBpmNode(BpmPoint& InBpmPoint, const int InScreenX, const int InScreenY, const bool InIsPinned = false);
+    void DisplayStopNode(StopPoint& InStop, const int InScreenX, const int InScreenY, const bool InIsPinned = false);
 
 	Time GetCursorTime();
 
@@ -36,6 +37,12 @@ private:
 	BpmPoint* _NextBpmPoint = nullptr;
 
 	BpmPoint* _PinnedBpmPoint = nullptr;
+
+    std::vector<StopPoint*>* _VisibleStops = nullptr;
+    StopPoint* _HoveredStop = nullptr;
+    StopPoint* _MovableStop = nullptr;
+    StopPoint _MovableStopInitialValue;
+    StopPoint* _PinnedStop = nullptr;
 
     std::vector<long long> _TapTimes;
     float _TappedBPM = 0.0f;

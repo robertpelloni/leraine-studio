@@ -126,12 +126,44 @@ int TestStops()
     return 0;
 }
 
+int TestStopEditing()
+{
+    Chart chart;
+    chart.InjectStop(1000, 2.0);
+
+    // Test Move
+    StopPoint* s = chart.GetStopsRelatedToTimeRange(0, 2000)[0];
+    StopPoint initial = *s;
+    chart.MoveStop(initial, 1500); // Move to 1500
+
+    auto stops = chart.GetStopsRelatedToTimeRange(0, 2000);
+    ASSERT(stops.size() == 1);
+    ASSERT(stops[0]->TimePoint == 1500);
+    ASSERT(stops[0]->Length == 2.0);
+
+    // Test Revaluate (In-Place)
+    StopPoint initial2 = *stops[0];
+    stops[0]->TimePoint = 1800;
+
+    chart.RevaluateStop(initial2, *stops[0]);
+    stops = chart.GetStopsRelatedToTimeRange(0, 2000);
+    ASSERT(stops[0]->TimePoint == 1800);
+
+    // Test Remove
+    chart.RemoveStop(*stops[0]);
+    stops = chart.GetStopsRelatedToTimeRange(0, 2000);
+    ASSERT(stops.empty());
+
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
     TEST(TestStreamGen);
     TEST(TestNewTypes);
     TEST(TestStops);
+    TEST(TestStopEditing);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
