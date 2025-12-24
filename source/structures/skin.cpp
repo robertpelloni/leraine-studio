@@ -49,7 +49,7 @@ void Skin::LoadResources(const int InKeyAmount, const std::filesystem::path& InS
 
 		if (_HasOverlay = !!std::ifstream(subPath))
 			NoteOverlayTextures[key].loadFromFile(subPath.make_preferred().string());
-	
+
 		subPath = path;
 		subPath /= "column_" + std::to_string(key + 1) + "_holdbody.png";
 
@@ -94,6 +94,21 @@ void Skin::RenderNote(const int InColumn, const int InPositionY, sf::RenderTarge
 	InOutRenderTarget->draw(NoteSprite);
 }
 
+void Skin::RenderMine(const int InColumn, const int InPositionY, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
+{
+    // Use Note texture but tinted red
+    sf::Color color = sf::Color(255, 0, 0, InAlpha);
+    NoteSprite.setColor(color);
+
+    // Fallback to NoteTexture
+    NoteSprite.setTexture(NoteTextures[InColumn]);
+    NoteSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().x,
+                        (float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().y);
+
+    NoteSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
+    InOutRenderTarget->draw(NoteSprite);
+}
+
 void Skin::RenderHoldBody(const int InColumn, const int InPositionY, const int InHeight, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
 {
 	sf::Color color = {255, 255, 255, 255};
@@ -104,22 +119,102 @@ void Skin::RenderHoldBody(const int InColumn, const int InPositionY, const int I
 	HoldBodySprite.setTexture(HoldBodyTextures[InColumn]);
 	HoldBodySprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)HoldBodyTextures[InColumn].getSize().x,
 							(float)(std::max(0, InHeight - int(_TimefieldMetrics.ColumnSize / 2))) / (float)HoldBodyTextures[InColumn].getSize().y);
-	
+
 	HoldBodySprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY);
 	InOutRenderTarget->draw(HoldBodySprite);
 }
 
 void Skin::RenderHoldCap(const int InColumn, const int InPositionY, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
-{	
+{
 	sf::Color color = {255, 255, 255, 255};
 	color.a = InAlpha;
-	
+
 	HoldCapSprite.setColor(color);
 
 	HoldCapSprite.setTexture(HoldBodyCapTextures[InColumn]);
 	HoldCapSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)HoldBodyCapTextures[InColumn].getSize().x,
 						   (float)_TimefieldMetrics.ColumnSize / (float)HoldBodyCapTextures[InColumn].getSize().y);
-	
+
+	HoldCapSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
+	InOutRenderTarget->draw(HoldCapSprite);
+}
+
+void Skin::RenderLift(const int InColumn, const int InPositionY, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
+{
+    // Gray tint for Lift
+    sf::Color color = sf::Color(192, 192, 192, InAlpha);
+    NoteSprite.setColor(color);
+
+    NoteSprite.setTexture(NoteTextures[InColumn]);
+    NoteSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().x,
+                        (float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().y);
+
+    NoteSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
+    InOutRenderTarget->draw(NoteSprite);
+
+    if (!_HasOverlay)
+		return;
+
+    NoteSprite.setColor(sf::Color(255, 255, 255, InAlpha));
+    NoteSprite.setTexture(NoteOverlayTextures[InColumn]);
+    NoteSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().x,
+        (float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().y);
+    NoteSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
+    InOutRenderTarget->draw(NoteSprite);
+}
+
+void Skin::RenderFake(const int InColumn, const int InPositionY, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
+{
+    // Darker/Ghostly for Fake
+    sf::Color color = sf::Color(100, 100, 100, InAlpha);
+    NoteSprite.setColor(color);
+
+    NoteSprite.setTexture(NoteTextures[InColumn]);
+    NoteSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().x,
+                        (float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().y);
+
+    NoteSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
+    InOutRenderTarget->draw(NoteSprite);
+
+    if (!_HasOverlay)
+		return;
+
+    NoteSprite.setColor(sf::Color(150, 150, 150, InAlpha));
+    NoteSprite.setTexture(NoteOverlayTextures[InColumn]);
+    NoteSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().x,
+        (float)_TimefieldMetrics.ColumnSize / (float)NoteTextures[InColumn].getSize().y);
+    NoteSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
+    InOutRenderTarget->draw(NoteSprite);
+}
+
+void Skin::RenderRollBody(const int InColumn, const int InPositionY, const int InHeight, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
+{
+    // Green tint for Roll
+	sf::Color color = {0, 255, 0, 255};
+	color.a = InAlpha;
+
+	HoldBodySprite.setColor(color);
+
+	HoldBodySprite.setTexture(HoldBodyTextures[InColumn]);
+	HoldBodySprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)HoldBodyTextures[InColumn].getSize().x,
+							(float)(std::max(0, InHeight - int(_TimefieldMetrics.ColumnSize / 2))) / (float)HoldBodyTextures[InColumn].getSize().y);
+
+	HoldBodySprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY);
+	InOutRenderTarget->draw(HoldBodySprite);
+}
+
+void Skin::RenderRollCap(const int InColumn, const int InPositionY, sf::RenderTarget* InOutRenderTarget, const sf::Int8 InAlpha)
+{
+    // Green tint for Roll
+	sf::Color color = {0, 255, 0, 255};
+	color.a = InAlpha;
+
+	HoldCapSprite.setColor(color);
+
+	HoldCapSprite.setTexture(HoldBodyCapTextures[InColumn]);
+	HoldCapSprite.setScale((float)_TimefieldMetrics.ColumnSize / (float)HoldBodyCapTextures[InColumn].getSize().x,
+						   (float)_TimefieldMetrics.ColumnSize / (float)HoldBodyCapTextures[InColumn].getSize().y);
+
 	HoldCapSprite.setPosition(_TimefieldMetrics.FirstColumnPosition + InColumn * _TimefieldMetrics.ColumnSize, InPositionY - _TimefieldMetrics.ColumnSize);
 	InOutRenderTarget->draw(HoldCapSprite);
 }
@@ -133,7 +228,7 @@ void Skin::RenderHoldCap(const int InColumn, const int InPositionY, sf::RenderTa
 // 	InOutRenderTarget->draw(HitlineSprite);
 // }
 
-void Skin::RenderReceptors(sf::RenderTarget* InRenderTarget, const int InBeatSnap) 
+void Skin::RenderReceptors(sf::RenderTarget* InRenderTarget, const int InBeatSnap)
 {
 	for(int column = 0; column <= _TimefieldMetrics.KeyAmount; ++column)
 		RenderNote(column, _TimefieldMetrics.HitLinePosition +_TimefieldMetrics.ColumnSize / 2, InRenderTarget, InBeatSnap, 96);
@@ -142,7 +237,7 @@ void Skin::RenderReceptors(sf::RenderTarget* InRenderTarget, const int InBeatSna
 void Skin::RenderTimeFieldBackground(sf::RenderTarget* InOutRenderTarget)
 {
 	sf::RectangleShape rectangle;
-	
+
 	rectangle.setPosition(_TimefieldMetrics.LeftSidePosition, 0);
 	rectangle.setSize({ float(_TimefieldMetrics.FieldWidth), float(InOutRenderTarget->getView().getSize().y) });
 	rectangle.setFillColor(sf::Color(0, 0, 0, 255));
@@ -164,7 +259,7 @@ void Skin::RenderTimeFieldBackground(sf::RenderTarget* InOutRenderTarget)
 	}
 }
 
-void Skin::UpdateTimefieldMetrics(const TimefieldMetrics& InTimefieldMetrics) 
+void Skin::UpdateTimefieldMetrics(const TimefieldMetrics& InTimefieldMetrics)
 {
 	_TimefieldMetrics = InTimefieldMetrics;
 }
@@ -179,7 +274,7 @@ void Skin::ResetTexturesAndSprites()
 		HoldBodyTextures[i] = sf::Texture();
 		HoldBodyCapTextures[i] = sf::Texture();
 	}
-	
+
 	SelectTexture = sf::Texture();
 	// HitlineTexture = sf::Texture();
 

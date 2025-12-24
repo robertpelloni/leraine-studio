@@ -39,6 +39,7 @@ public: //edit-mode overrides
     bool OnConvertToHolds(Time Length) override;
     bool OnConvertToTaps() override;
     bool OnMoveAllNotes(Time Offset);
+    bool OnInvertSelection();
     bool OnUndo();
     bool OnRedo();
 	bool OnDelete() override;

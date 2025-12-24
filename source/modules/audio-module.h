@@ -37,6 +37,9 @@ public:
     void InitMetronome();
     void PlayMetronomeTick();
 
+    void InitHitsound();
+    void PlayHitsound();
+
 	[[nodiscard]] WaveFormData* GenerateAndGetWaveformData(const std::filesystem::path& InPath);
 
 	bool UsePitch = true;
@@ -63,4 +66,5 @@ private:
 
 	HSAMPLE _StreamHandle; // Handle for open stream
     HSAMPLE _MetronomeSample = 0;
+    HSAMPLE _HitsoundSample = 0;
 };

@@ -1,6 +1,6 @@
 #include "timefield-render-graph.h"
 
-void TimefieldRenderGraph::Render(std::function<void(const NoteRenderCommand&)> InWork) 
+void TimefieldRenderGraph::Render(std::function<void(const NoteRenderCommand&)> InWork)
 {
     for(auto& renderCommand : _NoteRenderCommands)
     {
@@ -8,7 +8,7 @@ void TimefieldRenderGraph::Render(std::function<void(const NoteRenderCommand&)> 
     }
 }
 
-void TimefieldRenderGraph::Render(std::function<void(const TimefieldRenderCommand&)> InWork) 
+void TimefieldRenderGraph::Render(std::function<void(const TimefieldRenderCommand&)> InWork)
 {
     for(auto& timefieldCommand : _TimefieldRenderCommands)
     {
@@ -16,13 +16,13 @@ void TimefieldRenderGraph::Render(std::function<void(const TimefieldRenderComman
     }
 }
 
-void TimefieldRenderGraph::ClearRenderCommands() 
+void TimefieldRenderGraph::ClearRenderCommands()
 {
     _TimefieldRenderCommands.clear();
-    _NoteRenderCommands.clear();    
+    _NoteRenderCommands.clear();
 }
 
-void TimefieldRenderGraph::SubmitCommonNoteRenderCommand(const Column InColumn, const Time InTime, const int InBeatSnap, const sf::Int8 InAlpha) 
+void TimefieldRenderGraph::SubmitCommonNoteRenderCommand(const Column InColumn, const Time InTime, const int InBeatSnap, const sf::Int8 InAlpha)
 {
     Note note;
 
@@ -56,23 +56,46 @@ void TimefieldRenderGraph::SubmitHoldNoteRenderCommand(const Column InColumn, co
     SubmitNoteRenderCommand(holdEnd, InColumn, InAlpha);
 }
 
-void TimefieldRenderGraph::SubmitNoteRenderCommand(const Note& InNote, const Column InColumn, const sf::Int8 InAlpha) 
+void TimefieldRenderGraph::SubmitRollNoteRenderCommand(const Column InColumn, const Time InTimeBegin, const Time InTimeEnd, const int InBeatSnapBegin, const int InBeatSnapEnd, const sf::Int8 InAlpha)
+{
+    Note rollBegin;
+
+    rollBegin.Type = Note::EType::RollBegin;
+    rollBegin.TimePoint = InTimeBegin;
+    rollBegin.TimePointBegin = InTimeBegin;
+    rollBegin.TimePointEnd = InTimeEnd;
+    rollBegin.BeatSnap = InBeatSnapBegin;
+
+    SubmitNoteRenderCommand(rollBegin, InColumn, InAlpha);
+
+    Note rollEnd;
+
+    rollEnd.Type = Note::EType::RollEnd;
+    rollEnd.TimePoint = InTimeEnd;
+    rollEnd.TimePointBegin = InTimeBegin;
+    rollEnd.TimePointEnd = InTimeEnd;
+    rollEnd.BeatSnap = InBeatSnapEnd;
+
+    SubmitNoteRenderCommand(rollEnd, InColumn, InAlpha);
+}
+
+void TimefieldRenderGraph::SubmitNoteRenderCommand(const Note& InNote, const Column InColumn, const sf::Int8 InAlpha)
 {
     _NoteRenderCommands.emplace_back(InNote, InColumn, InAlpha);
 }
 
-void TimefieldRenderGraph::SubmitTimefieldRenderCommand(const Column InColumn, const Time InTime, const std::function<void(sf::RenderTarget* const, const TimefieldMetrics&, int, int)>& InRenderWork) 
+void TimefieldRenderGraph::SubmitTimefieldRenderCommand(const Column InColumn, const Time InTime, const std::function<void(sf::RenderTarget* const, const TimefieldMetrics&, int, int)>& InRenderWork)
 {
     _TimefieldRenderCommands.emplace_back(InColumn, InTime, InRenderWork);
 }
 
-TimefieldRenderGraph::TimefieldRenderGraph() 
+TimefieldRenderGraph::TimefieldRenderGraph()
 {
     _NoteRenderCommands.reserve(10000);
     _TimefieldRenderCommands.reserve(10000);
 }
 
-NoteRenderCommand::NoteRenderCommand(const Note& InNote, const Column InColumn, const sf::Int8 InAlpha) 
+NoteRenderCommand::NoteRenderCommand(const Note& InNote, const Column InColumn, const sf::Int8 InAlpha)
     : RenderNote(InNote), NoteColumn(InColumn), Alpha(InAlpha)
 { }
 

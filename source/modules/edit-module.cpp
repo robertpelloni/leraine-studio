@@ -76,6 +76,25 @@ bool EditModule::OnMoveAllNotes(Time Offset)
     return true;
 }
 
+bool EditModule::OnInvertSelection()
+{
+    // Need to access SelectEditMode or implement selection logic here?
+    // EditModule manages _SelectedEditMode.
+    // If SelectEditMode is active, call it.
+    if (IsEditModeActive<SelectEditMode>())
+    {
+        // Actually, SelectEditMode does not have OnInvertSelection in base EditMode.
+        // We can cast or add it to EditMode interface.
+        // Or implement it here using GetSelection?
+
+        // Easier: Just add to EditMode interface (virtual bool OnInvertSelection() { return false; })
+        // But for now, let's cast.
+        ((SelectEditMode*)_EditModes[_SelectedEditMode])->OnInvertSelection();
+        return true;
+    }
+    return false;
+}
+
 bool EditModule::OnUndo()
 {
     return static_Chart->Undo();

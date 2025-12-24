@@ -126,6 +126,25 @@ void Program::InnerTick()
         _LastTickTime = currentTime;
     }
 
+    // Assist Tick Logic
+    if (_AssistTickEnabled)
+    {
+        Time currentTime = MOD(AudioModule).GetTimeMilliSeconds();
+        if (_LastAssistTickTime != 0 && currentTime > _LastAssistTickTime)
+        {
+             bool play = false;
+             // Check notes slightly broader to catch frame misses? No, IterateNotesInTimeRange is inclusive?
+             // Need to check implementation.
+             SelectedChart->IterateNotesInTimeRange(_LastAssistTickTime, currentTime, [&](Note& n, Column c){
+                 if (n.TimePoint > _LastAssistTickTime && n.TimePoint <= currentTime)
+                     play = true;
+             });
+
+             if (play) MOD(AudioModule).PlayHitsound();
+        }
+        _LastAssistTickTime = currentTime;
+    }
+
 	SelectedChart->IterateNotesInTimeRange(WindowTimeBegin - TIMESLICE_LENGTH, WindowTimeEnd, [this](Note &InNote, const Column InColumn) {
 		sf::Int8 alpha = 255;
 
@@ -228,6 +247,9 @@ void Program::MenuBar()
 
 			if (MOD(ShortcutMenuModule).MenuItem("Select All", sf::Keyboard::Key::LControl, sf::Keyboard::Key::A))
 				MOD(EditModule).OnSelectAll();
+
+            if (MOD(ShortcutMenuModule).MenuItem("Invert Selection", sf::Keyboard::Key::LControl, sf::Keyboard::Key::I))
+                MOD(EditModule).OnInvertSelection();
 
 			MOD(ShortcutMenuModule).Separator();
 
@@ -373,6 +395,7 @@ void Program::MenuBar()
 			}
 
             ImGui::Checkbox("Metronome", &_MetronomeEnabled);
+            ImGui::Checkbox("Assist Tick", &_AssistTickEnabled);
 
 			ImGui::EndMenu();
 		}

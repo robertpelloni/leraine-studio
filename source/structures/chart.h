@@ -29,6 +29,12 @@ struct Note
 		HoldBegin,
 		HoldIntermediate,
 		HoldEnd,
+        Mine,
+        RollBegin,
+        RollIntermediate,
+        RollEnd,
+        Lift,
+        Fake,
 
 		COUNT
 	} Type;
@@ -59,6 +65,19 @@ struct ScrollVelocityMultiplier
 	double Multiplier;
 };
 
+struct StopPoint
+{
+    Time TimePoint;
+    double Length; // Seconds (StepMania standard) or MS? Standardize on MS internally?
+    // StepMania uses Seconds. Let's use Seconds to distinguish from Length in Time (which is int).
+    // Or simpler, double Seconds.
+
+    bool operator==(const StopPoint& InOther)
+    {
+        return (TimePoint == InOther.TimePoint);
+    }
+};
+
 struct TimeSlice
 {
 	Time TimePoint;
@@ -68,6 +87,7 @@ struct TimeSlice
 	std::map<Column, std::vector<Note>> Notes;
 
 	std::vector<BpmPoint> BpmPoints;
+    std::vector<StopPoint> Stops;
 	std::vector<ScrollVelocityMultiplier> SvMultipliers;
 };
 
@@ -163,7 +183,9 @@ public: //accessors
 
 	Note& InjectNote(const Time InTime, const Column InColumn, const Note::EType InNoteType, const Time InTimeBegin = -1, const Time InTimeEnd = -1, const int InBeatSnap = -1, const bool InSkipOnModified = false);
 	Note& InjectHold(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn,  const int InBeatSnapBegin = -1, const int InBeatSnapEnd = -1, const bool InSkipOnModified = false);
+    Note& InjectRoll(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn,  const int InBeatSnapBegin = -1, const int InBeatSnapEnd = -1, const bool InSkipOnModified = false);
 	BpmPoint* InjectBpmPoint(const Time InTime, const double InBpm, const double InBeatLength);
+    StopPoint* InjectStop(const Time InTime, const double Length);
 
 	Note* MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap);
 	Note* FindNote(const Time InTime, const Column InColumn);
@@ -185,6 +207,7 @@ public: //accessors
 
 	void IterateAllNotes(std::function<void(Note&, const Column)> InWork);
 	void IterateAllBpmPoints(std::function<void(BpmPoint&)> InWork);
+    void IterateAllStops(std::function<void(StopPoint&)> InWork);
 
 	std::vector<BpmPoint*>& GetBpmPointsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
 	BpmPoint* GetPreviousBpmPointFromTimePoint(const Time InTime);

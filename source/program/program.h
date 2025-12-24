@@ -53,5 +53,7 @@ private: //meta data ownership
 
 	bool _ShouldExitProgram = false;
     bool _MetronomeEnabled = false;
+    bool _AssistTickEnabled = false;
     Time _LastTickTime = 0;
+    Time _LastAssistTickTime = 0;
 };

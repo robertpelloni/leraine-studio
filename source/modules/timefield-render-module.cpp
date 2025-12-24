@@ -13,26 +13,26 @@ bool TimefieldRenderModule::StartUp()
 	return true;
 }
 
-bool TimefieldRenderModule::Tick(const float& InDeltaTime) 
+bool TimefieldRenderModule::Tick(const float& InDeltaTime)
 {
 	_Skin.UpdateTimefieldMetrics(_TimefieldMetrics);
 
 	return true;
 }
 
-bool TimefieldRenderModule::RenderBack(sf::RenderTarget* const InOutRenderTarget) 
+bool TimefieldRenderModule::RenderBack(sf::RenderTarget* const InOutRenderTarget)
 {
 	_Skin.RenderTimeFieldBackground(InOutRenderTarget);
 
 	return true;
 }
 
-bool TimefieldRenderModule::RenderFront(sf::RenderTarget* const InOutRenderTarget) 
+bool TimefieldRenderModule::RenderFront(sf::RenderTarget* const InOutRenderTarget)
 {
 	return false;
 }
 
-void TimefieldRenderModule::RenderTimefieldGraph(sf::RenderTarget* const InOutRenderTarget, TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTime, const float InZoomLevel, const bool InRegisterToOnscreenNotes) 
+void TimefieldRenderModule::RenderTimefieldGraph(sf::RenderTarget* const InOutRenderTarget, TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTime, const float InZoomLevel, const bool InRegisterToOnscreenNotes)
 {
 	if(InRegisterToOnscreenNotes)
 		_OnScreenNotes.clear();
@@ -59,6 +59,18 @@ void TimefieldRenderModule::RenderTimefieldGraph(sf::RenderTarget* const InOutRe
 
 				_Skin.RenderHoldBody(column, endY + _TimefieldMetrics.NoteScreenPivot, height, &_HoldRenderLayer, InNoteRenderCommand.Alpha);
 			}
+			break;
+
+		case Note::EType::RollBegin:
+		case Note::EType::RollIntermediate:
+		case Note::EType::RollEnd:
+			{
+				int endY = GetScreenPointFromTime(note.TimePointEnd, InTime, InZoomLevel) - _TimefieldMetrics.ColumnSize / 2;
+				int height = GetScreenPointFromTime(note.TimePointBegin, InTime, InZoomLevel) - endY;
+
+				_Skin.RenderRollBody(column, endY + _TimefieldMetrics.NoteScreenPivot, height, &_HoldRenderLayer, InNoteRenderCommand.Alpha);
+			}
+			break;
 		}
 
 		//common pass
@@ -71,6 +83,26 @@ void TimefieldRenderModule::RenderTimefieldGraph(sf::RenderTarget* const InOutRe
 
 		case Note::EType::HoldEnd:
 			_Skin.RenderHoldCap(column, y, &_HoldRenderLayer, InNoteRenderCommand.Alpha);
+			break;
+
+		case Note::EType::RollBegin:
+			_Skin.RenderNote(column, y, &_NoteRenderLayer, note.BeatSnap, InNoteRenderCommand.Alpha);
+			break;
+
+		case Note::EType::RollEnd:
+			_Skin.RenderRollCap(column, y, &_HoldRenderLayer, InNoteRenderCommand.Alpha);
+			break;
+
+		case Note::EType::Mine:
+			_Skin.RenderMine(column, y, &_NoteRenderLayer, InNoteRenderCommand.Alpha);
+			break;
+
+		case Note::EType::Lift:
+			_Skin.RenderLift(column, y, &_NoteRenderLayer, InNoteRenderCommand.Alpha);
+			break;
+
+		case Note::EType::Fake:
+			_Skin.RenderFake(column, y, &_NoteRenderLayer, InNoteRenderCommand.Alpha);
 			break;
 		}
 
@@ -120,17 +152,17 @@ sf::RenderTexture* const TimefieldRenderModule::GetRenderedTimefieldGraphSegment
 	return &_ResultingSegmentedRenderTexture;
 }
 
-void TimefieldRenderModule::RenderBeatLine(sf::RenderTarget* const InOutRenderTarget, const Time InBeatTimePoint, const int InBeatSnap, const Time InTime, const float InZoomLevel) 
+void TimefieldRenderModule::RenderBeatLine(sf::RenderTarget* const InOutRenderTarget, const Time InBeatTimePoint, const int InBeatSnap, const Time InTime, const float InZoomLevel)
 {
 	sf::RectangleShape line(sf::Vector2f(_TimefieldMetrics.FieldWidth, 1));
 	line.setPosition(_TimefieldMetrics.LeftSidePosition, GetScreenPointFromTime(InBeatTimePoint, InTime, InZoomLevel));
-	
+
 	line.setFillColor(_Skin.SnapColorTable[InBeatSnap]);
 
 	InOutRenderTarget->draw(line);
 }
 
-void TimefieldRenderModule::RenderReceptors(sf::RenderTarget* const InOutRenderTarget, const int InBeatSnap) 
+void TimefieldRenderModule::RenderReceptors(sf::RenderTarget* const InOutRenderTarget, const int InBeatSnap)
 {
 	_Skin.RenderReceptors(InOutRenderTarget, InBeatSnap);
 }
@@ -170,10 +202,10 @@ Time TimefieldRenderModule::GetWindowTimePointEnd(const Time InTime, const float
 	return GetTimeFromScreenPoint(0, InTime, InZoomLevel);
 }
 
-Column TimefieldRenderModule::GetColumnFromScreenPoint(const int InScreenPointX) 
+Column TimefieldRenderModule::GetColumnFromScreenPoint(const int InScreenPointX)
 {
 	int inputX = InScreenPointX - _TimefieldMetrics.ColumnSize;
-	
+
 	const int leftBorder = _WindowMetrics.MiddlePoint - _TimefieldMetrics.NoteFieldWidthHalf;
 	const int rightBorder = _WindowMetrics.MiddlePoint + _TimefieldMetrics.NoteFieldWidthHalf;
 
@@ -194,7 +226,7 @@ Column TimefieldRenderModule::GetColumnFromScreenPoint(const int InScreenPointX)
 	return  _TimefieldMetrics.KeyAmount - 1;
 }
 
-void TimefieldRenderModule::GetOverlappedOnScreenNotes(const Column InColumn, const int InScreenPointY, std::vector<const Note*>& OutNoteCollection) 
+void TimefieldRenderModule::GetOverlappedOnScreenNotes(const Column InColumn, const int InScreenPointY, std::vector<const Note*>& OutNoteCollection)
 {
 	for(auto& onScreenNote : _OnScreenNotes)
 	{
@@ -208,17 +240,17 @@ void TimefieldRenderModule::GetOverlappedOnScreenNotes(const Column InColumn, co
 	}
 }
 
-Skin& TimefieldRenderModule::GetSkin() 
+Skin& TimefieldRenderModule::GetSkin()
 {
 	return _Skin;
 }
 
-const TimefieldMetrics& TimefieldRenderModule::GetTimefieldMetrics() 
+const TimefieldMetrics& TimefieldRenderModule::GetTimefieldMetrics()
 {
 	return _TimefieldMetrics;
 }
 
-void TimefieldRenderModule::InitializeResources(const int InKeyAmount, const std::filesystem::path& InSkinFolderPath) 
+void TimefieldRenderModule::InitializeResources(const int InKeyAmount, const std::filesystem::path& InSkinFolderPath)
 {
 	_KeyAmount = InKeyAmount;
 
@@ -227,7 +259,7 @@ void TimefieldRenderModule::InitializeResources(const int InKeyAmount, const std
 
 	_TimefieldMetrics.FieldWidth = _TimefieldMetrics.ColumnSize * _TimefieldMetrics.KeyAmount + _TimefieldMetrics.SideSpace * 2;
 	_TimefieldMetrics.FieldWidthHalf = _TimefieldMetrics.FieldWidth / 2;
-	
+
 	_TimefieldMetrics.NoteFieldWidth = _TimefieldMetrics.ColumnSize * _TimefieldMetrics.KeyAmount;
 	_TimefieldMetrics.NoteFieldWidthHalf = _TimefieldMetrics.FieldWidth / 2;
 
@@ -236,7 +268,7 @@ void TimefieldRenderModule::InitializeResources(const int InKeyAmount, const std
 	_Skin.LoadResources(InKeyAmount, InSkinFolderPath);
 }
 
-void TimefieldRenderModule::UpdateMetrics(const WindowMetrics& InWindowMetrics) 
+void TimefieldRenderModule::UpdateMetrics(const WindowMetrics& InWindowMetrics)
 {
 	_WindowMetrics = InWindowMetrics;
 

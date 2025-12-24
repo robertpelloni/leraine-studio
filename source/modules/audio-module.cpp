@@ -286,6 +286,34 @@ void AudioModule::PlayMetronomeTick()
     }
 }
 
+void AudioModule::InitHitsound()
+{
+    if (_HitsoundSample) return;
+
+    // Generate a noise burst (clap-like)
+    int length = 44100 / 20; // 50ms
+    short* data = new short[length];
+    for (int i = 0; i < length; ++i)
+    {
+        // Simple decay noise
+        float decay = 1.0f - (float)i / (float)length;
+        short noise = (rand() % 20000 - 10000);
+        data[i] = (short)(noise * decay);
+    }
+
+    _HitsoundSample = BASS_SampleCreate(length, 44100, 1, 1, BASS_SAMPLE_OVER_POS);
+    BASS_SampleSetData(_HitsoundSample, data);
+    delete[] data;
+}
+
+void AudioModule::PlayHitsound()
+{
+    if (!_HitsoundSample) InitHitsound();
+
+    HCHANNEL ch = BASS_SampleGetChannel(_HitsoundSample, FALSE);
+    BASS_ChannelPlay(ch, FALSE);
+}
+
 WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::path& InPath)
 {
 	HSTREAM decoder = BASS_StreamCreateFile(FALSE, InPath.string().c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE);

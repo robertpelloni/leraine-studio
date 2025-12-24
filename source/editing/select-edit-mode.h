@@ -30,6 +30,7 @@ public:
 	bool OnDelete() override;
     bool GetSelectionRange(Time& OutStart, Time& OutEnd) override;
 	bool OnSelectAll() override;
+    void OnInvertSelection();
 
 	void OnReset() override;
 	void Tick() override;

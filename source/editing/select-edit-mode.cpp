@@ -27,6 +27,14 @@ bool SelectEditMode::OnCopy()
                 }
                 break;
 
+                case Note::EType::Mine:
+                {
+                    noteSegment += "M";
+                    noteSegment += std::to_string(column) + "|";
+                    noteSegment += std::to_string(selectedNote->TimePoint) + ";";
+                }
+                break;
+
                 case Note::EType::HoldBegin:
                 {
                     noteSegment += "H";
@@ -85,7 +93,9 @@ bool SelectEditMode::OnPaste()
             switch (character)
             {
             case 'N':
+            case 'M':
             {
+                char type = character;
                 character = clipboard[++index];
 
                 std::string parsedColumn;
@@ -98,7 +108,7 @@ bool SelectEditMode::OnPaste()
                 while(character != ';')
                     character = clipboard[++index], parsedTimePoint += character;
 
-                note.Type = Note::EType::Common;
+                note.Type = (type == 'M') ? Note::EType::Mine : Note::EType::Common;
                 note.TimePoint = std::stoi(parsedTimePoint);
 
                 _LowestPasteTimePoint = std::min( _LowestPasteTimePoint, note.TimePoint);
@@ -273,6 +283,28 @@ bool SelectEditMode::OnSelectAll()
     return true;
 }
 
+void SelectEditMode::OnInvertSelection()
+{
+    // Collect currently selected pointers
+    std::unordered_set<Note*> selectedSet;
+    for(auto& [col, notes] : _SelectedNotes.Notes)
+    {
+        for(auto* n : notes) selectedSet.insert(n);
+    }
+
+    _SelectedNotes.Clear();
+
+    // Iterate all notes, add if not in set
+    static_Chart->IterateAllNotes([&](Note& n, Column c) {
+        if(selectedSet.find(&n) == selectedSet.end())
+        {
+            _SelectedNotes.PushNote(c, &n);
+        }
+    });
+
+    PUSH_NOTIFICATION("Inverted Selection: %d Notes", _SelectedNotes.NoteAmount);
+}
+
 bool SelectEditMode::GetSelectionRange(Time& OutStart, Time& OutEnd)
 {
     if (_SelectedNotes.HasNotes)
@@ -432,7 +464,8 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
 
     static_Chart->IterateNotesInTimeRange(timeBegin, timeEnd, [this, &timeBegin, &timeEnd, &columnMin, &columnMax](Note& InOutNote, const Column& InColumn)
     {
-        if((InOutNote.Type == Note::EType::Common || InOutNote.Type == Note::EType::HoldBegin) && (InColumn >= columnMin && InColumn <= columnMax))
+        if((InOutNote.Type == Note::EType::Common || InOutNote.Type == Note::EType::Mine || InOutNote.Type == Note::EType::HoldBegin ||
+            InOutNote.Type == Note::EType::RollBegin || InOutNote.Type == Note::EType::Lift || InOutNote.Type == Note::EType::Fake) && (InColumn >= columnMin && InColumn <= columnMax))
             _SelectedNotes.PushNote(InColumn, &InOutNote);
     });
 
@@ -452,13 +485,22 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
 
             switch(note.Type)
             {
-                case Note::EType::Common:
-                    InOutTimefieldRenderGraph.SubmitCommonNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePoint - _LowestPasteTimePoint, note.BeatSnap, 128);
-                break;
-
                 case Note::EType::HoldBegin:
                     InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint,
                                                                                      static_Cursor.TimePoint + note.TimePointEnd   - _LowestPasteTimePoint, -1, -1, 128);
+                break;
+
+                case Note::EType::RollBegin:
+                    InOutTimefieldRenderGraph.SubmitRollNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint,
+                                                                                     static_Cursor.TimePoint + note.TimePointEnd   - _LowestPasteTimePoint, -1, -1, 128);
+                break;
+
+                default:
+                    {
+                         Note n = note;
+                         n.TimePoint = static_Cursor.TimePoint + note.TimePoint - _LowestPasteTimePoint;
+                         InOutTimefieldRenderGraph.SubmitNoteRenderCommand(n, newColumn, 128);
+                    }
                 break;
             }
         }
@@ -540,8 +582,22 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(column, _DraggingNote->TimePointBegin, timePoint, -1, -1, 128);
                 break;
 
+            case Note::EType::RollBegin:
+                InOutTimefieldRenderGraph.SubmitRollNoteRenderCommand(column, timePoint, _DraggingNote->TimePointEnd, -1, -1, 128);
+                break;
+
+            case Note::EType::RollEnd:
+                InOutTimefieldRenderGraph.SubmitRollNoteRenderCommand(column, _DraggingNote->TimePointBegin, timePoint, -1, -1, 128);
+                break;
+
             default:
-                InOutTimefieldRenderGraph.SubmitCommonNoteRenderCommand(column, timePoint, -1, 128);
+                {
+                    Note n;
+                    n.Type = _DraggingNote->Type;
+                    n.TimePoint = timePoint;
+                    n.BeatSnap = -1;
+                    InOutTimefieldRenderGraph.SubmitNoteRenderCommand(n, column, 128);
+                }
                 break;
             }
 

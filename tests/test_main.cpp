@@ -57,10 +57,81 @@ int TestStreamGen() {
     return 0;
 }
 
+int TestNewTypes() {
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Test Roll
+    chart.InjectRoll(1000, 2000, 0);
+    Note* rollHead = chart.FindNote(1000, 0);
+    ASSERT(rollHead != nullptr);
+    ASSERT(rollHead->Type == Note::EType::RollBegin);
+    ASSERT(rollHead->TimePointEnd == 2000);
+
+    Note* rollTail = chart.FindNote(2000, 0);
+    ASSERT(rollTail != nullptr);
+    ASSERT(rollTail->Type == Note::EType::RollEnd);
+
+    // Test Mine
+    chart.InjectNote(3000, 1, Note::EType::Mine);
+    Note* mine = chart.FindNote(3000, 1);
+    ASSERT(mine != nullptr);
+    ASSERT(mine->Type == Note::EType::Mine);
+
+    // Test Lift
+    chart.InjectNote(4000, 2, Note::EType::Lift);
+    Note* lift = chart.FindNote(4000, 2);
+    ASSERT(lift != nullptr);
+    ASSERT(lift->Type == Note::EType::Lift);
+
+    // Test Fake
+    chart.InjectNote(5000, 3, Note::EType::Fake);
+    Note* fake = chart.FindNote(5000, 3);
+    ASSERT(fake != nullptr);
+    ASSERT(fake->Type == Note::EType::Fake);
+
+    // Test Move Note with Roll
+    // Move Roll 1000->2000 to 1500->2000 (Resize)
+    chart.MoveNote(1000, 1500, 0, 0, -1);
+
+    // Verify old removed
+    ASSERT(chart.FindNote(1000, 0) == nullptr);
+
+    // Verify new exists
+    Note* newHead = chart.FindNote(1500, 0);
+    ASSERT(newHead != nullptr);
+    ASSERT(newHead->Type == Note::EType::RollBegin);
+    ASSERT(newHead->TimePointEnd == 2000);
+
+    Note* newTail = chart.FindNote(2000, 0);
+    ASSERT(newTail != nullptr);
+    ASSERT(newTail->Type == Note::EType::RollEnd);
+
+    return 0;
+}
+
+int TestStops()
+{
+    Chart chart;
+    chart.InjectStop(1000, 2.5); // 2.5 seconds
+    chart.InjectStop(2000, 1.0);
+
+    int count = 0;
+    chart.IterateAllStops([&](StopPoint& s){
+        if (s.TimePoint == 1000 && s.Length == 2.5) count++;
+        if (s.TimePoint == 2000 && s.Length == 1.0) count++;
+    });
+
+    ASSERT(count == 2);
+    return 0;
+}
+
 int main() {
     int result = 0;
-    result |= TestChartLogic();
-    result |= TestStreamGen();
+    TEST(TestChartLogic);
+    TEST(TestStreamGen);
+    TEST(TestNewTypes);
+    TEST(TestStops);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

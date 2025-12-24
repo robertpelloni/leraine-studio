@@ -14,8 +14,13 @@ struct Skin
 	void LoadResources(const int InKeyAmount, const std::filesystem::path& InSkinFolderPath);
 
 	void RenderNote(const int InColumn, const int InPositionY, sf::RenderTarget* InRenderTarget, const int InBeatSnap = -1, const sf::Int8 InAlpha = 255);
+    void RenderMine(const int InColumn, const int InPositionY, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
+    void RenderLift(const int InColumn, const int InPositionY, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
+    void RenderFake(const int InColumn, const int InPositionY, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
 	void RenderHoldBody(const int InColumn, const int InPositionY, const int InHeight, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
 	void RenderHoldCap(const int InColumn, const int InPositionY, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
+    void RenderRollBody(const int InColumn, const int InPositionY, const int InHeight, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
+    void RenderRollCap(const int InColumn, const int InPositionY, sf::RenderTarget* InRenderTarget, const sf::Int8 InAlpha = 255);
 
 	// void RenderHitline(sf::RenderTarget* InRenderTarget);
 	void RenderReceptors(sf::RenderTarget* InRenderTarget, const int InBeatSnap = -1);

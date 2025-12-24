@@ -27,6 +27,7 @@ void NoteReferenceCollection::PushNote(Column InColumn, Note* InNote)
 		break;
 
 	case Note::EType::HoldBegin:
+    case Note::EType::RollBegin:
 		TrySetMinMaxTime(InNote->TimePointEnd);
 		break;
 	}
@@ -99,12 +100,19 @@ void Chart::BulkPlaceNotes(const std::vector<std::pair<Column, Note>> &InNotes, 
 		switch (note.Type)
 		{
 		case Note::EType::Common:
+        case Note::EType::Mine:
+        case Note::EType::Lift:
+        case Note::EType::Fake:
 			InjectNote(note.TimePoint, column, note.Type, -1, -1, -1, InSkipOnModified);
 			break;
 
 		case Note::EType::HoldBegin:
 			InjectHold(note.TimePointBegin, note.TimePointEnd, column, -1, -1, InSkipOnModified);
 			break;
+
+        case Note::EType::RollBegin:
+            InjectRoll(note.TimePointBegin, note.TimePointEnd, column, -1, -1, InSkipOnModified);
+            break;
 		}
 	}
 }
@@ -182,7 +190,7 @@ void Chart::ScaleNotes(NoteReferenceCollection& OutNotes, float Factor)
 			// Reset beat snap as it likely changes (unless factor is integer, but safer to reset)
 			note.BeatSnap = -1;
 
-			if (note.Type == Note::EType::HoldBegin)
+			if (note.Type == Note::EType::HoldBegin || note.Type == Note::EType::RollBegin)
 			{
 				Time newEnd = pivotTime + (Time)((note.TimePointEnd - pivotTime) * Factor);
 				note.TimePointBegin = newTime;
@@ -234,7 +242,7 @@ void Chart::ReverseNotes(NoteReferenceCollection& OutNotes)
 			note.TimePoint = newTime;
 			note.BeatSnap = -1;
 
-			if (note.Type == Note::EType::HoldBegin)
+			if (note.Type == Note::EType::HoldBegin || note.Type == Note::EType::RollBegin)
 			{
 				// Hold end also flips
 				Time newStart = maxTime + minTime - note.TimePointEnd;
@@ -350,7 +358,7 @@ void Chart::MoveAllNotes(Time Offset)
     IterateAllNotes([&](Note& n, Column c){
         minTime = std::min(minTime, n.TimePoint);
         maxTime = std::max(maxTime, n.TimePoint);
-        if (n.Type == Note::EType::HoldBegin)
+        if (n.Type == Note::EType::HoldBegin || n.Type == Note::EType::RollBegin)
             maxTime = std::max(maxTime, n.TimePointEnd);
     });
 
@@ -371,7 +379,9 @@ void Chart::MoveAllNotes(Time Offset)
     std::vector<std::pair<Column, Note>> notes;
     IterateAllNotes([&](Note& n, Column c){
         // Only collect "Head" notes (Common, HoldBegin). Intermediates/Ends are handled by InjectHold.
-        if (n.Type == Note::EType::Common || n.Type == Note::EType::HoldBegin)
+        if (n.Type == Note::EType::Common || n.Type == Note::EType::HoldBegin ||
+            n.Type == Note::EType::RollBegin || n.Type == Note::EType::Mine ||
+            n.Type == Note::EType::Lift || n.Type == Note::EType::Fake)
         {
             notes.push_back({c, n});
         }
@@ -404,7 +414,7 @@ void Chart::MoveAllNotes(Time Offset)
     for (auto& [c, n] : notes)
     {
         n.TimePoint += Offset;
-        if (n.Type == Note::EType::HoldBegin)
+        if (n.Type == Note::EType::HoldBegin || n.Type == Note::EType::RollBegin)
         {
             n.TimePointBegin += Offset;
             n.TimePointEnd += Offset;
@@ -413,10 +423,12 @@ void Chart::MoveAllNotes(Time Offset)
         // Safety check for negative time?
         // Some games allow negative time (intro). Let's allow it.
 
-        if (n.Type == Note::EType::Common)
-            InjectNote(n.TimePoint, c, n.Type, -1, -1, -1, true);
-        else if (n.Type == Note::EType::HoldBegin)
+        if (n.Type == Note::EType::HoldBegin)
             InjectHold(n.TimePointBegin, n.TimePointEnd, c, -1, -1, true);
+        else if (n.Type == Note::EType::RollBegin)
+            InjectRoll(n.TimePointBegin, n.TimePointEnd, c, -1, -1, true);
+        else
+            InjectNote(n.TimePoint, c, n.Type, -1, -1, -1, true);
     }
 
     for (auto& b : bpms)
@@ -714,7 +726,7 @@ void Chart::QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor)
 				// We will leave -1 or try to derive it.
 				note.BeatSnap = -1;
 
-				if (note.Type == Note::EType::HoldBegin)
+				if (note.Type == Note::EType::HoldBegin || note.Type == Note::EType::RollBegin)
 				{
 					// Quantize end too? Yes usually.
 					// Or maintain length? ArrowVortex "Quantize" snaps both ends.
@@ -807,7 +819,8 @@ bool Chart::RemoveNote(const Time InTime, const Column InColumn, const bool InIg
 		return false;
 
 	//hold checks
-	if (InIgnoreHoldChecks == false && (noteIt->Type == Note::EType::HoldBegin || noteIt->Type == Note::EType::HoldEnd))
+	if (InIgnoreHoldChecks == false && (noteIt->Type == Note::EType::HoldBegin || noteIt->Type == Note::EType::HoldEnd ||
+                                        noteIt->Type == Note::EType::RollBegin || noteIt->Type == Note::EType::RollEnd))
 	{
 		Time holdTimeBegin = noteIt->TimePointBegin;
 		Time holdTimedEnd = noteIt->TimePointEnd;
@@ -927,6 +940,24 @@ Note &Chart::InjectHold(const Time InTimeBegin, const Time InTimeEnd, const Colu
 	return noteToReturn;
 }
 
+Note &Chart::InjectRoll(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn, const int InBeatSnapBegin, const int InBeatSnapEnd, const bool InSkipOnModified)
+{
+	Note &noteToReturn = InjectNote(InTimeBegin, InColumn, Note::EType::RollBegin, InTimeBegin, InTimeEnd, InBeatSnapBegin);
+
+	Time startTime = FindOrAddTimeSlice(InTimeBegin).TimePoint + TIMESLICE_LENGTH;
+	Time endTime = FindOrAddTimeSlice(InTimeEnd).TimePoint - TIMESLICE_LENGTH;
+
+	for (Time time = startTime; time <= endTime; time += TIMESLICE_LENGTH)
+	{
+		InjectNote(time, InColumn, Note::EType::RollIntermediate, InTimeBegin, InTimeEnd);
+	}
+
+	if(!InSkipOnModified)
+		InjectNote(InTimeEnd, InColumn, Note::EType::RollEnd, InTimeBegin, InTimeEnd, InBeatSnapEnd);
+
+	return noteToReturn;
+}
+
 BpmPoint *Chart::InjectBpmPoint(const Time InTime, const double InBpm, const double InBeatLength)
 {
 	auto &timeSlice = FindOrAddTimeSlice(InTime);
@@ -948,6 +979,24 @@ BpmPoint *Chart::InjectBpmPoint(const Time InTime, const double InBpm, const dou
 	return bpmPointPtr;
 }
 
+StopPoint* Chart::InjectStop(const Time InTime, const double Length)
+{
+	auto &timeSlice = FindOrAddTimeSlice(InTime);
+
+	StopPoint stop;
+	stop.TimePoint = InTime;
+	stop.Length = Length;
+
+	timeSlice.Stops.push_back(stop);
+
+	StopPoint *stopPtr = &(timeSlice.Stops.back());
+
+	std::sort(timeSlice.Stops.begin(), timeSlice.Stops.end(), [](const auto &lhs, const auto &rhs)
+			  { return lhs.TimePoint < rhs.TimePoint; });
+
+	return stopPtr;
+}
+
 Note *Chart::MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap)
 {
 	//have I mentioned that I really dislike handling edge-cases?
@@ -956,6 +1005,9 @@ Note *Chart::MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column I
 	switch (noteToRemove.Type)
 	{
 	case Note::EType::Common:
+    case Note::EType::Mine:
+    case Note::EType::Lift:
+    case Note::EType::Fake:
 	{
 		auto &timeSliceFrom = FindOrAddTimeSlice(InTimeFrom);
 		auto &timeSliceTo = FindOrAddTimeSlice(InTimeTo);
@@ -966,7 +1018,7 @@ Note *Chart::MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column I
 			RegisterTimeSliceHistoryRanged(InTimeFrom, InTimeTo);
 
 		RemoveNote(InTimeFrom, InColumnFrom, false, true);
-		return &(InjectNote(InTimeTo, InColumnTo, Note::EType::Common, -1, -1, InNewBeatSnap));
+		return &(InjectNote(InTimeTo, InColumnTo, noteToRemove.Type, -1, -1, InNewBeatSnap));
 	}
 	break;
 
@@ -994,6 +1046,33 @@ Note *Chart::MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column I
 		RemoveNote(InTimeFrom, InColumnFrom, false, true);
 
 		return &(InjectHold(noteToRemove.TimePointBegin, InTimeTo, InColumnTo, beatSnap));
+	}
+	break;
+
+    case Note::EType::RollBegin:
+	{
+		if (InTimeTo < noteToRemove.TimePointBegin)
+			RegisterTimeSliceHistoryRanged(InTimeTo - TIMESLICE_LENGTH, noteToRemove.TimePointEnd);
+		else
+			RegisterTimeSliceHistoryRanged(noteToRemove.TimePointBegin - TIMESLICE_LENGTH, noteToRemove.TimePointEnd);
+
+		RemoveNote(InTimeFrom, InColumnFrom, false, true);
+
+		return &(InjectRoll(InTimeTo, noteToRemove.TimePointEnd, InColumnTo, InNewBeatSnap));
+	}
+	break;
+	case Note::EType::RollEnd:
+	{
+		if (InTimeTo > noteToRemove.TimePointBegin)
+			RegisterTimeSliceHistoryRanged(noteToRemove.TimePointBegin, InTimeTo + TIMESLICE_LENGTH);
+		else
+			RegisterTimeSliceHistoryRanged(noteToRemove.TimePointBegin, noteToRemove.TimePointEnd + TIMESLICE_LENGTH);
+
+		int beatSnap = FindNote(noteToRemove.TimePointBegin, InColumnFrom)->BeatSnap;
+
+		RemoveNote(InTimeFrom, InColumnFrom, false, true);
+
+		return &(InjectRoll(noteToRemove.TimePointBegin, InTimeTo, InColumnTo, beatSnap));
 	}
 	break;
 
@@ -1233,6 +1312,17 @@ void Chart::IterateNotesInTimeRange(const Time InTimeBegin, const Time InTimeEnd
 				if (note.TimePoint >= InTimeBegin && note.TimePoint <= InTimeEnd)
 					InWork(note, column);
 			}
+		}
+	}
+}
+
+void Chart::IterateAllStops(std::function<void(StopPoint&)> InWork)
+{
+	for (auto &[ID, timeSlice] : TimeSlices)
+	{
+		for (auto &stop : timeSlice.Stops)
+		{
+			InWork(stop);
 		}
 	}
 }
