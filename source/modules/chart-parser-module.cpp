@@ -535,6 +535,8 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
                         }
                     }
                 }
+                else if (key == "BGCHANGES") chart->SmBgChanges = value;
+                else if (key == "FGCHANGES") chart->SmFgChanges = value;
 				else if (key == "NOTES")
 				{
 					inNotes = true;
@@ -936,8 +938,8 @@ void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& 
     }
 	ss << ";\n";
 
-	ss << "#BGCHANGES:;\n";
-	ss << "#FGCHANGES:;\n"; // Fixed typo key -> FGCHANGES
+	ss << "#BGCHANGES:" << InChart->SmBgChanges << ";\n";
+	ss << "#FGCHANGES:" << InChart->SmFgChanges << ";\n";
 
 	// 3. Convert Notes to Beat Positions
 	struct SmNote

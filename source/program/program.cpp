@@ -162,6 +162,9 @@ void Program::InnerRender(sf::RenderTarget *const InOutRenderTarget)
 	if (!SelectedChart)
 		return;
 
+    MOD(BackgroundModule).RenderBack(InOutRenderTarget);
+    MOD(TimefieldRenderModule).RenderBack(InOutRenderTarget);
+
 	if(Config.ShowWaveform)
 		MOD(WaveFormModule).RenderWaveForm(WaveformRenderGraph, WindowTimeBegin, WindowTimeEnd, MOD(TimefieldRenderModule).GetTimefieldMetrics().LeftSidePosition + MOD(TimefieldRenderModule).GetTimefieldMetrics().FieldWidthHalf, ZoomLevel, InOutRenderTarget->getView().getSize().y);
 		//MOD(WaveFormModule).RenderWaveFormPolygon(InOutRenderTarget, WindowTimeBegin, WindowTimeEnd, MOD(TimefieldRenderModule).GetTimefieldMetrics().LeftSidePosition + MOD(TimefieldRenderModule).GetTimefieldMetrics().FieldWidthHalf, ZoomLevel, InOutRenderTarget->getView().getSize().y);
@@ -170,6 +173,16 @@ void Program::InnerRender(sf::RenderTarget *const InOutRenderTarget)
 	{
 		MOD(TimefieldRenderModule).RenderBeatLine(InOutRenderTarget, InBeatLine.TimePoint, InBeatLine.BeatSnap, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel);
 	});
+
+    SelectedChart->IterateAllBpmPoints([this, &InOutRenderTarget](BpmPoint& bpm){
+        if (bpm.TimePoint >= WindowTimeBegin && bpm.TimePoint <= WindowTimeEnd)
+            MOD(TimefieldRenderModule).RenderTimingEvent(InOutRenderTarget, bpm.TimePoint, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel, sf::Color(0, 255, 255, 128));
+    });
+
+    SelectedChart->IterateAllStops([this, &InOutRenderTarget](StopPoint& stop){
+        if (stop.TimePoint >= WindowTimeBegin && stop.TimePoint <= WindowTimeEnd)
+            MOD(TimefieldRenderModule).RenderTimingEvent(InOutRenderTarget, stop.TimePoint, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel, sf::Color(255, 255, 0, 128));
+    });
 
 	MOD(DebugModule).RenderTimeSliceBoundaries(DebugRenderGraph, SelectedChart, WindowTimeBegin, WindowTimeEnd);
 

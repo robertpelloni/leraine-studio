@@ -20,6 +20,7 @@ public: //rendering
 	sf::RenderTexture* const GetRenderedTimefieldGraphSegment(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTime, const float InZoomLevel);
 
 	void RenderBeatLine(sf::RenderTarget* const InOutRenderTarget, const Time InBeatTimePoint, const int InBeatSnap, const Time InTime, const float InZoomLevel);
+    void RenderTimingEvent(sf::RenderTarget* const InOutRenderTarget, const Time InTimePoint, const Time InTime, const float InZoomLevel, const sf::Color InColor);
 	void RenderReceptors(sf::RenderTarget* const InOutRenderTarget, const int InBeatSnap);
 
 public: //data gathering

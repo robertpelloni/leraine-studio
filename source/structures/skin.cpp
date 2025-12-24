@@ -240,7 +240,7 @@ void Skin::RenderTimeFieldBackground(sf::RenderTarget* InOutRenderTarget)
 
 	rectangle.setPosition(_TimefieldMetrics.LeftSidePosition, 0);
 	rectangle.setSize({ float(_TimefieldMetrics.FieldWidth), float(InOutRenderTarget->getView().getSize().y) });
-	rectangle.setFillColor(sf::Color(0, 0, 0, 255));
+	rectangle.setFillColor(sf::Color(0, 0, 0, 200));
 
 	InOutRenderTarget->draw(rectangle);
 

@@ -162,6 +162,15 @@ void TimefieldRenderModule::RenderBeatLine(sf::RenderTarget* const InOutRenderTa
 	InOutRenderTarget->draw(line);
 }
 
+void TimefieldRenderModule::RenderTimingEvent(sf::RenderTarget* const InOutRenderTarget, const Time InTimePoint, const Time InTime, const float InZoomLevel, const sf::Color InColor)
+{
+	sf::RectangleShape line(sf::Vector2f(_TimefieldMetrics.FieldWidth, 2));
+	line.setPosition(_TimefieldMetrics.LeftSidePosition, GetScreenPointFromTime(InTimePoint, InTime, InZoomLevel));
+	line.setFillColor(InColor);
+
+	InOutRenderTarget->draw(line);
+}
+
 void TimefieldRenderModule::RenderReceptors(sf::RenderTarget* const InOutRenderTarget, const int InBeatSnap)
 {
 	_Skin.RenderReceptors(InOutRenderTarget, InBeatSnap);

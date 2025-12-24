@@ -150,6 +150,9 @@ public: //meta
 	float HP = 0;
 	float OD = 0;
 
+    std::string SmBgChanges;
+    std::string SmFgChanges;
+
 	std::vector<std::string> InheritedTimingPoints;
 
 public: //accessors
