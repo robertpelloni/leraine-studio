@@ -775,20 +775,9 @@ void Program::InputActions()
 		return void(MOD(EditModule).OnMouseRightButtonClicked(MOD(InputModule).IsShiftKeyDown()));
 }
 
-void Program::OpenChart(const std::string& InPath)
+void Program::InitializeChart(Chart* InChart)
 {
-	SelectedChart = MOD(ChartParserModule).ParseAndGenerateChartSet(InPath);
-
-	if (!SelectedChart)
-	{
-		PUSH_NOTIFICATION("File not found! It might have been deleted?");
-		Config.DeleteRecentFile(InPath);
-		Config.Save();
-		return;
-	}
-
-	Config.RegisterRecentFile(InPath);
-	Config.Save();
+    SelectedChart = InChart;
 
 	MOD(BeatModule).AssignNotesToSnapsInChart(SelectedChart);
 	MOD(AudioModule).LoadAudio(SelectedChart->AudioPath);
@@ -805,6 +794,64 @@ void Program::OpenChart(const std::string& InPath)
 		MOD(BeatModule).AssignNotesToSnapsInTimeSlice(SelectedChart, InTimeSlice);
 		MOD(MiniMapModule).GeneratePortion(InTimeSlice, MOD(TimefieldRenderModule).GetSkin());
 	});
+}
+
+void Program::OpenChart(const std::string& InPath)
+{
+    auto charts = MOD(ChartParserModule).ScanForCharts(InPath);
+
+    if (charts.empty())
+    {
+		PUSH_NOTIFICATION("File not found! It might have been deleted?");
+		Config.DeleteRecentFile(InPath);
+		Config.Save();
+		return;
+    }
+
+    if (charts.size() == 1)
+    {
+        Chart* chart = MOD(ChartParserModule).LoadChart(InPath, charts[0].DifficultyName);
+        if (chart)
+        {
+            Config.RegisterRecentFile(InPath);
+            Config.Save();
+            InitializeChart(chart);
+        }
+        else
+        {
+            PUSH_NOTIFICATION("Failed to load chart");
+        }
+    }
+    else
+    {
+        MOD(PopupModule).OpenPopup("Select Difficulty", [this, charts, InPath](bool& OutOpen) mutable
+        {
+            ImGui::Text("Select a chart to load:");
+            for (const auto& def : charts)
+            {
+                std::string label = def.DifficultyName;
+                if (label.empty()) label = "Untitled";
+                if (!def.ChartType.empty()) label += " (" + def.ChartType + ")";
+
+                if (ImGui::Button(label.c_str(), ImVec2(-1, 0)))
+                {
+                    Chart* chart = MOD(ChartParserModule).LoadChart(InPath, def.DifficultyName);
+                    if (chart)
+                    {
+                        Config.RegisterRecentFile(InPath);
+                        Config.Save();
+                        InitializeChart(chart);
+                    }
+                    else
+                    {
+                        PUSH_NOTIFICATION("Failed to load chart");
+                    }
+                    OutOpen = false;
+                }
+            }
+            if (ImGui::Button("Cancel", ImVec2(-1, 0))) OutOpen = false;
+        });
+    }
 }
 
 void Program::ApplyDeltaToZoom(const float InDelta)

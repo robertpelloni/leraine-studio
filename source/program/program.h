@@ -27,6 +27,7 @@ public: //abstractions
 	void GlobalInputActions();
 	void ApplyDeltaToZoom(const float InDelta);
 	void UpdateCursor();
+    void InitializeChart(Chart* InChart);
 	void OpenChart(const std::string& InPath);
 	void SetConfig(const Configuration& InConfig);
 

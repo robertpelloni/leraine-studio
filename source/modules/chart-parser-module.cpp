@@ -92,6 +92,11 @@ std::string ChartParserModule::SetChartMetadata(Chart* OutChart, const ChartMeta
 
 Chart* ChartParserModule::ParseAndGenerateChartSet(const std::filesystem::path& InPath)
 {
+    return LoadChart(InPath, "");
+}
+
+Chart* ChartParserModule::LoadChart(const std::filesystem::path& InPath, const std::string& InDifficultyName)
+{
 	std::ifstream chartFile(InPath);
 	if (!chartFile.is_open()) return nullptr;
 	
@@ -99,14 +104,68 @@ Chart* ChartParserModule::ParseAndGenerateChartSet(const std::filesystem::path& 
 
 	PUSH_NOTIFICATION("Opened %s", InPath.c_str());
 
-	Chart* chart = nullptr;
-
 	if(InPath.extension() == ".osu")
-		chart = ParseChartOsuImpl(chartFile, InPath);
+		return ParseChartOsuImpl(chartFile, InPath);
 	else if(InPath.extension() == ".sm")
-		chart = ParseChartStepmaniaImpl(chartFile, InPath);
+		return ParseChartStepmaniaImpl(chartFile, InPath, InDifficultyName);
 
-	return chart;
+	return nullptr;
+}
+
+std::vector<ChartDefinition> ChartParserModule::ScanForCharts(const std::filesystem::path& InPath)
+{
+    std::vector<ChartDefinition> definitions;
+    if(InPath.extension() == ".osu")
+    {
+        definitions.push_back({"Default", "", "osu"});
+        return definitions;
+    }
+
+    if(InPath.extension() == ".sm")
+    {
+        std::ifstream InIfstream(InPath);
+        std::string line;
+
+        while (std::getline(InIfstream, line))
+        {
+            size_t commentPos = line.find("//");
+		    if (commentPos != std::string::npos) line = line.substr(0, commentPos);
+
+            line.erase(0, line.find_first_not_of(" \t\r\n"));
+            line.erase(line.find_last_not_of(" \t\r\n") + 1);
+            if (line.empty()) continue;
+
+            if (line.find("#NOTES") != std::string::npos)
+            {
+                std::string buffer = line;
+                if (buffer.find(':') != std::string::npos)
+                    buffer = buffer.substr(buffer.find(':') + 1);
+
+                while (std::count(buffer.begin(), buffer.end(), ':') < 3 && InIfstream.peek() != EOF)
+                {
+                    std::string nextLine;
+                    std::getline(InIfstream, nextLine);
+                    buffer += nextLine;
+                }
+
+                std::vector<std::string> sections;
+                std::stringstream ss(buffer);
+                std::string segment;
+                while (std::getline(ss, segment, ':'))
+                {
+                    segment.erase(0, segment.find_first_not_of(" \t\r\n"));
+                    segment.erase(segment.find_last_not_of(" \t\r\n") + 1);
+                    sections.push_back(segment);
+                }
+
+                if (sections.size() >= 3)
+                {
+                    definitions.push_back({sections[2], sections[1], sections[0]});
+                }
+            }
+        }
+    }
+    return definitions;
 }
 
 Chart* ChartParserModule::ParseChartOsuImpl(std::ifstream& InIfstream, std::filesystem::path InPath)
@@ -389,7 +448,7 @@ struct SmBpmPoint
 	double Bpm;
 };
 
-Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std::filesystem::path InPath)
+Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std::filesystem::path InPath, const std::string& InDifficultyName)
 {
 	Chart* chart = new Chart();
 	chart->KeyAmount = 4; // Default to 4 keys for dance-single
@@ -606,17 +665,24 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
                     chart->InjectSV(t, sv.Multiplier);
                 }
 
-				std::string chartType = sections[0]; // dance-single
-				// Only parse dance-single for now
-				if (chartType.find("dance-single") != std::string::npos)
-				{
-					chart->DifficultyName = sections[2]; // Difficulty Class (Hard, etc)
+				std::string chartType = sections[0];
+                std::string difficulty = sections[2];
 
-					// Note Data is in sections[5] (and subsequent if split failed on colons inside data, but data usually doesn't have colons)
-					// Actually, sections might be wrong if data contains colons? No, data uses 0123M and newlines/commas.
+                bool match = false;
+                if (InDifficultyName.empty())
+                {
+				    if (chartType.find("dance-single") != std::string::npos) match = true;
+                }
+                else
+                {
+                    if (difficulty == InDifficultyName) match = true;
+                }
+
+				if (match)
+				{
+					chart->DifficultyName = difficulty;
 
 					std::string noteData = sections[5];
-					// If there were more colons, append them back? unlikely for standard SM.
 
 					// Process Measures
 					std::vector<SmHoldTracker> holds;
