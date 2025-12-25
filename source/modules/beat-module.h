@@ -16,6 +16,7 @@ struct BeatLine
 	int BeatCount = 0;
 	int BeatDivision = 0;
 	int BeatSnap = -1;
+    bool IsMeasure = false;
 };
 
 class BeatModule : public Module

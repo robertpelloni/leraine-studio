@@ -16,10 +16,10 @@ public: //module overrides
 
 public: //rendering
 
-	void RenderTimefieldGraph(sf::RenderTarget* const InOutRenderTarget, TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTime, const float InZoomLevel, const bool InRegisterToOnscreenNotes = true);	
+	void RenderTimefieldGraph(sf::RenderTarget* const InOutRenderTarget, TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTime, const float InZoomLevel, const bool InRegisterToOnscreenNotes = true);
 	sf::RenderTexture* const GetRenderedTimefieldGraphSegment(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTime, const float InZoomLevel);
 
-	void RenderBeatLine(sf::RenderTarget* const InOutRenderTarget, const Time InBeatTimePoint, const int InBeatSnap, const Time InTime, const float InZoomLevel);
+	void RenderBeatLine(sf::RenderTarget* const InOutRenderTarget, const Time InBeatTimePoint, const int InBeatSnap, const Time InTime, const float InZoomLevel, const bool InIsMeasure = false);
     void RenderTimingEvent(sf::RenderTarget* const InOutRenderTarget, const Time InTimePoint, const Time InTime, const float InZoomLevel, const sf::Color InColor);
 	void RenderReceptors(sf::RenderTarget* const InOutRenderTarget, const int InBeatSnap);
 
@@ -60,11 +60,11 @@ private: //data ownership
 
 	int _KeyAmount;
 
-	struct _OnScreenNote 
-	{ 
-		const Note* m_Note; 
-		const Column m_Column; 
-		const int OnScreenY; 
+	struct _OnScreenNote
+	{
+		const Note* m_Note;
+		const Column m_Column;
+		const int OnScreenY;
 	};
 
 	std::vector<_OnScreenNote> _OnScreenNotes;

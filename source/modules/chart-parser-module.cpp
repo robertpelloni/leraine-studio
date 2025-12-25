@@ -470,6 +470,13 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
         double Multiplier;
     };
     std::vector<SmSV> smSVs;
+    struct SmTimeSignature
+    {
+        double Beat;
+        int Numerator;
+        int Denominator;
+    };
+    std::vector<SmTimeSignature> smTimeSignatures;
 	bool inNotes = false;
 
 	// Helper to calculate time from beat using smBpmPoints and offset
@@ -615,6 +622,27 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
                         }
                     }
                 }
+                else if (key == "TIMESIGNATURES")
+                {
+                    std::string pairStr;
+                    std::stringstream ss(value);
+                    while (std::getline(ss, pairStr, ','))
+                    {
+                        size_t eqPos1 = pairStr.find('=');
+                        if (eqPos1 != std::string::npos)
+                        {
+                            double beat = std::stod(pairStr.substr(0, eqPos1));
+                            std::string rem = pairStr.substr(eqPos1 + 1);
+                            size_t eqPos2 = rem.find('=');
+                            if (eqPos2 != std::string::npos)
+                            {
+                                int num = std::stoi(rem.substr(0, eqPos2));
+                                int den = std::stoi(rem.substr(eqPos2 + 1));
+                                smTimeSignatures.push_back({beat, num, den});
+                            }
+                        }
+                    }
+                }
                 else if (key == "BGCHANGES") chart->SmBgChanges = value;
                 else if (key == "FGCHANGES") chart->SmFgChanges = value;
 				else if (key == "NOTES")
@@ -663,6 +691,11 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
                 {
                     Time t = GetTimeFromBeat(sv.Beat);
                     chart->InjectSV(t, sv.Multiplier);
+                }
+                for (const auto& ts : smTimeSignatures)
+                {
+                    Time t = GetTimeFromBeat(ts.Beat);
+                    chart->InjectTimeSignature(t, ts.Numerator, ts.Denominator);
                 }
 
 				std::string chartType = sections[0];
@@ -1040,6 +1073,19 @@ void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& 
         double beat = TimeToBeat(svs[i].TimePoint);
         ss << beat << "=" << svs[i].Multiplier;
         if (i < svs.size() - 1) ss << ",";
+    }
+    ss << ";\n";
+
+    ss << "#TIMESIGNATURES:";
+    std::vector<TimeSignature> tss;
+    InChart->IterateAllTimeSignatures([&](TimeSignature& ts){ tss.push_back(ts); });
+    std::sort(tss.begin(), tss.end(), [](const auto& a, const auto& b){ return a.TimePoint < b.TimePoint; });
+
+    for (size_t i = 0; i < tss.size(); ++i)
+    {
+        double beat = TimeToBeat(tss[i].TimePoint);
+        ss << beat << "=" << tss[i].Numerator << "=" << tss[i].Denominator;
+        if (i < tss.size() - 1) ss << ",";
     }
     ss << ";\n";
 

@@ -70,6 +70,15 @@ struct ScrollVelocityMultiplier
     }
 };
 
+struct TimeSignature
+{
+    Time TimePoint;
+    int Numerator = 4;
+    int Denominator = 4;
+
+    bool operator==(const TimeSignature& other) { return TimePoint == other.TimePoint; }
+};
+
 struct StopPoint
 {
     Time TimePoint;
@@ -94,6 +103,7 @@ struct TimeSlice
 	std::vector<BpmPoint> BpmPoints;
     std::vector<StopPoint> Stops;
 	std::vector<ScrollVelocityMultiplier> SvMultipliers;
+    std::vector<TimeSignature> TimeSignatures;
 };
 
 enum class StreamPattern
@@ -155,6 +165,8 @@ public: //meta
 	float HP = 0;
 	float OD = 0;
 
+    double BaseOffset = 0.0;
+
     std::string SmBgChanges;
     std::string SmFgChanges;
 
@@ -197,6 +209,7 @@ public: //accessors
 	BpmPoint* InjectBpmPoint(const Time InTime, const double InBpm, const double InBeatLength);
     StopPoint* InjectStop(const Time InTime, const double Length);
     ScrollVelocityMultiplier* InjectSV(const Time InTime, const double Multiplier);
+    TimeSignature* InjectTimeSignature(const Time InTime, const int Numerator, const int Denominator);
 
 	Note* MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap);
     StopPoint* MoveStop(StopPoint& InStop, const Time NewTime);
@@ -224,10 +237,12 @@ public: //accessors
 	void IterateAllBpmPoints(std::function<void(BpmPoint&)> InWork);
     void IterateAllStops(std::function<void(StopPoint&)> InWork);
     void IterateAllSVs(std::function<void(ScrollVelocityMultiplier&)> InWork);
+    void IterateAllTimeSignatures(std::function<void(TimeSignature&)> InWork);
 
 	std::vector<BpmPoint*>& GetBpmPointsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
     std::vector<StopPoint*>& GetStopsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
     std::vector<ScrollVelocityMultiplier*>& GetSVsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
+    std::vector<TimeSignature*>& GetTimeSignaturesRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
 	BpmPoint* GetPreviousBpmPointFromTimePoint(const Time InTime);
 	BpmPoint* GetNextBpmPointFromTimePoint(const Time InTime);
 
@@ -244,6 +259,7 @@ public: //data ownership
 	std::vector<BpmPoint*> CachedBpmPoints;
     std::vector<StopPoint*> CachedStops;
     std::vector<ScrollVelocityMultiplier*> CachedSVs;
+    std::vector<TimeSignature*> CachedTimeSignatures;
 
 private:
 

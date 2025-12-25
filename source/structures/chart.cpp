@@ -89,6 +89,19 @@ bool Chart::RemoveSV(ScrollVelocityMultiplier &InSV, const bool InSkipHistoryReg
 	return true;
 }
 
+bool Chart::RemoveTimeSignature(TimeSignature &InTS, const bool InSkipHistoryRegistering)
+{
+    auto &timeSlice = FindOrAddTimeSlice(InTS.TimePoint);
+    auto &tsCollection = timeSlice.TimeSignatures;
+
+    if (!InSkipHistoryRegistering)
+        RegisterTimeSliceHistory(InTS.TimePoint);
+
+    tsCollection.erase(std::remove(tsCollection.begin(), tsCollection.end(), InTS), tsCollection.end());
+
+    return true;
+}
+
 bool Chart::PlaceHold(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn, const int InBeatSnap, const int InBeatSnapEnd)
 {
 	if (InTimeBegin == InTimeEnd)
@@ -152,6 +165,17 @@ void Chart::IterateAllSVs(std::function<void(ScrollVelocityMultiplier&)> InWork)
 			InWork(sv);
 		}
 	}
+}
+
+void Chart::IterateAllTimeSignatures(std::function<void(TimeSignature&)> InWork)
+{
+    for (auto &[ID, timeSlice] : TimeSlices)
+    {
+        for (auto &ts : timeSlice.TimeSignatures)
+        {
+            InWork(ts);
+        }
+    }
 }
 
 void Chart::MirrorNotes(NoteReferenceCollection& OutNotes)
@@ -405,17 +429,31 @@ void Chart::MoveAllNotes(Time Offset)
         maxTime = std::max(maxTime, b.TimePoint);
     });
 
+    // Stops
+    IterateAllStops([&](StopPoint& s){
+        minTime = std::min(minTime, s.TimePoint);
+        maxTime = std::max(maxTime, s.TimePoint);
+    });
+
+    // SVs
+    IterateAllSVs([&](ScrollVelocityMultiplier& sv){
+        minTime = std::min(minTime, sv.TimePoint);
+        maxTime = std::max(maxTime, sv.TimePoint);
+    });
+
+    // Time Signatures
+    IterateAllTimeSignatures([&](TimeSignature& ts){
+        minTime = std::min(minTime, ts.TimePoint);
+        maxTime = std::max(maxTime, ts.TimePoint);
+    });
+
     if (maxTime < minTime) return; // Empty chart
 
     RegisterTimeSliceHistoryRanged(minTime, maxTime + abs(Offset) + TIMESLICE_LENGTH);
 
-    // We can't modify in place while iterating easily because of time slices (moving might change slice).
-    // So we collect everything, remove, then re-insert with offset.
-
     // 1. Collect Notes
     std::vector<std::pair<Column, Note>> notes;
     IterateAllNotes([&](Note& n, Column c){
-        // Only collect "Head" notes (Common, HoldBegin). Intermediates/Ends are handled by InjectHold.
         if (n.Type == Note::EType::Common || n.Type == Note::EType::HoldBegin ||
             n.Type == Note::EType::RollBegin || n.Type == Note::EType::Mine ||
             n.Type == Note::EType::Lift || n.Type == Note::EType::Fake)
@@ -430,10 +468,23 @@ void Chart::MoveAllNotes(Time Offset)
         bpms.push_back(b);
     });
 
-    // 3. Clear Chart (this is drastic but safe for integrity)
-    // Actually, iterating and removing is safer.
-    // Let's use BulkRemoveNotes logic? But that requires a selection.
-    // Let's just manually clear time slices? No, unsafe.
+    // 3. Collect Stops
+    std::vector<StopPoint> stops;
+    IterateAllStops([&](StopPoint& s){
+        stops.push_back(s);
+    });
+
+    // 4. Collect SVs
+    std::vector<ScrollVelocityMultiplier> svs;
+    IterateAllSVs([&](ScrollVelocityMultiplier& sv){
+        svs.push_back(sv);
+    });
+
+    // 5. Collect TS
+    std::vector<TimeSignature> tss;
+    IterateAllTimeSignatures([&](TimeSignature& ts){
+        tss.push_back(ts);
+    });
 
     // Remove all notes
     for (auto& [c, n] : notes)
@@ -444,7 +495,25 @@ void Chart::MoveAllNotes(Time Offset)
     // Remove all BPMs
     for (auto& b : bpms)
     {
-        RemoveBpmPoint(b, true); // true = skip history (we registered range)
+        RemoveBpmPoint(b, true);
+    }
+
+    // Remove all Stops
+    for (auto& s : stops)
+    {
+        RemoveStop(s, true);
+    }
+
+    // Remove all SVs
+    for (auto& sv : svs)
+    {
+        RemoveSV(sv, true);
+    }
+
+    // Remove all TS
+    for (auto& ts : tss)
+    {
+        RemoveTimeSignature(ts, true);
     }
 
     // 4. Re-insert with offset
@@ -456,9 +525,6 @@ void Chart::MoveAllNotes(Time Offset)
             n.TimePointBegin += Offset;
             n.TimePointEnd += Offset;
         }
-
-        // Safety check for negative time?
-        // Some games allow negative time (intro). Let's allow it.
 
         if (n.Type == Note::EType::HoldBegin)
             InjectHold(n.TimePointBegin, n.TimePointEnd, c, -1, -1, true);
@@ -472,6 +538,24 @@ void Chart::MoveAllNotes(Time Offset)
     {
         b.TimePoint += Offset;
         InjectBpmPoint(b.TimePoint, b.Bpm, b.BeatLength);
+    }
+
+    for (auto& s : stops)
+    {
+        s.TimePoint += Offset;
+        InjectStop(s.TimePoint, s.Length);
+    }
+
+    for (auto& sv : svs)
+    {
+        sv.TimePoint += Offset;
+        InjectSV(sv.TimePoint, sv.Multiplier);
+    }
+
+    for (auto& ts : tss)
+    {
+        ts.TimePoint += Offset;
+        InjectTimeSignature(ts.TimePoint, ts.Numerator, ts.Denominator);
     }
 
     // Notify modification on the whole range
@@ -657,62 +741,38 @@ double Chart::GetBeatFromTime(Time InTime)
 	if (!_BpmPointCounter)
 		return 0.0;
 
-	BpmPoint* bpmPoint = GetPreviousBpmPointFromTimePoint(InTime);
+    std::vector<BpmPoint> points;
+    IterateAllBpmPoints([&](BpmPoint& b){ points.push_back(b); });
+    std::sort(points.begin(), points.end(), [](const BpmPoint& a, const BpmPoint& b){ return a.TimePoint < b.TimePoint; });
 
-	if (!bpmPoint)
-	{
-		// Find first BPM point to approximate
-		BpmPoint* first = GetNextBpmPointFromTimePoint(-1000000);
-		if (first)
-		{
-			// Time < First BPM Point. Extrapolate backwards.
-			// Beat = 0 - (FirstTime - Time) / (BeatLength)
-			return - (double(first->TimePoint - InTime) / first->BeatLength);
-		}
-		return 0.0; // Should not happen if counter > 0
-	}
+    if (points.empty()) return 0.0;
 
-	// We need the cumulative beat sum up to this BPM point.
-	// This is expensive to calculate every time.
-	// However, for Quantize, we just need the beat relative to the current BPM point to snap it?
-	// No, to snap to a global grid (e.g. measure lines), we need absolute beats.
-	// But usually Quantize snaps to the "local" grid defined by the current timing point.
-	// StepMania snaps to the measure.
+    // Check if before first point
+    if (InTime < points[0].TimePoint)
+    {
+        return -(double(points[0].TimePoint - InTime) / points[0].BeatLength);
+    }
 
-	// Let's implement a simple integration.
-	double beat = 0.0;
-	Time lastTime = 0; // Assuming 0 start? Or finding first BPM point.
+    double totalBeats = 0.0;
+    for (size_t i = 0; i < points.size(); ++i)
+    {
+        Time nextTime = (i + 1 < points.size()) ? points[i+1].TimePoint : std::numeric_limits<int>::max();
 
-	// Find all BPM points up to InTime
-	std::vector<BpmPoint*> points;
-	// We can't easily get all points in order without iterating everything.
-	// Chart stores BPM points in TimeSlices.
+        if (InTime < nextTime)
+        {
+            double delta = InTime - points[i].TimePoint;
+            return totalBeats + delta / points[i].BeatLength;
+        }
 
-	// Optimization: For "Quantize", we usually care about the fractional part relative to the current BPM measure.
-	// If meter is 4/4, we align to 1/Divisor beats.
-	// Current BPM point defines the grid anchor.
+        double delta = nextTime - points[i].TimePoint;
+        totalBeats += delta / points[i].BeatLength;
+    }
 
-	// So:
-	double timeDelta = double(InTime - bpmPoint->TimePoint);
-	double beatsSinceBpm = timeDelta / bpmPoint->BeatLength;
-
-	// We assume the BPM point itself is on a beat (usually beat 0 or start of a measure).
-	// Ideally we should know the absolute beat of the BPM point.
-	// But if we assume the user placed BPM points on beats, we can snap relative to them.
-
-	return beatsSinceBpm;
+    return totalBeats;
 }
 
 Time Chart::GetTimeFromBeat(double InBeat)
 {
-	// Inverse of above, strictly local to current BPM point logic for now.
-	// This might be insufficient for complex multi-BPM songs if we cross boundaries,
-	// but Quantize usually works on individual notes.
-	// If we quantize a note, we find its BPM point, snap the local beat, and convert back.
-
-	// This function signature implies global beat, but we only have local logic easily available.
-	// Let's rely on the caller to handle the context or make this "GetTimeFromLocalBeat(Beat, BpmPoint)".
-
 	return 0; // Not used directly in this simplified logic
 }
 
@@ -746,28 +806,16 @@ void Chart::QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor)
 				double beat = timeDelta / beatLen;
 
 				// Snap beat
-				// Divisor is Measure Divisor (4 = Quarter Note = 1 Beat, 16 = 16th Note = 0.25 Beat)
-                // Grid in beats = 4.0 / Divisor.
-                // We want to snap 'beat' to multiples of 'grid'.
                 double grid = 4.0 / double(Divisor);
 				double snappedBeat = std::round(beat / grid) * grid;
 
 				Time newTime = bpm->TimePoint + Time(snappedBeat * beatLen);
 				note.TimePoint = newTime;
 
-				// Calculate snap for metadata
-				// 1/4 -> 1, 1/8 -> 2?
-				// Note::BeatSnap is usually 1, 2, 3, 4, 6, 8, 12, 16...
-				// Logic in BeatModule::GetBeatSnap.
-				// We can try to set it or leave -1 (auto).
-				// We will leave -1 or try to derive it.
 				note.BeatSnap = -1;
 
 				if (note.Type == Note::EType::HoldBegin || note.Type == Note::EType::RollBegin)
 				{
-					// Quantize end too? Yes usually.
-					// Or maintain length? ArrowVortex "Quantize" snaps both ends.
-
 					// Recalculate for end
 					BpmPoint* bpmEnd = GetPreviousBpmPointFromTimePoint(note.TimePointEnd);
 					if (!bpmEnd) bpmEnd = GetNextBpmPointFromTimePoint(-1000000);
@@ -1050,6 +1098,25 @@ ScrollVelocityMultiplier* Chart::InjectSV(const Time InTime, const double Multip
 			  { return lhs.TimePoint < rhs.TimePoint; });
 
 	return svPtr;
+}
+
+TimeSignature* Chart::InjectTimeSignature(const Time InTime, const int Numerator, const int Denominator)
+{
+    auto &timeSlice = FindOrAddTimeSlice(InTime);
+
+    TimeSignature ts;
+    ts.TimePoint = InTime;
+    ts.Numerator = Numerator;
+    ts.Denominator = Denominator;
+
+    timeSlice.TimeSignatures.push_back(ts);
+
+    TimeSignature *tsPtr = &(timeSlice.TimeSignatures.back());
+
+    std::sort(timeSlice.TimeSignatures.begin(), timeSlice.TimeSignatures.end(), [](const auto &lhs, const auto &rhs)
+              { return lhs.TimePoint < rhs.TimePoint; });
+
+    return tsPtr;
 }
 
 StopPoint* Chart::MoveStop(StopPoint& InStop, const Time NewTime)
@@ -1539,6 +1606,22 @@ std::vector<ScrollVelocityMultiplier *> &Chart::GetSVsRelatedToTimeRange(const T
 								 });
 
 	return CachedSVs;
+}
+
+std::vector<TimeSignature *> &Chart::GetTimeSignaturesRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd)
+{
+	CachedTimeSignatures.clear();
+
+	IterateTimeSlicesInTimeRange(InTimeBegin - TIMESLICE_LENGTH, InTimeEnd + TIMESLICE_LENGTH, [this](TimeSlice &InTimeSlice)
+								 {
+									 if (InTimeSlice.TimeSignatures.empty())
+										 return;
+
+									 for (auto &ts : InTimeSlice.TimeSignatures)
+										 CachedTimeSignatures.push_back(&ts);
+								 });
+
+	return CachedTimeSignatures;
 }
 
 BpmPoint *Chart::GetPreviousBpmPointFromTimePoint(const Time InTime)

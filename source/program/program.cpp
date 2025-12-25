@@ -171,7 +171,7 @@ void Program::InnerRender(sf::RenderTarget *const InOutRenderTarget)
 
 	MOD(BeatModule).IterateThroughBeatlines([this, &InOutRenderTarget](const BeatLine &InBeatLine)
 	{
-		MOD(TimefieldRenderModule).RenderBeatLine(InOutRenderTarget, InBeatLine.TimePoint, InBeatLine.BeatSnap, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel);
+		MOD(TimefieldRenderModule).RenderBeatLine(InOutRenderTarget, InBeatLine.TimePoint, InBeatLine.BeatSnap, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel, InBeatLine.IsMeasure);
 	});
 
     SelectedChart->IterateAllBpmPoints([this, &InOutRenderTarget](BpmPoint& bpm){
