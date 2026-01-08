@@ -6,9 +6,10 @@
 #include <cmath>
 
 #include "imgui.h"
+#include "../modules/manager/module-manager.h"
+#include "../modules/beat-module.h"
 
-
-bool SelectEditMode::OnCopy() 
+bool SelectEditMode::OnCopy()
 {
     std::string clipboard =  "LeraineStudio:";
 
@@ -22,6 +23,14 @@ bool SelectEditMode::OnCopy()
                 case Note::EType::Common:
                 {
                     noteSegment += "N";
+                    noteSegment += std::to_string(column) + "|";
+                    noteSegment += std::to_string(selectedNote->TimePoint) + ";";
+                }
+                break;
+
+                case Note::EType::Mine:
+                {
+                    noteSegment += "M";
                     noteSegment += std::to_string(column) + "|";
                     noteSegment += std::to_string(selectedNote->TimePoint) + ";";
                 }
@@ -47,9 +56,9 @@ bool SelectEditMode::OnCopy()
     return true;
 }
 
-bool SelectEditMode::OnPaste() 
+bool SelectEditMode::OnPaste()
 {
-    //I hate parsing strings in c++ 
+    //I hate parsing strings in c++
 
     _MostRightColumn = 0;
     _MostLeftColumn = static_Chart->KeyAmount - 1;
@@ -85,7 +94,9 @@ bool SelectEditMode::OnPaste()
             switch (character)
             {
             case 'N':
+            case 'M':
             {
+                char type = character;
                 character = clipboard[++index];
 
                 std::string parsedColumn;
@@ -98,7 +109,7 @@ bool SelectEditMode::OnPaste()
                 while(character != ';')
                     character = clipboard[++index], parsedTimePoint += character;
 
-                note.Type = Note::EType::Common;
+                note.Type = (type == 'M') ? Note::EType::Mine : Note::EType::Common;
                 note.TimePoint = std::stoi(parsedTimePoint);
 
                 _LowestPasteTimePoint = std::min( _LowestPasteTimePoint, note.TimePoint);
@@ -120,7 +131,7 @@ bool SelectEditMode::OnPaste()
 
                 std::string parsedTimePointBegin = "";
                 std::string parsedTimePointEnd = "";
-                
+
                 bool endParse = false;
 
                 while(character != ';')
@@ -145,7 +156,7 @@ bool SelectEditMode::OnPaste()
                 _PastePreviewNotes.push_back({column, note});
             }
             break;
-            
+
             default:
                 break;
             }
@@ -158,16 +169,16 @@ bool SelectEditMode::OnPaste()
     return true;
 }
 
-bool SelectEditMode::OnMirror() 
+bool SelectEditMode::OnMirror()
 {
     if(_IsPreviewingPaste)
     {
         static_Chart->MirrorNotes(_PastePreviewNotes);
         PUSH_NOTIFICATION("Mirrored %d Paste Notes", _PastePreviewNotes.size());
-        
+
         return true;
     }
-    
+
     if(_SelectedNotes.HasNotes)
     {
         PUSH_NOTIFICATION("Mirrored %d Notes", _SelectedNotes.NoteAmount);
@@ -188,12 +199,35 @@ bool SelectEditMode::OnExpand()
     return false;
 }
 
+bool SelectEditMode::OnConvertToHolds(Time Length)
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Converted %d Notes to Holds", _SelectedNotes.NoteAmount);
+        static_Chart->ConvertToHolds(_SelectedNotes, Length);
+        return true;
+    }
+    return false;
+}
+
+bool SelectEditMode::OnConvertToTaps()
+{
+    if(_SelectedNotes.HasNotes)
+    {
+        PUSH_NOTIFICATION("Converted %d Notes to Taps", _SelectedNotes.NoteAmount);
+        static_Chart->ConvertToTaps(_SelectedNotes);
+        return true;
+    }
+    return false;
+}
+
 bool SelectEditMode::OnQuantize(int InDivisor)
 {
     if(_SelectedNotes.HasNotes)
     {
         PUSH_NOTIFICATION("Quantized %d Notes to 1/%d", _SelectedNotes.NoteAmount, InDivisor);
         static_Chart->QuantizeNotes(_SelectedNotes, InDivisor);
+        MOD(BeatModule).RecalculateSnaps(static_Chart, _SelectedNotes.MinTimePoint - TIMESLICE_LENGTH, _SelectedNotes.MaxTimePoint + TIMESLICE_LENGTH);
         return true;
     }
     return false;
@@ -232,7 +266,7 @@ bool SelectEditMode::OnCompress()
     return false;
 }
 
-bool SelectEditMode::OnDelete() 
+bool SelectEditMode::OnDelete()
 {
     if(_SelectedNotes.HasNotes)
     {
@@ -243,7 +277,7 @@ bool SelectEditMode::OnDelete()
     return true;
 }
 
-bool SelectEditMode::OnSelectAll() 
+bool SelectEditMode::OnSelectAll()
 {
     static_Chart->FillNoteCollectionWithAllNotes(_SelectedNotes);
     PUSH_NOTIFICATION("Selected %d Notes", _SelectedNotes.NoteAmount);
@@ -251,7 +285,40 @@ bool SelectEditMode::OnSelectAll()
     return true;
 }
 
-void SelectEditMode::OnReset() 
+void SelectEditMode::OnInvertSelection()
+{
+    // Collect currently selected pointers
+    std::unordered_set<Note*> selectedSet;
+    for(auto& [col, notes] : _SelectedNotes.Notes)
+    {
+        for(auto* n : notes) selectedSet.insert(n);
+    }
+
+    _SelectedNotes.Clear();
+
+    // Iterate all notes, add if not in set
+    static_Chart->IterateAllNotes([&](Note& n, Column c) {
+        if(selectedSet.find(&n) == selectedSet.end())
+        {
+            _SelectedNotes.PushNote(c, &n);
+        }
+    });
+
+    PUSH_NOTIFICATION("Inverted Selection: %d Notes", _SelectedNotes.NoteAmount);
+}
+
+bool SelectEditMode::GetSelectionRange(Time& OutStart, Time& OutEnd)
+{
+    if (_SelectedNotes.HasNotes)
+    {
+        OutStart = _SelectedNotes.MinTimePoint;
+        OutEnd = _SelectedNotes.MaxTimePoint;
+        return true;
+    }
+    return false;
+}
+
+void SelectEditMode::OnReset()
 {
     _PastePreviewNotes.reserve(100);
 
@@ -262,7 +329,7 @@ void SelectEditMode::OnReset()
     _PastePreviewNotes.clear();
 }
 
-void SelectEditMode::Tick() 
+void SelectEditMode::Tick()
 {
     if(_IsMovingNote)
         return;
@@ -304,25 +371,38 @@ bool SelectEditMode::OnMouseLeftButtonClicked(const bool InIsShiftDown)
                     }
                 }
         }
-    
+
         _SelectedNotes.Clear();
-        
+
         _DraggingNote = _HoveredNote;
         return _IsMovingNote = true;
     }
 
-    _SelectedNotes.Clear();  
-    
+    _SelectedNotes.Clear();
+
     _IsAreaSelecting = true;
 
     if(!_IsPreviewingPaste)
         return true;
-    
+
     SetNewPreviewPasteLocation();
 
     PUSH_NOTIFICATION("Placed %d Notes", _PastePreviewNotes.size());
 
     static_Chart->BulkPlaceNotes(_PastePreviewNotes);
+
+    if (!_PastePreviewNotes.empty())
+    {
+        Time minT = INT_MAX, maxT = INT_MIN;
+        for(auto& p : _PastePreviewNotes) {
+            minT = std::min(minT, p.second.TimePoint);
+            maxT = std::max(maxT, p.second.TimePoint);
+            if(p.second.Type == Note::EType::HoldBegin || p.second.Type == Note::EType::RollBegin)
+                maxT = std::max(maxT, p.second.TimePointEnd);
+        }
+        MOD(BeatModule).RecalculateSnaps(static_Chart, minT - TIMESLICE_LENGTH, maxT + TIMESLICE_LENGTH);
+    }
+
     _IsPreviewingPaste = false;
     _PastePreviewNotes.clear();
 
@@ -334,15 +414,27 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
     if(_IsMovingNote)
     {
         if(_PastePreviewNotes.size() > 0)
-        {   
+        {
             SetNewPreviewPasteLocation();
-            
+
             Time minTimePoint = (_HighestPasteTimepoint < _DraggingNotes.MaxTimePoint) ? _HighestPasteTimepoint - (_DraggingNotes.MaxTimePoint - _DraggingNotes.MinTimePoint) : _DraggingNotes.MinTimePoint;
             Time maxTimePoint = (_HighestPasteTimepoint < _DraggingNotes.MaxTimePoint) ? _DraggingNotes.MaxTimePoint : _HighestPasteTimepoint;
-            
+
             static_Chart->RegisterTimeSliceHistoryRanged(minTimePoint - TIMESLICE_LENGTH, maxTimePoint + TIMESLICE_LENGTH);
             static_Chart->BulkRemoveNotes(_DraggingNotes, true);
             static_Chart->BulkPlaceNotes(_PastePreviewNotes, true);
+
+            if (!_PastePreviewNotes.empty())
+            {
+                Time minT = INT_MAX, maxT = INT_MIN;
+                for(auto& p : _PastePreviewNotes) {
+                    minT = std::min(minT, p.second.TimePoint);
+                    maxT = std::max(maxT, p.second.TimePoint);
+                    if(p.second.Type == Note::EType::HoldBegin || p.second.Type == Note::EType::RollBegin)
+                        maxT = std::max(maxT, p.second.TimePointEnd);
+                }
+                MOD(BeatModule).RecalculateSnaps(static_Chart, minT - TIMESLICE_LENGTH, maxT + TIMESLICE_LENGTH);
+            }
 
             PUSH_NOTIFICATION("Moved %d Notes", _PastePreviewNotes.size());
 
@@ -353,7 +445,7 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
             _MostLeftColumn = static_Chart->KeyAmount - 1;
 
             _PastePreviewNotes.clear();
-            
+
             return _IsMovingNote = false;
         }
 
@@ -381,7 +473,7 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
         _HoveredNoteColumn = static_Cursor.CursorColumn;
 
         return _IsMovingNote = false;
-    } 
+    }
 
     if(!(static_Cursor.TimefieldSide != _AnchoredCursor.TimefieldSide || static_Cursor.TimefieldSide == Cursor::FieldPosition::Middle && _AnchoredCursor.TimefieldSide == Cursor::FieldPosition::Middle))
         return _IsAreaSelecting = false;
@@ -390,7 +482,7 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
         return false;
 
     _IsAreaSelecting = false;
-    
+
     const Time timeBegin = std::min(_AnchoredCursor.UnsnappedTimePoint, static_Cursor.UnsnappedTimePoint);
     const Time timeEnd   = std::max(_AnchoredCursor.UnsnappedTimePoint, static_Cursor.UnsnappedTimePoint);
 
@@ -399,7 +491,8 @@ bool SelectEditMode::OnMouseLeftButtonReleased()
 
     static_Chart->IterateNotesInTimeRange(timeBegin, timeEnd, [this, &timeBegin, &timeEnd, &columnMin, &columnMax](Note& InOutNote, const Column& InColumn)
     {
-        if((InOutNote.Type == Note::EType::Common || InOutNote.Type == Note::EType::HoldBegin) && (InColumn >= columnMin && InColumn <= columnMax))
+        if((InOutNote.Type == Note::EType::Common || InOutNote.Type == Note::EType::Mine || InOutNote.Type == Note::EType::HoldBegin ||
+            InOutNote.Type == Note::EType::RollBegin || InOutNote.Type == Note::EType::Lift || InOutNote.Type == Note::EType::Fake) && (InColumn >= columnMin && InColumn <= columnMax))
             _SelectedNotes.PushNote(InColumn, &InOutNote);
     });
 
@@ -419,13 +512,22 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
 
             switch(note.Type)
             {
-                case Note::EType::Common:
-                    InOutTimefieldRenderGraph.SubmitCommonNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePoint - _LowestPasteTimePoint, note.BeatSnap, 128);
+                case Note::EType::HoldBegin:
+                    InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint,
+                                                                                     static_Cursor.TimePoint + note.TimePointEnd   - _LowestPasteTimePoint, -1, -1, 128);
                 break;
 
-                case Note::EType::HoldBegin:
-                    InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint, 
+                case Note::EType::RollBegin:
+                    InOutTimefieldRenderGraph.SubmitRollNoteRenderCommand(newColumn, static_Cursor.TimePoint + note.TimePointBegin - _LowestPasteTimePoint,
                                                                                      static_Cursor.TimePoint + note.TimePointEnd   - _LowestPasteTimePoint, -1, -1, 128);
+                break;
+
+                default:
+                    {
+                         Note n = note;
+                         n.TimePoint = static_Cursor.TimePoint + note.TimePoint - _LowestPasteTimePoint;
+                         InOutTimefieldRenderGraph.SubmitNoteRenderCommand(n, newColumn, 128);
+                    }
                 break;
             }
         }
@@ -452,7 +554,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 rectangle.setOutlineThickness(1.0f);
 
                 InRenderTarget->draw(rectangle);
-            }); 
+            });
         }
     }
 
@@ -461,7 +563,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
          for(const auto& [column, count] : _SelectedNotes.ColumnNoteCount)
          {
              sf::Uint8 alpha = sf::Uint8(std::pow(float(count) / float(_SelectedNotes.HighestColumnAmount), 1.f) * 255.f);
-            
+
             //TODO: rendercommand for multiple timepoints and columns since this is extremely hacky
             int* minY = new int();
 
@@ -483,7 +585,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 InRenderTarget->draw(rectangle);
 
                 delete minY;
-            }); 
+            });
          }
     }
 
@@ -506,9 +608,23 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
             case Note::EType::HoldEnd:
                 InOutTimefieldRenderGraph.SubmitHoldNoteRenderCommand(column, _DraggingNote->TimePointBegin, timePoint, -1, -1, 128);
                 break;
-            
+
+            case Note::EType::RollBegin:
+                InOutTimefieldRenderGraph.SubmitRollNoteRenderCommand(column, timePoint, _DraggingNote->TimePointEnd, -1, -1, 128);
+                break;
+
+            case Note::EType::RollEnd:
+                InOutTimefieldRenderGraph.SubmitRollNoteRenderCommand(column, _DraggingNote->TimePointBegin, timePoint, -1, -1, 128);
+                break;
+
             default:
-                InOutTimefieldRenderGraph.SubmitCommonNoteRenderCommand(column, timePoint, -1, 128);
+                {
+                    Note n;
+                    n.Type = _DraggingNote->Type;
+                    n.TimePoint = timePoint;
+                    n.BeatSnap = -1;
+                    InOutTimefieldRenderGraph.SubmitNoteRenderCommand(n, column, 128);
+                }
                 break;
             }
 
@@ -528,18 +644,18 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
                 rectangle.setOutlineThickness(1.0f);
 
                 InRenderTarget->draw(rectangle);
-            }); 
+            });
         }
     }
 
     if(!_IsAreaSelecting)
         return;
 
-    InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(_AnchoredCursor.CursorColumn, _AnchoredCursor.UnsnappedTimePoint, 
+    InOutTimefieldRenderGraph.SubmitTimefieldRenderCommand(_AnchoredCursor.CursorColumn, _AnchoredCursor.UnsnappedTimePoint,
     [this](sf::RenderTarget* const InRenderTarget, const TimefieldMetrics& InTimefieldMetrics, const int InScreenX, const int InScreenY)
     {
         sf::RectangleShape rectangle;
-        
+
         rectangle.setPosition(_AnchoredCursor.X, InScreenY);
         rectangle.setSize(sf::Vector2f(static_Cursor.X - _AnchoredCursor.X, static_Cursor.Y - InScreenY));
 
@@ -551,7 +667,7 @@ void SelectEditMode::SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRen
     });
 }
 
-int SelectEditMode::GetDelteColumn() 
+int SelectEditMode::GetDelteColumn()
 {
     int deltaColumn = int(static_Cursor.CursorColumn) - int(_MostLeftColumn);
     int keyAmount = static_Chart->KeyAmount - 1;
@@ -565,7 +681,7 @@ int SelectEditMode::GetDelteColumn()
     return deltaColumn;
 }
 
-void SelectEditMode::SetNewPreviewPasteLocation() 
+void SelectEditMode::SetNewPreviewPasteLocation()
 {
     for(auto& [column, note] : _PastePreviewNotes)
     {

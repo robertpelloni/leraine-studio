@@ -18,6 +18,7 @@ public:
 
 	void TogglePause();
 	void SetPause(bool InPause);
+    void PlayRange(Time Start, Time End);
 	void ResetSpeed();
 	void SetTimeMilliSeconds(const Time InTime);
 
@@ -30,6 +31,14 @@ public:
 	float GetPlaybackSpeed();
 
 	float EstimateBPM(Time Start, Time End);
+    Time EstimateOffset(double BPM, Time Start, Time End);
+    Time FindNearestPeak(Time Center, int WindowMs);
+
+    void InitMetronome();
+    void PlayMetronomeTick();
+
+    void InitHitsound();
+    void PlayHitsound();
 
 	[[nodiscard]] WaveFormData* GenerateAndGetWaveformData(const std::filesystem::path& InPath);
 
@@ -44,6 +53,7 @@ private:
     std::filesystem::path _CurrentAudioPath;
 
 	double _CurrentTime = 0;
+    double _PlayEndTime = -1.0;
 	float _Speed = 1.f;
 	bool _Paused = true;
 
@@ -55,4 +65,6 @@ private:
 	int _Freq = 44100; // Sample rate (Hz)
 
 	HSAMPLE _StreamHandle; // Handle for open stream
+    HSAMPLE _MetronomeSample = 0;
+    HSAMPLE _HitsoundSample = 0;
 };

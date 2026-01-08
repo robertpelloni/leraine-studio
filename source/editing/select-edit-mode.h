@@ -25,8 +25,12 @@ public:
 	bool OnReverse() override;
 	bool OnShuffle() override;
 	bool OnQuantize(int InDivisor) override;
+    bool OnConvertToHolds(Time Length) override;
+    bool OnConvertToTaps() override;
 	bool OnDelete() override;
+    bool GetSelectionRange(Time& OutStart, Time& OutEnd) override;
 	bool OnSelectAll() override;
+    void OnInvertSelection();
 
 	void OnReset() override;
 	void Tick() override;

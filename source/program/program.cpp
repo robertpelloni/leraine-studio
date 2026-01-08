@@ -23,7 +23,7 @@ namespace
 
 	float ZoomLevel = 1.0f;
 	int CurrentSnap = 2;
-	
+
 	ChartMetadata ChartMetadataSetup;
 
 	Configuration Config;
@@ -108,6 +108,43 @@ void Program::InnerTick()
 	MOD(TimefieldRenderModule).UpdateMetrics(_WindowMetrics);
 	MOD(BeatModule).GenerateTimeRangeBeatLines(WindowTimeBegin, WindowTimeEnd, SelectedChart, CurrentSnap);
 
+    // Metronome Logic
+    if (_MetronomeEnabled)
+    {
+        Time currentTime = MOD(AudioModule).GetTimeMilliSeconds();
+        if (_LastTickTime != 0 && currentTime > _LastTickTime)
+        {
+            // Check for beats between _LastTickTime and currentTime
+            // We can ask BeatModule for the next beat line after LastTickTime
+            BeatLine nextBeat = MOD(BeatModule).GetNextBeatLine(_LastTickTime);
+            if (nextBeat.TimePoint <= currentTime && nextBeat.BeatSnap == 1) // Only major beats (4th)?
+            {
+                // Play tick
+                MOD(AudioModule).PlayMetronomeTick();
+            }
+        }
+        _LastTickTime = currentTime;
+    }
+
+    // Assist Tick Logic
+    if (_AssistTickEnabled)
+    {
+        Time currentTime = MOD(AudioModule).GetTimeMilliSeconds();
+        if (_LastAssistTickTime != 0 && currentTime > _LastAssistTickTime)
+        {
+             bool play = false;
+             // Check notes slightly broader to catch frame misses? No, IterateNotesInTimeRange is inclusive?
+             // Need to check implementation.
+             SelectedChart->IterateNotesInTimeRange(_LastAssistTickTime, currentTime, [&](Note& n, Column c){
+                 if (n.TimePoint > _LastAssistTickTime && n.TimePoint <= currentTime)
+                     play = true;
+             });
+
+             if (play) MOD(AudioModule).PlayHitsound();
+        }
+        _LastAssistTickTime = currentTime;
+    }
+
 	SelectedChart->IterateNotesInTimeRange(WindowTimeBegin - TIMESLICE_LENGTH, WindowTimeEnd, [this](Note &InNote, const Column InColumn) {
 		sf::Int8 alpha = 255;
 
@@ -125,14 +162,27 @@ void Program::InnerRender(sf::RenderTarget *const InOutRenderTarget)
 	if (!SelectedChart)
 		return;
 
+    MOD(BackgroundModule).RenderBack(InOutRenderTarget);
+    MOD(TimefieldRenderModule).RenderBack(InOutRenderTarget);
+
 	if(Config.ShowWaveform)
 		MOD(WaveFormModule).RenderWaveForm(WaveformRenderGraph, WindowTimeBegin, WindowTimeEnd, MOD(TimefieldRenderModule).GetTimefieldMetrics().LeftSidePosition + MOD(TimefieldRenderModule).GetTimefieldMetrics().FieldWidthHalf, ZoomLevel, InOutRenderTarget->getView().getSize().y);
 		//MOD(WaveFormModule).RenderWaveFormPolygon(InOutRenderTarget, WindowTimeBegin, WindowTimeEnd, MOD(TimefieldRenderModule).GetTimefieldMetrics().LeftSidePosition + MOD(TimefieldRenderModule).GetTimefieldMetrics().FieldWidthHalf, ZoomLevel, InOutRenderTarget->getView().getSize().y);
 
 	MOD(BeatModule).IterateThroughBeatlines([this, &InOutRenderTarget](const BeatLine &InBeatLine)
 	{
-		MOD(TimefieldRenderModule).RenderBeatLine(InOutRenderTarget, InBeatLine.TimePoint, InBeatLine.BeatSnap, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel);
+		MOD(TimefieldRenderModule).RenderBeatLine(InOutRenderTarget, InBeatLine.TimePoint, InBeatLine.BeatSnap, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel, InBeatLine.IsMeasure);
 	});
+
+    SelectedChart->IterateAllBpmPoints([this, &InOutRenderTarget](BpmPoint& bpm){
+        if (bpm.TimePoint >= WindowTimeBegin && bpm.TimePoint <= WindowTimeEnd)
+            MOD(TimefieldRenderModule).RenderTimingEvent(InOutRenderTarget, bpm.TimePoint, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel, sf::Color(0, 255, 255, 128));
+    });
+
+    SelectedChart->IterateAllStops([this, &InOutRenderTarget](StopPoint& stop){
+        if (stop.TimePoint >= WindowTimeBegin && stop.TimePoint <= WindowTimeEnd)
+            MOD(TimefieldRenderModule).RenderTimingEvent(InOutRenderTarget, stop.TimePoint, MOD(AudioModule).GetTimeMilliSeconds(), ZoomLevel, sf::Color(255, 255, 0, 128));
+    });
 
 	MOD(DebugModule).RenderTimeSliceBoundaries(DebugRenderGraph, SelectedChart, WindowTimeBegin, WindowTimeEnd);
 
@@ -177,14 +227,14 @@ void Program::MenuBar()
 
 			if (MOD(ShortcutMenuModule).MenuItem("Open", sf::Keyboard::Key::LControl, sf::Keyboard::Key::O))
 			{
-				MOD(DialogModule).OpenFileDialog(".osu;.sm", [this](const std::string &InPath) 
+				MOD(DialogModule).OpenFileDialog(".osu;.sm", [this](const std::string &InPath)
 				{
 					OpenChart(InPath);
 				});
 			}
 
 			MOD(ShortcutMenuModule).Separator();
-			
+
 			if (MOD(ShortcutMenuModule).MenuItem("Edit Metadata", sf::Keyboard::Key::LControl, sf::Keyboard::Key::E) && SelectedChart)
 				ShouldSetUpMetadata = true;
 
@@ -202,11 +252,17 @@ void Program::MenuBar()
 
 		if (MOD(ShortcutMenuModule).BeginMenu("Edit"))
 		{
-			if (MOD(ShortcutMenuModule).MenuItem("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Z) && SelectedChart && SelectedChart->Undo())
+			if (MOD(ShortcutMenuModule).MenuItem("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Z) && SelectedChart && MOD(EditModule).OnUndo())
 				PUSH_NOTIFICATION("Undo");
-			
+
+			if (MOD(ShortcutMenuModule).MenuItem("Redo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Y) && SelectedChart && MOD(EditModule).OnRedo())
+				PUSH_NOTIFICATION("Redo");
+
 			if (MOD(ShortcutMenuModule).MenuItem("Select All", sf::Keyboard::Key::LControl, sf::Keyboard::Key::A))
 				MOD(EditModule).OnSelectAll();
+
+            if (MOD(ShortcutMenuModule).MenuItem("Invert Selection", sf::Keyboard::Key::LControl, sf::Keyboard::Key::I))
+                MOD(EditModule).OnInvertSelection();
 
 			MOD(ShortcutMenuModule).Separator();
 
@@ -214,7 +270,7 @@ void Program::MenuBar()
 				MOD(EditModule).OnCopy();
 
 			if (MOD(ShortcutMenuModule).MenuItem("Paste", sf::Keyboard::Key::LControl, sf::Keyboard::Key::V) && SelectedChart)
-			 	MOD(EditModule).OnPaste();
+				MOD(EditModule).OnPaste();
 
 			if (MOD(ShortcutMenuModule).MenuItem("Delete", sf::Keyboard::Unknown, sf::Keyboard::Key::Delete) && SelectedChart)
 				MOD(EditModule).OnDelete();
@@ -239,9 +295,43 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Quantize", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Q) && SelectedChart)
 				MOD(EditModule).OnQuantize(CurrentSnap);
 
+            if (MOD(ShortcutMenuModule).MenuItem("Convert to Holds", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+            {
+                // Calculate 1/4 length in ms based on current BPM
+                // We need current time point to get BPM.
+                Time currentTime = MOD(AudioModule).GetTimeMilliSeconds();
+                BpmPoint* bpm = MOD(BeatModule).GetClosestBeatLineToTimePoint(currentTime).TimePoint > 0 ? SelectedChart->GetPreviousBpmPointFromTimePoint(currentTime) : nullptr;
+                if (!bpm) bpm = SelectedChart->GetNextBpmPointFromTimePoint(-1000000);
+
+                double length = 0;
+                if (bpm) length = bpm->BeatLength; // 1 beat default? Or Snap?
+
+                // Let's use CurrentSnap divisor
+                if (CurrentSnap > 0 && bpm) length = bpm->BeatLength * (4.0 / CurrentSnap); // Snap is usually divisor of measure (48 = 1/48?)
+
+                if (length <= 0) length = 500; // Fallback
+
+                MOD(EditModule).OnConvertToHolds(Time(length));
+            }
+
+            if (MOD(ShortcutMenuModule).MenuItem("Convert to Taps", sf::Keyboard::Key::Unknown, sf::Keyboard::Unknown) && SelectedChart)
+                MOD(EditModule).OnConvertToTaps();
+
+            if (MOD(ShortcutMenuModule).MenuItem("Play Selection", sf::Keyboard::Key::LShift, sf::Keyboard::Key::Space) && SelectedChart)
+            {
+                 Time start, end;
+                 if (MOD(EditModule).GetSelectionRange(start, end))
+                 {
+                     MOD(AudioModule).PlayRange(start, end);
+                 }
+            }
+
             // Using Ctrl+B for Estimate BPM (usually B is taken, but maybe Ctrl+Shift+B)
 			if (MOD(ShortcutMenuModule).MenuItem("Estimate BPM", sf::Keyboard::Key::LControl, sf::Keyboard::Key::B) && SelectedChart)
 				MOD(EditModule).OnEstimateBPM();
+
+			if (MOD(ShortcutMenuModule).MenuItem("Tap BPM", sf::Keyboard::Key::LShift, sf::Keyboard::Key::T) && SelectedChart)
+				MOD(EditModule).OnTap();
 
 			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
 				MOD(EditModule).OnExpand();
@@ -249,28 +339,16 @@ void Program::MenuBar()
 			if (MOD(ShortcutMenuModule).MenuItem("Compress", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Down) && SelectedChart)
 				MOD(EditModule).OnCompress();
 
-			if (MOD(ShortcutMenuModule).MenuItem("Reverse", sf::Keyboard::Key::LControl, sf::Keyboard::Key::R) && SelectedChart)
-				MOD(EditModule).OnReverse();
-
-			if (MOD(ShortcutMenuModule).MenuItem("Shuffle", sf::Keyboard::Key::LControl, sf::Keyboard::Key::J) && SelectedChart)
-				MOD(EditModule).OnShuffle();
-
-			if (MOD(ShortcutMenuModule).MenuItem("Quantize", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Q) && SelectedChart)
-				MOD(EditModule).OnQuantize(CurrentSnap);
-
-            // Using Ctrl+B for Estimate BPM (usually B is taken, but maybe Ctrl+Shift+B)
-			if (MOD(ShortcutMenuModule).MenuItem("Estimate BPM", sf::Keyboard::Key::LControl, sf::Keyboard::Key::B) && SelectedChart)
-				MOD(EditModule).OnEstimateBPM();
-
-			if (MOD(ShortcutMenuModule).MenuItem("Expand", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Up) && SelectedChart)
-				MOD(EditModule).OnExpand();
-
-			if (MOD(ShortcutMenuModule).MenuItem("Compress", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Down) && SelectedChart)
-				MOD(EditModule).OnCompress();
+            // Snap to Peak: Ctrl+P
+			if (MOD(ShortcutMenuModule).MenuItem("Snap to Peak", sf::Keyboard::Key::LControl, sf::Keyboard::Key::P) && SelectedChart)
+				SnapToPeak();
 
 			if (MOD(ShortcutMenuModule).MenuItem("Go To Timepoint", sf::Keyboard::Key::LControl, sf::Keyboard::Key::T) && SelectedChart)
 				GoToTimePoint();
-				
+
+            if (MOD(ShortcutMenuModule).MenuItem("Move All Notes", sf::Keyboard::Key::Unknown, sf::Keyboard::Key::Unknown) && SelectedChart)
+                OpenMoveAllNotes();
+
 			MOD(ShortcutMenuModule).EndMenu();
 		}
 
@@ -293,8 +371,8 @@ void Program::MenuBar()
 			ImGui::Separator();
 
 			if(ImGui::MenuItem("Select Skin"))
-			{ 
-				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath) 
+			{
+				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath)
 				{
 					Config.SkinFolderPath = InPath;
 					Config.Save();
@@ -329,6 +407,9 @@ void Program::MenuBar()
 				Config.Save();
 			}
 
+            ImGui::Checkbox("Metronome", &_MetronomeEnabled);
+            ImGui::Checkbox("Assist Tick", &_AssistTickEnabled);
+
 			ImGui::EndMenu();
 		}
 
@@ -339,10 +420,10 @@ void Program::MenuBar()
 
 			MOD(ShortcutMenuModule).EndMenu();
 		}
-		
+
 		if (ImGui::BeginMenu("Debug"))
 		{
-			ImGui::Checkbox("Show TimeSlice Boundaries", &MOD(DebugModule).ShowTimeSliceBoundaries);		
+			ImGui::Checkbox("Show TimeSlice Boundaries", &MOD(DebugModule).ShowTimeSliceBoundaries);
 
 			ImGui::EndMenu();
 		}
@@ -352,11 +433,11 @@ void Program::MenuBar()
 	}
 }
 
-void Program::SetUpMetadata() 
+void Program::SetUpMetadata()
 {
 	std::string titleName;
 
-	if (ShouldSetUpNewChart) 
+	if (ShouldSetUpNewChart)
 		titleName = "New Chart";
 	else
 		titleName = "Edit Metadata";
@@ -387,14 +468,14 @@ void Program::SetUpMetadata()
 			std::string audioButtonName =  ChartMetadataSetup.AudioPath.string() == "" ? "Pick an audio file" : ChartMetadataSetup.AudioPath.string();
 			std::string chartButtonName =  ChartMetadataSetup.ChartFolderPath.string() == "" ? "Pick a chart folder path" : ChartMetadataSetup.ChartFolderPath.string();
 			std::string backgroundButtonName =  ChartMetadataSetup.BackgroundPath.string() == "" ? "Pick a background (optional)" : ChartMetadataSetup.BackgroundPath.string();
-			
+
 			ImGui::Text("Relevant Paths");
-			
+
 			if(ImGui::Button(audioButtonName.c_str()))
 			{
 				ShouldSetUpMetadata = OutOpen = false;
 
-				MOD(DialogModule).OpenFileDialog(".mp3;.ogg;.wav", [this](const std::string &InPath) 
+				MOD(DialogModule).OpenFileDialog(".mp3;.ogg;.wav", [this](const std::string &InPath)
 				{
 					ChartMetadataSetup.AudioPath = InPath;
 					ShouldSetUpMetadata = true;
@@ -405,7 +486,7 @@ void Program::SetUpMetadata()
 			{
 				ShouldSetUpMetadata = OutOpen = false;
 
-				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath) 
+				MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath)
 				{
 					ChartMetadataSetup.ChartFolderPath = InPath;
 					ShouldSetUpMetadata = true;
@@ -416,7 +497,7 @@ void Program::SetUpMetadata()
 			{
 				ShouldSetUpMetadata = OutOpen = false;
 
-				MOD(DialogModule).OpenFileDialog(".png;.jpg", [this](const std::string &InPath) 
+				MOD(DialogModule).OpenFileDialog(".png;.jpg", [this](const std::string &InPath)
 				{
 					ChartMetadataSetup.BackgroundPath = InPath;
 					ShouldSetUpMetadata = true;
@@ -446,7 +527,7 @@ void Program::SetUpMetadata()
 			}
 
 			ImGui::SameLine();
-			
+
 			if(ImGui::Button("Close"))
 			{
 				if (ShouldSetUpNewChart) ChartMetadataSetup = ChartMetadata();
@@ -456,7 +537,7 @@ void Program::SetUpMetadata()
 	});
 }
 
-void Program::ShowShortCuts() 
+void Program::ShowShortCuts()
 {
 	MOD(PopupModule).OpenPopup("New Chart", [this](bool& OutOpen)
 	{
@@ -467,11 +548,38 @@ void Program::ShowShortCuts()
 	});
 }
 
+void Program::OpenMoveAllNotes()
+{
+    static int offset = 0;
+    MOD(PopupModule).OpenPopup("Move All Notes", [this](bool& OutOpen)
+    {
+        ImGui::InputInt("Offset (ms)", &offset);
+        ImGui::Text("Positive = Move Right (Later)");
+        ImGui::Text("Negative = Move Left (Earlier)");
+
+        if(ImGui::Button("Apply"))
+        {
+            if (offset != 0)
+            {
+                MOD(EditModule).OnMoveAllNotes(offset);
+                MOD(BeatModule).AssignNotesToSnapsInChart(SelectedChart);
+                PUSH_NOTIFICATION("Moved all notes by %d ms", offset);
+            }
+            OutOpen = false;
+        }
+
+        ImGui::SameLine();
+
+        if(ImGui::Button("Cancel") || MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Escape))
+            OutOpen = false;
+    });
+}
+
 void Program::OpenStreamGenerator()
 {
 	static int start = 0;
 	static int end = 0;
-	static int divisor = 4;
+	static int divisor = 16;
 	static int pattern = 0;
 
 	if (start == 0 && end == 0)
@@ -485,15 +593,16 @@ void Program::OpenStreamGenerator()
 		ImGui::InputInt("Start Time (ms)", &start);
 		ImGui::InputInt("End Time (ms)", &end);
 
-		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random" };
+		const char* patterns[] = { "Staircase", "Trill", "Spiral", "Random", "Jumpstream", "Handstream", "Chordjack" };
 		ImGui::Combo("Pattern", &pattern, patterns, IM_ARRAYSIZE(patterns));
 
-		ImGui::InputInt("Divisor (1/X)", &divisor);
+		ImGui::InputInt("Snap (4, 8, 16...)", &divisor);
 		if (divisor < 1) divisor = 1;
 
 		if(ImGui::Button("Generate"))
 		{
 			SelectedChart->GenerateStream(start, end, divisor, (StreamPattern)pattern);
+            MOD(BeatModule).RecalculateSnaps(SelectedChart, start, end);
 			OutOpen = false;
 		}
 
@@ -529,7 +638,15 @@ void Program::OpenDifficultyAnalyzer()
 	});
 }
 
-void Program::GoToTimePoint() 
+void Program::SnapToPeak()
+{
+    Time current = MOD(AudioModule).GetTimeMilliSeconds();
+    Time peak = MOD(AudioModule).FindNearestPeak(current, 50); // +/- 50ms window
+    MOD(AudioModule).SetTimeMilliSeconds(peak);
+    PUSH_NOTIFICATION("Snapped to Peak: %d -> %d", current, peak);
+}
+
+void Program::GoToTimePoint()
 {
 	MOD(PopupModule).OpenPopup("Go To Timepoint", [this](bool& OutOpen)
 	{
@@ -554,7 +671,18 @@ void Program::InputActions()
 	MOD(EditModule).SetShiftKeyState(MOD(InputModule).IsShiftKeyDown());
 
 	if (MOD(InputModule).IsTogglingPause())
+    {
+        if (MOD(InputModule).IsShiftKeyDown())
+        {
+             Time start, end;
+             if (MOD(EditModule).GetSelectionRange(start, end))
+             {
+                 MOD(AudioModule).PlayRange(start, end);
+                 return;
+             }
+        }
 		MOD(AudioModule).TogglePause();
+    }
 
 	if (MOD(InputModule).WasKeyPressed(sf::Keyboard::Key::Num1))
 	{
@@ -647,20 +775,9 @@ void Program::InputActions()
 		return void(MOD(EditModule).OnMouseRightButtonClicked(MOD(InputModule).IsShiftKeyDown()));
 }
 
-void Program::OpenChart(const std::string& InPath) 
+void Program::InitializeChart(Chart* InChart)
 {
-	SelectedChart = MOD(ChartParserModule).ParseAndGenerateChartSet(InPath);
-	
-	if (!SelectedChart)
-	{
-		PUSH_NOTIFICATION("File not found! It might have been deleted?");
-		Config.DeleteRecentFile(InPath);
-		Config.Save();
-		return;
-	}
-
-	Config.RegisterRecentFile(InPath);
-	Config.Save();
+    SelectedChart = InChart;
 
 	MOD(BeatModule).AssignNotesToSnapsInChart(SelectedChart);
 	MOD(AudioModule).LoadAudio(SelectedChart->AudioPath);
@@ -671,12 +788,70 @@ void Program::OpenChart(const std::string& InPath)
 	MOD(WaveFormModule).SetWaveFormData(MOD(AudioModule).GenerateAndGetWaveformData(SelectedChart->AudioPath), MOD(AudioModule).GetSongLengthMilliSeconds());
 	ChartMetadataSetup = MOD(ChartParserModule).GetChartMetadata(SelectedChart);
 
-	SelectedChart->RegisterOnModifiedCallback([this](TimeSlice &InTimeSlice) 
+	SelectedChart->RegisterOnModifiedCallback([this](TimeSlice &InTimeSlice)
 	{
 		//TODO: replicate the timeslice method to optimize when "re-generating"
 		MOD(BeatModule).AssignNotesToSnapsInTimeSlice(SelectedChart, InTimeSlice);
 		MOD(MiniMapModule).GeneratePortion(InTimeSlice, MOD(TimefieldRenderModule).GetSkin());
 	});
+}
+
+void Program::OpenChart(const std::string& InPath)
+{
+    auto charts = MOD(ChartParserModule).ScanForCharts(InPath);
+
+    if (charts.empty())
+    {
+		PUSH_NOTIFICATION("File not found! It might have been deleted?");
+		Config.DeleteRecentFile(InPath);
+		Config.Save();
+		return;
+    }
+
+    if (charts.size() == 1)
+    {
+        Chart* chart = MOD(ChartParserModule).LoadChart(InPath, charts[0].DifficultyName);
+        if (chart)
+        {
+            Config.RegisterRecentFile(InPath);
+            Config.Save();
+            InitializeChart(chart);
+        }
+        else
+        {
+            PUSH_NOTIFICATION("Failed to load chart");
+        }
+    }
+    else
+    {
+        MOD(PopupModule).OpenPopup("Select Difficulty", [this, charts, InPath](bool& OutOpen) mutable
+        {
+            ImGui::Text("Select a chart to load:");
+            for (const auto& def : charts)
+            {
+                std::string label = def.DifficultyName;
+                if (label.empty()) label = "Untitled";
+                if (!def.ChartType.empty()) label += " (" + def.ChartType + ")";
+
+                if (ImGui::Button(label.c_str(), ImVec2(-1, 0)))
+                {
+                    Chart* chart = MOD(ChartParserModule).LoadChart(InPath, def.DifficultyName);
+                    if (chart)
+                    {
+                        Config.RegisterRecentFile(InPath);
+                        Config.Save();
+                        InitializeChart(chart);
+                    }
+                    else
+                    {
+                        PUSH_NOTIFICATION("Failed to load chart");
+                    }
+                    OutOpen = false;
+                }
+            }
+            if (ImGui::Button("Cancel", ImVec2(-1, 0))) OutOpen = false;
+        });
+    }
 }
 
 void Program::ApplyDeltaToZoom(const float InDelta)

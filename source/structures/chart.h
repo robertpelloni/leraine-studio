@@ -29,6 +29,12 @@ struct Note
 		HoldBegin,
 		HoldIntermediate,
 		HoldEnd,
+        Mine,
+        RollBegin,
+        RollIntermediate,
+        RollEnd,
+        Lift,
+        Fake,
 
 		COUNT
 	} Type;
@@ -57,6 +63,33 @@ struct ScrollVelocityMultiplier
 {
 	Time TimePoint;
 	double Multiplier;
+
+    bool operator==(const ScrollVelocityMultiplier& InOther)
+    {
+        return (TimePoint == InOther.TimePoint);
+    }
+};
+
+struct TimeSignature
+{
+    Time TimePoint;
+    int Numerator = 4;
+    int Denominator = 4;
+
+    bool operator==(const TimeSignature& other) { return TimePoint == other.TimePoint; }
+};
+
+struct StopPoint
+{
+    Time TimePoint;
+    double Length; // Seconds (StepMania standard) or MS? Standardize on MS internally?
+    // StepMania uses Seconds. Let's use Seconds to distinguish from Length in Time (which is int).
+    // Or simpler, double Seconds.
+
+    bool operator==(const StopPoint& InOther)
+    {
+        return (TimePoint == InOther.TimePoint);
+    }
 };
 
 struct TimeSlice
@@ -68,7 +101,20 @@ struct TimeSlice
 	std::map<Column, std::vector<Note>> Notes;
 
 	std::vector<BpmPoint> BpmPoints;
+    std::vector<StopPoint> Stops;
 	std::vector<ScrollVelocityMultiplier> SvMultipliers;
+    std::vector<TimeSignature> TimeSignatures;
+};
+
+enum class StreamPattern
+{
+	Staircase,
+	Trill,
+	Spiral,
+	Random,
+    Jumpstream,
+    Handstream,
+    Chordjack
 };
 
 enum class StreamPattern
@@ -127,6 +173,11 @@ public: //meta
 	float HP = 0;
 	float OD = 0;
 
+    double BaseOffset = 0.0;
+
+    std::string SmBgChanges;
+    std::string SmFgChanges;
+
 	std::vector<std::string> InheritedTimingPoints;
 
 public: //accessors
@@ -142,6 +193,9 @@ public: //accessors
 	void ReverseNotes(NoteReferenceCollection& OutNotes);
 	void ShuffleNotes(NoteReferenceCollection& OutNotes);
 	void QuantizeNotes(NoteReferenceCollection& OutNotes, int Divisor);
+    void ConvertToHolds(NoteReferenceCollection& OutNotes, Time Length);
+    void ConvertToTaps(NoteReferenceCollection& OutNotes);
+    void MoveAllNotes(Time Offset);
 	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
@@ -153,13 +207,21 @@ public: //accessors
 
 	bool RemoveNote(const Time InTime, const Column InColumn, const bool InIgnoreHoldChecks = false, const bool InSkipHistoryRegistering = false, const bool InSkipOnModified = false);
 	bool RemoveBpmPoint(BpmPoint& InBpmPoint, const bool InSkipHistoryRegistering = false);
+    bool RemoveStop(StopPoint& InStop, const bool InSkipHistoryRegistering = false);
+    bool RemoveSV(ScrollVelocityMultiplier& InSV, const bool InSkipHistoryRegistering = false);
 	bool BulkRemoveNotes(NoteReferenceCollection& InNotes, const bool InSkipHistoryRegistering = false);
 
 	Note& InjectNote(const Time InTime, const Column InColumn, const Note::EType InNoteType, const Time InTimeBegin = -1, const Time InTimeEnd = -1, const int InBeatSnap = -1, const bool InSkipOnModified = false);
 	Note& InjectHold(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn,  const int InBeatSnapBegin = -1, const int InBeatSnapEnd = -1, const bool InSkipOnModified = false);
+    Note& InjectRoll(const Time InTimeBegin, const Time InTimeEnd, const Column InColumn,  const int InBeatSnapBegin = -1, const int InBeatSnapEnd = -1, const bool InSkipOnModified = false);
 	BpmPoint* InjectBpmPoint(const Time InTime, const double InBpm, const double InBeatLength);
+    StopPoint* InjectStop(const Time InTime, const double Length);
+    ScrollVelocityMultiplier* InjectSV(const Time InTime, const double Multiplier);
+    TimeSignature* InjectTimeSignature(const Time InTime, const int Numerator, const int Denominator);
 
 	Note* MoveNote(const Time InTimeFrom, const Time InTimeTo, const Column InColumnFrom, const Column InColumnTo, const int InNewBeatSnap);
+    StopPoint* MoveStop(StopPoint& InStop, const Time NewTime);
+    ScrollVelocityMultiplier* MoveSV(ScrollVelocityMultiplier& InSV, const Time NewTime);
 	Note* FindNote(const Time InTime, const Column InColumn);
 	bool IsAPotentialNoteDuplicate(const Time InTime, const Column InColumn);
 	TimeSlice& FindOrAddTimeSlice(const Time InTime);
@@ -167,19 +229,28 @@ public: //accessors
 	void FillNoteCollectionWithAllNotes(NoteReferenceCollection& OutNotes);
 
 	void RevaluateBpmPoint(BpmPoint& InFormerBpmPoint, BpmPoint& InMovedBpmPoint);
+    void RevaluateStop(StopPoint& InFormerStop, StopPoint& InMovedStop);
+    void RevaluateSV(ScrollVelocityMultiplier& InFormerSV, ScrollVelocityMultiplier& InMovedSV);
 	void PushTimeSliceHistoryIfNotAdded(const Time InTime);
 	void RegisterTimeSliceHistory(const Time InTime);
 	void RegisterTimeSliceHistoryRanged(const Time InTimeBegin, const Time InTimeEnd);
 
 	bool Undo();
+    bool Redo();
 
 	void IterateTimeSlicesInTimeRange(const Time InTimeBegin, const Time InTimeEnd, std::function<void(TimeSlice&)> InWork);
 	void IterateNotesInTimeRange(const Time InTimeBegin, const Time InTimeEnd, std::function<void(Note&, const Column)> InWork);
 
 	void IterateAllNotes(std::function<void(Note&, const Column)> InWork);
 	void IterateAllBpmPoints(std::function<void(BpmPoint&)> InWork);
+    void IterateAllStops(std::function<void(StopPoint&)> InWork);
+    void IterateAllSVs(std::function<void(ScrollVelocityMultiplier&)> InWork);
+    void IterateAllTimeSignatures(std::function<void(TimeSignature&)> InWork);
 
 	std::vector<BpmPoint*>& GetBpmPointsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
+    std::vector<StopPoint*>& GetStopsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
+    std::vector<ScrollVelocityMultiplier*>& GetSVsRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
+    std::vector<TimeSignature*>& GetTimeSignaturesRelatedToTimeRange(const Time InTimeBegin, const Time InTimeEnd);
 	BpmPoint* GetPreviousBpmPointFromTimePoint(const Time InTime);
 	BpmPoint* GetNextBpmPointFromTimePoint(const Time InTime);
 
@@ -191,8 +262,12 @@ public: //data ownership
 	std::map<int, TimeSlice> TimeSlices;
 
 	std::stack<std::vector<TimeSlice>> TimeSliceHistory;
+    std::stack<std::vector<TimeSlice>> TimeSliceFuture;
 
 	std::vector<BpmPoint*> CachedBpmPoints;
+    std::vector<StopPoint*> CachedStops;
+    std::vector<ScrollVelocityMultiplier*> CachedSVs;
+    std::vector<TimeSignature*> CachedTimeSignatures;
 
 private:
 

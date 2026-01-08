@@ -30,29 +30,9 @@ bool EditMode::OnExpand()
 	return false;
 }
 
-bool EditMode::OnReverse()
+bool EditMode::GetSelectionRange(Time& OutStart, Time& OutEnd)
 {
-	return false;
-}
-
-bool EditMode::OnShuffle()
-{
-	return false;
-}
-
-bool EditMode::OnQuantize(int InDivisor)
-{
-	return false;
-}
-
-bool EditMode::OnCompress()
-{
-	return false;
-}
-
-bool EditMode::OnExpand()
-{
-	return false;
+    return false;
 }
 
 bool EditMode::OnReverse()
@@ -68,6 +48,16 @@ bool EditMode::OnShuffle()
 bool EditMode::OnQuantize(int InDivisor)
 {
 	return false;
+}
+
+bool EditMode::OnConvertToHolds(Time Length)
+{
+    return false;
+}
+
+bool EditMode::OnConvertToTaps()
+{
+    return false;
 }
 
 bool EditMode::OnCompress()

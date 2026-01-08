@@ -36,10 +36,19 @@ public: //edit-mode overrides
 	bool OnReverse() override;
 	bool OnShuffle() override;
 	bool OnQuantize(int InDivisor) override;
+    bool OnConvertToHolds(Time Length) override;
+    bool OnConvertToTaps() override;
+    bool OnMoveAllNotes(Time Offset);
+    bool OnInvertSelection();
+    bool OnUndo();
+    bool OnRedo();
 	bool OnDelete() override;
 	bool OnSelectAll() override;
 
     void OnEstimateBPM();
+    void OnTap();
+
+    bool GetSelectionRange(Time& OutStart, Time& OutEnd);
 
 	void SubmitToRenderGraph(TimefieldRenderGraph& InOutTimefieldRenderGraph, const Time InTimeBegin, const Time InTimeEnd) override;
 

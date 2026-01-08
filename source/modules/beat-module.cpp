@@ -1,4 +1,5 @@
 #include "beat-module.h"
+#include "../structures/chart.h"
 
 #include <math.h>
 
@@ -19,7 +20,7 @@ bool BeatModule::StartUp()
 	_LegalSnaps.insert(16);
 	_LegalSnaps.insert(24);
 	_LegalSnaps.insert(48);
-	
+
 	return true;
 }
 
@@ -42,7 +43,14 @@ void BeatModule::AssignNotesToSnapsInChart(Chart* const InChart)
 	}
 }
 
-void BeatModule::AssignNotesToSnapsInTimeSlice(Chart* const InChart, TimeSlice& InOutTimeSlice) 
+void BeatModule::RecalculateSnaps(Chart* const InChart, Time Start, Time End)
+{
+    InChart->IterateTimeSlicesInTimeRange(Start, End, [&](TimeSlice& slice){
+        AssignNotesToSnapsInTimeSlice(InChart, slice);
+    });
+}
+
+void BeatModule::AssignNotesToSnapsInTimeSlice(Chart* const InChart, TimeSlice& InOutTimeSlice)
 {
 	GenerateTimeRangeBeatLines(InOutTimeSlice.TimePoint, InOutTimeSlice.TimePoint + TIMESLICE_LENGTH, InChart, 48);
 	GenerateTimeRangeBeatLines(InOutTimeSlice.TimePoint, InOutTimeSlice.TimePoint + TIMESLICE_LENGTH, InChart, 5, true);
@@ -71,6 +79,10 @@ void BeatModule::GenerateTimeRangeBeatLines(const Time InTimeBegin, const Time I
 
 	const auto& bpmPoints = InChart->GetBpmPointsRelatedToTimeRange(InTimeBegin, InTimeEnd);
 
+    std::vector<TimeSignature> allTS;
+    InChart->IterateAllTimeSignatures([&](TimeSignature& ts){ allTS.push_back(ts); });
+    std::sort(allTS.begin(), allTS.end(), [](const auto& a, const auto& b){ return a.TimePoint < b.TimePoint; });
+
 	size_t index = 0;
 	for (const auto& bpmPointPtr : bpmPoints)
 	{
@@ -95,7 +107,7 @@ void BeatModule::GenerateTimeRangeBeatLines(const Time InTimeBegin, const Time I
 			timeEnd += Time(timeBetweenSnaps);
 
 		int beatCount = (int)std::max(0.0, double(firstPosition - double(bpmPoint.TimePoint)) / timeBetweenSnaps + 0.5);
-		
+
 		for (double timePosition = firstPosition; timePosition + 0.5 < double(timeEnd); timePosition += timeBetweenSnaps)
 		{
 			Time actualTime = Time(timePosition);
@@ -105,7 +117,34 @@ void BeatModule::GenerateTimeRangeBeatLines(const Time InTimeBegin, const Time I
 				_OnFieldBeatLines.push_back({ actualTime, -1, InBeatDivision, -1});
 			else
 			{
-				_OnFieldBeatLines.push_back({ analyticalTime, beatCount, InBeatDivision, GetBeatSnap(beatCount, InBeatDivision) });
+                bool isMeasure = false;
+                if (InBeatDivision == 48)
+                {
+                    TimeSignature currentTs;
+                    currentTs.TimePoint = -999999;
+                    currentTs.Numerator = 4;
+                    currentTs.Denominator = 4;
+
+                    for (const auto& ts : allTS)
+                    {
+                        if (ts.TimePoint <= analyticalTime)
+                            currentTs = ts;
+                        else
+                            break;
+                    }
+
+                    double absBeat = InChart->GetBeatFromTime(analyticalTime);
+                    double beatAtTs = (currentTs.TimePoint == -999999) ? 0.0 : InChart->GetBeatFromTime(currentTs.TimePoint);
+
+                    double beatInTs = absBeat - beatAtTs;
+                    double measureLen = (double)currentTs.Numerator * (4.0 / (double)currentTs.Denominator);
+
+                    double m = beatInTs / measureLen;
+                    if (std::abs(m - std::round(m)) < 0.001)
+                        isMeasure = true;
+                }
+
+				_OnFieldBeatLines.push_back({ analyticalTime, beatCount, InBeatDivision, GetBeatSnap(beatCount, InBeatDivision), isMeasure });
 				beatCount++;
 			}
 		}
@@ -113,7 +152,7 @@ void BeatModule::GenerateTimeRangeBeatLines(const Time InTimeBegin, const Time I
 	}
 }
 
-void BeatModule::GenerateBeatLinesFromTimePointIfInvalid(Chart* const InChart, const Time InTime) 
+void BeatModule::GenerateBeatLinesFromTimePointIfInvalid(Chart* const InChart, const Time InTime)
 {
 	const Time timeBegin = _OnFieldBeatLines.front().TimePoint;
 	const Time timeEnd = _OnFieldBeatLines.back().TimePoint;
@@ -247,7 +286,7 @@ bool BeatModule::IsBeatThisDivision(const int InBeatCount, const int InBeatDivis
 	return GlobalFunctions::FloatCompare(fmodf(float(InBeatCount), occurrences) + occurrences, occurrences, 0.001f);
 }
 
-BeatLine BeatModule::GetClosestBeatLineToTimePoint(const Time InTimePoint) 
+BeatLine BeatModule::GetClosestBeatLineToTimePoint(const Time InTimePoint)
 {
 	BeatLine attachedBeatLine = _OnFieldBeatLines.back();
 

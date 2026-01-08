@@ -18,13 +18,16 @@ public: //abstractions
 	void SetUpMetadata();
 	void ShowShortCuts();
 	void GoToTimePoint();
+    void OpenMoveAllNotes();
 	void OpenStreamGenerator();
 	void OpenDifficultyAnalyzer();
+    void SnapToPeak();
 	void ScrollShortcutRoutines();
 	void InputActions();
 	void GlobalInputActions();
 	void ApplyDeltaToZoom(const float InDelta);
 	void UpdateCursor();
+    void InitializeChart(Chart* InChart);
 	void OpenChart(const std::string& InPath);
 	void SetConfig(const Configuration& InConfig);
 
@@ -44,10 +47,14 @@ public: //meta program sequences
 	void ShutDown();
 
 private: //meta data ownership
-	
+
 	sf::Clock _DeltaClock;
 	sf::RenderWindow* _RenderWindow;
 	WindowMetrics _WindowMetrics;
-	
+
 	bool _ShouldExitProgram = false;
+    bool _MetronomeEnabled = false;
+    bool _AssistTickEnabled = false;
+    Time _LastTickTime = 0;
+    Time _LastAssistTickTime = 0;
 };

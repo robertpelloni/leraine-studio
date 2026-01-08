@@ -92,6 +92,11 @@ std::string ChartParserModule::SetChartMetadata(Chart* OutChart, const ChartMeta
 
 Chart* ChartParserModule::ParseAndGenerateChartSet(const std::filesystem::path& InPath)
 {
+    return LoadChart(InPath, "");
+}
+
+Chart* ChartParserModule::LoadChart(const std::filesystem::path& InPath, const std::string& InDifficultyName)
+{
 	std::ifstream chartFile(InPath);
 	if (!chartFile.is_open()) return nullptr;
 	
@@ -99,14 +104,68 @@ Chart* ChartParserModule::ParseAndGenerateChartSet(const std::filesystem::path& 
 
 	PUSH_NOTIFICATION("Opened %s", InPath.c_str());
 
-	Chart* chart = nullptr;
-
 	if(InPath.extension() == ".osu")
-		chart = ParseChartOsuImpl(chartFile, InPath);
+		return ParseChartOsuImpl(chartFile, InPath);
 	else if(InPath.extension() == ".sm")
-		chart = ParseChartStepmaniaImpl(chartFile, InPath);
+		return ParseChartStepmaniaImpl(chartFile, InPath, InDifficultyName);
 
-	return chart;
+	return nullptr;
+}
+
+std::vector<ChartDefinition> ChartParserModule::ScanForCharts(const std::filesystem::path& InPath)
+{
+    std::vector<ChartDefinition> definitions;
+    if(InPath.extension() == ".osu")
+    {
+        definitions.push_back({"Default", "", "osu"});
+        return definitions;
+    }
+
+    if(InPath.extension() == ".sm")
+    {
+        std::ifstream InIfstream(InPath);
+        std::string line;
+
+        while (std::getline(InIfstream, line))
+        {
+            size_t commentPos = line.find("//");
+		    if (commentPos != std::string::npos) line = line.substr(0, commentPos);
+
+            line.erase(0, line.find_first_not_of(" \t\r\n"));
+            line.erase(line.find_last_not_of(" \t\r\n") + 1);
+            if (line.empty()) continue;
+
+            if (line.find("#NOTES") != std::string::npos)
+            {
+                std::string buffer = line;
+                if (buffer.find(':') != std::string::npos)
+                    buffer = buffer.substr(buffer.find(':') + 1);
+
+                while (std::count(buffer.begin(), buffer.end(), ':') < 3 && InIfstream.peek() != EOF)
+                {
+                    std::string nextLine;
+                    std::getline(InIfstream, nextLine);
+                    buffer += nextLine;
+                }
+
+                std::vector<std::string> sections;
+                std::stringstream ss(buffer);
+                std::string segment;
+                while (std::getline(ss, segment, ':'))
+                {
+                    segment.erase(0, segment.find_first_not_of(" \t\r\n"));
+                    segment.erase(segment.find_last_not_of(" \t\r\n") + 1);
+                    sections.push_back(segment);
+                }
+
+                if (sections.size() >= 3)
+                {
+                    definitions.push_back({sections[2], sections[1], sections[0]});
+                }
+            }
+        }
+    }
+    return definitions;
 }
 
 Chart* ChartParserModule::ParseChartOsuImpl(std::ifstream& InIfstream, std::filesystem::path InPath)
@@ -379,6 +438,7 @@ struct SmHoldTracker
 {
 	Time TimePointBegin;
 	Column Col;
+    Note::EType Type;
 };
 
 // Helper struct for beat-based bpm points needed during parsing
@@ -388,7 +448,7 @@ struct SmBpmPoint
 	double Bpm;
 };
 
-Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std::filesystem::path InPath)
+Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std::filesystem::path InPath, const std::string& InDifficultyName)
 {
 	Chart* chart = new Chart();
 	chart->KeyAmount = 4; // Default to 4 keys for dance-single
@@ -398,6 +458,25 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
 
 	double offset = 0.0;
 	std::vector<SmBpmPoint> smBpmPoints;
+    struct SmStop
+    {
+        double Beat;
+        double Length;
+    };
+    std::vector<SmStop> smStops;
+    struct SmSV
+    {
+        double Beat;
+        double Multiplier;
+    };
+    std::vector<SmSV> smSVs;
+    struct SmTimeSignature
+    {
+        double Beat;
+        int Numerator;
+        int Denominator;
+    };
+    std::vector<SmTimeSignature> smTimeSignatures;
 	bool inNotes = false;
 
 	// Helper to calculate time from beat using smBpmPoints and offset
@@ -513,6 +592,59 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
 						chart->InjectBpmPoint(t, pt.Bpm, 60000.0 / pt.Bpm);
 					}
 				}
+                else if (key == "STOPS")
+                {
+                    std::string pairStr;
+                    std::stringstream ss(value);
+                    while (std::getline(ss, pairStr, ','))
+                    {
+                        size_t eqPos = pairStr.find('=');
+                        if (eqPos != std::string::npos)
+                        {
+                            double beat = std::stod(pairStr.substr(0, eqPos));
+                            double len = std::stod(pairStr.substr(eqPos + 1));
+                            smStops.push_back({beat, len});
+                        }
+                    }
+                }
+                else if (key == "SCROLLS")
+                {
+                    std::string pairStr;
+                    std::stringstream ss(value);
+                    while (std::getline(ss, pairStr, ','))
+                    {
+                        size_t eqPos = pairStr.find('=');
+                        if (eqPos != std::string::npos)
+                        {
+                            double beat = std::stod(pairStr.substr(0, eqPos));
+                            double mul = std::stod(pairStr.substr(eqPos + 1));
+                            smSVs.push_back({beat, mul});
+                        }
+                    }
+                }
+                else if (key == "TIMESIGNATURES")
+                {
+                    std::string pairStr;
+                    std::stringstream ss(value);
+                    while (std::getline(ss, pairStr, ','))
+                    {
+                        size_t eqPos1 = pairStr.find('=');
+                        if (eqPos1 != std::string::npos)
+                        {
+                            double beat = std::stod(pairStr.substr(0, eqPos1));
+                            std::string rem = pairStr.substr(eqPos1 + 1);
+                            size_t eqPos2 = rem.find('=');
+                            if (eqPos2 != std::string::npos)
+                            {
+                                int num = std::stoi(rem.substr(0, eqPos2));
+                                int den = std::stoi(rem.substr(eqPos2 + 1));
+                                smTimeSignatures.push_back({beat, num, den});
+                            }
+                        }
+                    }
+                }
+                else if (key == "BGCHANGES") chart->SmBgChanges = value;
+                else if (key == "FGCHANGES") chart->SmFgChanges = value;
 				else if (key == "NOTES")
 				{
 					inNotes = true;
@@ -550,17 +682,40 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
 
 			if (sections.size() >= 6)
 			{
-				std::string chartType = sections[0]; // dance-single
-				// Only parse dance-single for now
-				if (chartType.find("dance-single") != std::string::npos)
-				{
-					chart->DifficultyName = sections[2]; // Difficulty Class (Hard, etc)
+                for (const auto& stop : smStops)
+                {
+                    Time t = GetTimeFromBeat(stop.Beat);
+                    chart->InjectStop(t, stop.Length);
+                }
+                for (const auto& sv : smSVs)
+                {
+                    Time t = GetTimeFromBeat(sv.Beat);
+                    chart->InjectSV(t, sv.Multiplier);
+                }
+                for (const auto& ts : smTimeSignatures)
+                {
+                    Time t = GetTimeFromBeat(ts.Beat);
+                    chart->InjectTimeSignature(t, ts.Numerator, ts.Denominator);
+                }
 
-					// Note Data is in sections[5] (and subsequent if split failed on colons inside data, but data usually doesn't have colons)
-					// Actually, sections might be wrong if data contains colons? No, data uses 0123M and newlines/commas.
+				std::string chartType = sections[0];
+                std::string difficulty = sections[2];
+
+                bool match = false;
+                if (InDifficultyName.empty())
+                {
+				    if (chartType.find("dance-single") != std::string::npos) match = true;
+                }
+                else
+                {
+                    if (difficulty == InDifficultyName) match = true;
+                }
+
+				if (match)
+				{
+					chart->DifficultyName = difficulty;
 
 					std::string noteData = sections[5];
-					// If there were more colons, append them back? unlikely for standard SM.
 
 					// Process Measures
 					std::vector<SmHoldTracker> holds;
@@ -622,8 +777,12 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
 								}
 								else if (type == '2') // Hold Head
 								{
-									holds.push_back({t, (Column)c});
+									holds.push_back({t, (Column)c, Note::EType::HoldBegin});
 								}
+                                else if (type == '4') // Roll Head
+                                {
+                                    holds.push_back({t, (Column)c, Note::EType::RollBegin});
+                                }
 								else if (type == '3') // Hold Tail
 								{
 									// Find matching head
@@ -631,7 +790,11 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
 									{
 										if (it->Col == (Column)c)
 										{
-											chart->InjectHold(it->TimePointBegin, t, c);
+                                            if (it->Type == Note::EType::HoldBegin)
+											    chart->InjectHold(it->TimePointBegin, t, c);
+                                            else if (it->Type == Note::EType::RollBegin)
+                                                chart->InjectRoll(it->TimePointBegin, t, c);
+
 											holds.erase(it);
 											break;
 										}
@@ -639,9 +802,16 @@ Chart* ChartParserModule::ParseChartStepmaniaImpl(std::ifstream& InIfstream, std
 								}
 								else if (type == 'M') // Mine
 								{
-									// Treat as common note or specialized?
-									// chart->InjectNote(t, c, Note::EType::Mine); // If supported
+									chart->InjectNote(t, c, Note::EType::Mine);
 								}
+                                else if (type == 'L') // Lift
+                                {
+                                    chart->InjectNote(t, c, Note::EType::Lift);
+                                }
+                                else if (type == 'F') // Fake
+                                {
+                                    chart->InjectNote(t, c, Note::EType::Fake);
+                                }
 							}
 						}
 						currentMeasureIndex++;
@@ -824,46 +994,6 @@ void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& 
 		currentBpm = sortedBpmPoints[i].Bpm;
 	}
 
-	// 2. Write Header
-	std::stringstream ss;
-	ss << "#TITLE:" << InChart->SongTitle << ";\n";
-	ss << "#SUBTITLE:;\n";
-	ss << "#ARTIST:" << InChart->Artist << ";\n";
-	ss << "#TITLETRANSLIT:" << InChart->SongtitleUnicode << ";\n";
-	ss << "#ARTISTTRANSLIT:" << InChart->ArtistUnicode << ";\n";
-	ss << "#GENRE:;\n";
-	ss << "#CREDIT:" << InChart->Charter << ";\n";
-	ss << "#MUSIC:" << InChart->AudioPath.filename().string() << ";\n";
-	ss << "#BANNER:" << InChart->BackgroundPath.filename().string() << ";\n";
-	ss << "#BACKGROUND:;\n";
-	ss << "#LYRICSPATH:;\n";
-	ss << "#CDTITLE:;\n";
-	ss << "#OFFSET:" << offset << ";\n";
-	ss << "#SAMPLESTART:0.000;\n";
-	ss << "#SAMPLELENGTH:10.000;\n";
-	ss << "#SELECTABLE:YES;\n";
-
-	ss << "#BPMS:";
-	for (size_t i = 0; i < processedBpmPoints.size(); ++i)
-	{
-		ss << processedBpmPoints[i].Beat << "=" << processedBpmPoints[i].Bpm;
-		if (i < processedBpmPoints.size() - 1) ss << ",";
-		else ss << ";\n";
-	}
-
-	ss << "#STOPS:;\n";
-	ss << "#BGCHANGES:;\n";
-	ss << "#FGCHANGES:;\n"; // Fixed typo key -> FGCHANGES
-
-	// 3. Convert Notes to Beat Positions
-	struct SmNote
-	{
-		double Beat;
-		int Column;
-		char Type; // 1=Tap, 2=Head, 3=Tail
-	};
-	std::vector<SmNote> smNotes;
-
 	auto TimeToBeat = [&](Time t) -> double {
 		// Find relevant BPM segment
 		// processedBpmPoints has (Beat, Bpm, TimePoint).
@@ -893,6 +1023,84 @@ void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& 
 		return processedBpmPoints[idx].Beat + delta / (60000.0 / processedBpmPoints[idx].Bpm);
 	};
 
+	// 2. Write Header
+	std::stringstream ss;
+	ss << "#TITLE:" << InChart->SongTitle << ";\n";
+	ss << "#SUBTITLE:;\n";
+	ss << "#ARTIST:" << InChart->Artist << ";\n";
+	ss << "#TITLETRANSLIT:" << InChart->SongtitleUnicode << ";\n";
+	ss << "#ARTISTTRANSLIT:" << InChart->ArtistUnicode << ";\n";
+	ss << "#GENRE:;\n";
+	ss << "#CREDIT:" << InChart->Charter << ";\n";
+	ss << "#MUSIC:" << InChart->AudioPath.filename().string() << ";\n";
+	ss << "#BANNER:" << InChart->BackgroundPath.filename().string() << ";\n";
+	ss << "#BACKGROUND:;\n";
+	ss << "#LYRICSPATH:;\n";
+	ss << "#CDTITLE:;\n";
+	ss << "#OFFSET:" << offset << ";\n";
+	ss << "#SAMPLESTART:0.000;\n";
+	ss << "#SAMPLELENGTH:10.000;\n";
+	ss << "#SELECTABLE:YES;\n";
+
+	ss << "#BPMS:";
+	for (size_t i = 0; i < processedBpmPoints.size(); ++i)
+	{
+		ss << processedBpmPoints[i].Beat << "=" << processedBpmPoints[i].Bpm;
+		if (i < processedBpmPoints.size() - 1) ss << ",";
+		else ss << ";\n";
+	}
+
+	ss << "#STOPS:";
+    std::vector<StopPoint> stops;
+    InChart->IterateAllStops([&](StopPoint& s){ stops.push_back(s); });
+    std::sort(stops.begin(), stops.end(), [](const StopPoint& a, const StopPoint& b){ return a.TimePoint < b.TimePoint; });
+
+    for (size_t i = 0; i < stops.size(); ++i)
+    {
+        double beat = TimeToBeat(stops[i].TimePoint);
+        ss << beat << "=" << stops[i].Length;
+        if (i < stops.size() - 1) ss << ",";
+    }
+	ss << ";\n";
+
+    ss << "#SCROLLS:";
+    std::vector<ScrollVelocityMultiplier> svs;
+    InChart->IterateAllSVs([&](ScrollVelocityMultiplier& s){ svs.push_back(s); });
+    std::sort(svs.begin(), svs.end(), [](const auto& a, const auto& b){ return a.TimePoint < b.TimePoint; });
+
+    for (size_t i = 0; i < svs.size(); ++i)
+    {
+        double beat = TimeToBeat(svs[i].TimePoint);
+        ss << beat << "=" << svs[i].Multiplier;
+        if (i < svs.size() - 1) ss << ",";
+    }
+    ss << ";\n";
+
+    ss << "#TIMESIGNATURES:";
+    std::vector<TimeSignature> tss;
+    InChart->IterateAllTimeSignatures([&](TimeSignature& ts){ tss.push_back(ts); });
+    std::sort(tss.begin(), tss.end(), [](const auto& a, const auto& b){ return a.TimePoint < b.TimePoint; });
+
+    for (size_t i = 0; i < tss.size(); ++i)
+    {
+        double beat = TimeToBeat(tss[i].TimePoint);
+        ss << beat << "=" << tss[i].Numerator << "=" << tss[i].Denominator;
+        if (i < tss.size() - 1) ss << ",";
+    }
+    ss << ";\n";
+
+	ss << "#BGCHANGES:" << InChart->SmBgChanges << ";\n";
+	ss << "#FGCHANGES:" << InChart->SmFgChanges << ";\n";
+
+	// 3. Convert Notes to Beat Positions
+	struct SmNote
+	{
+		double Beat;
+		int Column;
+		char Type; // 1=Tap, 2=Head, 3=Tail
+	};
+	std::vector<SmNote> smNotes;
+
 	InChart->IterateAllNotes([&](Note& n, const Column& col) {
 		// Only support 4 keys for now
 		if (col >= 4) return;
@@ -908,6 +1116,24 @@ void ChartParserModule::ExportChartStepmaniaImpl(Chart* InChart, std::ofstream& 
 			double bEnd = TimeToBeat(n.TimePointEnd);
 			smNotes.push_back({bEnd, (int)col, '3'});
 		}
+        else if (n.Type == Note::EType::RollBegin)
+        {
+            smNotes.push_back({b, (int)col, '4'});
+            double bEnd = TimeToBeat(n.TimePointEnd);
+            smNotes.push_back({bEnd, (int)col, '3'});
+        }
+        else if (n.Type == Note::EType::Mine)
+        {
+            smNotes.push_back({b, (int)col, 'M'});
+        }
+        else if (n.Type == Note::EType::Lift)
+        {
+            smNotes.push_back({b, (int)col, 'L'});
+        }
+        else if (n.Type == Note::EType::Fake)
+        {
+            smNotes.push_back({b, (int)col, 'F'});
+        }
 	});
 
 	std::sort(smNotes.begin(), smNotes.end(), [](const SmNote& a, const SmNote& b){
