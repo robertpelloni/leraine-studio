@@ -117,6 +117,14 @@ enum class StreamPattern
     Chordjack
 };
 
+enum class StreamPattern
+{
+	Staircase,
+	Trill,
+	Spiral,
+	Random
+};
+
 struct NoteReferenceCollection
 {
 	void PushNote(Column InColumn, Note* InNote);
