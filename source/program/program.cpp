@@ -479,6 +479,17 @@ void Program::DisplayDashboard()
         {
             Config.Save();
         }
+        if (Config.ShowWaveform)
+        {
+            ImGui::SameLine();
+            bool isStereo = MOD(WaveFormModule).IsStereoMode();
+            if (ImGui::Checkbox("Stereo Waveform", &isStereo))
+            {
+                MOD(WaveFormModule).SetStereoMode(isStereo);
+            }
+            ImGui::SameLine();
+            HelpMarker("Toggle between distinct Left/Right stereo audio channels or combined mono waveform visualization.");
+        }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
         {

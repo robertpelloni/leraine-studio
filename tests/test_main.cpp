@@ -7,6 +7,7 @@
 #include "../source/modules/chart-parser-module.h"
 #include "../source/modules/shortcut-menu-module.h"
 #include "../source/structures/skin.h"
+#include "../source/modules/waveform-module.h"
 
 // Simple test framework
 #define ASSERT(cond) if(!(cond)) { std::cerr << "Assertion failed: " << #cond << std::endl; return 1; }
@@ -265,6 +266,26 @@ int TestSkinSnapColorTable()
     return 0;
 }
 
+int TestWaveformBounds()
+{
+    WaveFormModule waveform;
+    ASSERT(!waveform.HasWaveFormData());
+    ASSERT(waveform.GetSongLength() == 0);
+
+    WaveFormData dummyData[10];
+    for (int i = 0; i < 10; ++i)
+    {
+        dummyData[i].Left = 0.5f;
+        dummyData[i].Right = 0.5f;
+    }
+
+    waveform.SetWaveFormData(dummyData, 10);
+    ASSERT(waveform.HasWaveFormData());
+    ASSERT(waveform.GetSongLength() == 10);
+
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
@@ -277,6 +298,7 @@ int main() {
     TEST(TestShortcutMappings);
     TEST(TestUnsnappedNoteValidation);
     TEST(TestSkinSnapColorTable);
+    TEST(TestWaveformBounds);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

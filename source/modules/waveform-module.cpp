@@ -47,11 +47,23 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
         const float y = float(_ScalableWaveFormTexture.getSize().y - i);
         const int pointIndex = i * 2;
 
-        _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - abs(waveFormData.Left * _WaveFormWidth / 2);
-        _WaveFormLines[pointIndex].position.y = y;
+        if (_StereoMode)
+        {
+            _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - abs(waveFormData.Left * _WaveFormWidth / 2);
+            _WaveFormLines[pointIndex].position.y = y;
 
-        _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + abs(waveFormData.Right * _WaveFormWidth / 2);
-        _WaveFormLines[pointIndex + 1].position.y = y;
+            _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + abs(waveFormData.Right * _WaveFormWidth / 2);
+            _WaveFormLines[pointIndex + 1].position.y = y;
+        }
+        else
+        {
+            float monoAmp = (abs(waveFormData.Left) + abs(waveFormData.Right)) * 0.5f;
+            _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - monoAmp * (_WaveFormWidth / 2);
+            _WaveFormLines[pointIndex].position.y = y;
+
+            _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + monoAmp * (_WaveFormWidth / 2);
+            _WaveFormLines[pointIndex + 1].position.y = y;
+        }
 
         _WaveFormLines[pointIndex].color = sf::Color(255, 255, 255, 255);
         _WaveFormLines[pointIndex + 1].color = sf::Color(255, 255, 255, 255);

@@ -16,6 +16,12 @@ public:
     void SetWaveFormData(WaveFormData* const InWaveFormData, const Time InSongLengthMilliSeconds);
     void RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, const Time InTimeBegin, const Time InTimeEnd, const int InScreenX, const float InZoomLevel, const float InWindowHeight);
 
+    bool HasWaveFormData() const { return _WaveFormData != nullptr; }
+    Time GetSongLength() const { return _SongLengthMilliSeconds; }
+
+    bool IsStereoMode() const { return _StereoMode; }
+    void SetStereoMode(bool InStereo) { _StereoMode = InStereo; }
+
 private:
 
     const int _WaveFormWidth = 256;
@@ -27,4 +33,5 @@ private:
     WaveFormData* _WaveFormData = nullptr;
 
     Time _SongLengthMilliSeconds = 0;
+    bool _StereoMode = true;
 };

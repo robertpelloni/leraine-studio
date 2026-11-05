@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-11-04
+### Added
+- **Waveform Channel Mode Control**: Implemented Stereo vs. Monochannel waveform rendering modes and state inspection in `WaveFormModule` (`IsStereoMode`, `SetStereoMode`, `HasWaveFormData`, `GetSongLength`).
+- **Dashboard Waveform Settings**: Added stereo waveform channel toggle in View & Grid Settings inside the Unified Dashboard with `(?)` guidance marker.
+- **Automated Waveform Tests**: Added `TestWaveformBounds()` in `tests/test_main.cpp`.
+
 ## [1.5.0] - 2026-11-04
 ### Added
 - **Skin Query Helpers & Color Mapping**: Implemented `Skin::GetLoadedKeyAmount()` and `Skin::GetSnapColor()` for querying skin metrics and fallback beat snap coloration.
