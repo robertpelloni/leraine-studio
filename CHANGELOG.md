@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-11-04
+### Added
+- **Waveform Color Customization Engine**: Added configurable RGB waveform color fields (`WaveformColorRed`, `WaveformColorGreen`, `WaveformColorBlue`) to `Configuration` with YAML serialization.
+- **Waveform Module Color Hooks**: Implemented `GetFrontColor()`, `SetFrontColor()`, `GetBackColor()`, and `SetBackColor()` in `WaveFormModule`.
+- **Dashboard Waveform Color Picker**: Added interactive `ImGui::ColorEdit3` picker to the Unified Dashboard under View & Grid Settings with instant preview and auto-saving.
+- **Automated Waveform Color Tests**: Added `TestWaveformColorConfiguration()` in `tests/test_main.cpp`.
+
+## [1.7.0] - 2026-11-04
+### Added
+- **FFT Audio Spectrum Analysis**: Implemented `AudioModule::GetFFTSpectrum` utilizing `BASS_ChannelGetData` with `BASS_DATA_FFT2048` to sample real-time frequency distribution bins.
+- **Dashboard Spectrum Visualizer**: Integrated real-time frequency spectrum histogram in the Unified Dashboard under Playback & Audio Controls.
+- **Automated Audio Spectrum Tests**: Added `TestAudioFFTData` unit test in `tests/test_main.cpp`.
+
+## [1.6.0] - 2026-11-04
+### Added
+- **Waveform Channel Mode Control**: Implemented Stereo vs. Monochannel waveform rendering modes and state inspection in `WaveFormModule` (`IsStereoMode`, `SetStereoMode`, `HasWaveFormData`, `GetSongLength`).
+- **Dashboard Waveform Settings**: Added stereo waveform channel toggle in View & Grid Settings inside the Unified Dashboard with `(?)` guidance marker.
+- **Automated Waveform Tests**: Added `TestWaveformBounds()` in `tests/test_main.cpp`.
+
 ## [1.5.0] - 2026-11-04
 ### Added
 - **Skin Query Helpers & Color Mapping**: Implemented `Skin::GetLoadedKeyAmount()` and `Skin::GetSnapColor()` for querying skin metrics and fallback beat snap coloration.

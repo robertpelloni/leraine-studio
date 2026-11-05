@@ -314,6 +314,26 @@ void AudioModule::PlayHitsound()
     BASS_ChannelPlay(ch, FALSE);
 }
 
+int AudioModule::GetFFTSpectrum(float* OutFFTBuffer, int InSampleSize)
+{
+    if (!OutFFTBuffer || InSampleSize <= 0 || !_StreamHandle)
+        return 0;
+
+    // Request FFT2048 (1024 sample bins)
+    float fft[1024] = { 0 };
+    DWORD bytes = BASS_ChannelGetData(_StreamHandle, fft, BASS_DATA_FFT2048);
+    if (bytes == (DWORD)-1)
+        return 0;
+
+    int copyCount = std::min(InSampleSize, 1024);
+    for (int i = 0; i < copyCount; ++i)
+    {
+        OutFFTBuffer[i] = fft[i];
+    }
+
+    return copyCount;
+}
+
 WaveFormData* AudioModule::GenerateAndGetWaveformData(const std::filesystem::path& InPath)
 {
 	HSTREAM decoder = BASS_StreamCreateFile(FALSE, InPath.string().c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_DECODE);

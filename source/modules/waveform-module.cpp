@@ -47,11 +47,23 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
         const float y = float(_ScalableWaveFormTexture.getSize().y - i);
         const int pointIndex = i * 2;
 
-        _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - abs(waveFormData.Left * _WaveFormWidth / 2);
-        _WaveFormLines[pointIndex].position.y = y;
+        if (_StereoMode)
+        {
+            _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - abs(waveFormData.Left * _WaveFormWidth / 2);
+            _WaveFormLines[pointIndex].position.y = y;
 
-        _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + abs(waveFormData.Right * _WaveFormWidth / 2);
-        _WaveFormLines[pointIndex + 1].position.y = y;
+            _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + abs(waveFormData.Right * _WaveFormWidth / 2);
+            _WaveFormLines[pointIndex + 1].position.y = y;
+        }
+        else
+        {
+            float monoAmp = (abs(waveFormData.Left) + abs(waveFormData.Right)) * 0.5f;
+            _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - monoAmp * (_WaveFormWidth / 2);
+            _WaveFormLines[pointIndex].position.y = y;
+
+            _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + monoAmp * (_WaveFormWidth / 2);
+            _WaveFormLines[pointIndex + 1].position.y = y;
+        }
 
         _WaveFormLines[pointIndex].color = sf::Color(255, 255, 255, 255);
         _WaveFormLines[pointIndex + 1].color = sf::Color(255, 255, 255, 255);
@@ -62,19 +74,15 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
 
     InOutRenderGraph.SubmitTimefieldRenderCommand(0, InTimeEnd + timeHeight - timeOffsetPosition, [this, scale, InTimeEnd, InWindowHeight](sf::RenderTarget* const InRenderTarget, const TimefieldMetrics& InTimefieldMetrics, const int InScreenX, const int InScreenY)
     {
-
-        const sf::Color backColor  = sf::Color(255, 255, 0, 96);
-        const sf::Color frontColor = sf::Color(0, 255, 255, 128);
-
         float positionY = float(InScreenY);
 
         _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - _WaveFormWidth / 2, positionY);
         _ScalableWaveFormSprite.setScale(1.0f, scale);
-        _ScalableWaveFormSprite.setColor(backColor);
+        _ScalableWaveFormSprite.setColor(_BackColor);
 
         InRenderTarget->draw(_ScalableWaveFormSprite);
 
-        _ScalableWaveFormSprite.setColor(frontColor);
+        _ScalableWaveFormSprite.setColor(_FrontColor);
         _ScalableWaveFormSprite.setScale(0.375, scale);
         _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - _WaveFormWidth / 8 - _WaveFormWidth / 16, positionY);
 

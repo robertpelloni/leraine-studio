@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.5.0
+# Session Handoff — Version 1.8.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying and selection, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -19,7 +19,7 @@ This session focused on full codebase context restoration, build health recovery
      3. *Timing & Synchronization Tools*: Active BPM readout, Auto BPM Estimation, Real-time Tap BPM, Move Entire Chart.
      4. *Stream Pattern Generator*: Range, pattern style, snap divisor, and instant generation.
      5. *NPS & Difficulty Analytics*: Interactive notes-per-second graph, average NPS, peak NPS.
-     6. *View & Grid Settings*: Column lines, audio waveform, heatmap density, auto-timing assistance, snap divisor, Skin folder path and selector trigger.
+     6. *View & Grid Settings*: Column lines, audio waveform, stereo/mono waveform mode, heatmap density, auto-timing assistance, snap divisor, Skin folder path and selector trigger.
      7. *Session & File Management*: Quick save, metadata editor, Chart Integrity Check, Shortcuts Reference, and application exit.
    - Added tooltip helper markers `(?)` throughout all controls.
    - Added `View -> Dashboard Window` toggle to the main menu bar.
@@ -38,9 +38,24 @@ This session focused on full codebase context restoration, build health recovery
    - Added `Skin::GetLoadedKeyAmount()` and `Skin::GetSnapColor()` to safely inspect loaded theme resources.
    - Added unit test `TestSkinSnapColorTable()` in `tests/test_main.cpp`.
 
-6. **Governance Documentation**:
-   - Created `VERSION.md` (1.5.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0, 1.2.0, 1.3.0, 1.4.0, and 1.5.0 details.
+6. **Waveform Enhancements**:
+   - Added `WaveFormModule::IsStereoMode()` / `SetStereoMode()` supporting dual-channel stereo or combined mono rendering.
+   - Added unit test `TestWaveformBounds()` in `tests/test_main.cpp`.
+
+7. **FFT Audio Frequency Spectrum Analysis**:
+   - Implemented `AudioModule::GetFFTSpectrum` utilizing `BASS_ChannelGetData` with `BASS_DATA_FFT2048`.
+   - Integrated real-time frequency spectrum histogram in the Unified Dashboard under Playback & Audio Controls.
+   - Added unit test `TestAudioFFTData()` in `tests/test_main.cpp`.
+
+8. **Waveform Color Customization Engine**:
+   - Added configurable RGB waveform color fields (`WaveformColorRed`, `WaveformColorGreen`, `WaveformColorBlue`) in `Configuration` with YAML serialization.
+   - Added `GetFrontColor()`, `SetFrontColor()`, `GetBackColor()`, and `SetBackColor()` to `WaveFormModule`.
+   - Integrated interactive ImGui color editor (`ImGui::ColorEdit3`) in Unified Dashboard with real-time preview and auto-saving.
+   - Added unit test `TestWaveformColorConfiguration()` in `tests/test_main.cpp`.
+
+9. **Governance Documentation**:
+   - Updated `VERSION.md` (1.8.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.8.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

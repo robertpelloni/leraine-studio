@@ -16,6 +16,18 @@ public:
     void SetWaveFormData(WaveFormData* const InWaveFormData, const Time InSongLengthMilliSeconds);
     void RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, const Time InTimeBegin, const Time InTimeEnd, const int InScreenX, const float InZoomLevel, const float InWindowHeight);
 
+    bool HasWaveFormData() const { return _WaveFormData != nullptr; }
+    Time GetSongLength() const { return _SongLengthMilliSeconds; }
+
+    bool IsStereoMode() const { return _StereoMode; }
+    void SetStereoMode(bool InStereo) { _StereoMode = InStereo; }
+
+    sf::Color GetFrontColor() const { return _FrontColor; }
+    void SetFrontColor(const sf::Color& InColor) { _FrontColor = InColor; }
+
+    sf::Color GetBackColor() const { return _BackColor; }
+    void SetBackColor(const sf::Color& InColor) { _BackColor = InColor; }
+
 private:
 
     const int _WaveFormWidth = 256;
@@ -27,4 +39,8 @@ private:
     WaveFormData* _WaveFormData = nullptr;
 
     Time _SongLengthMilliSeconds = 0;
+    bool _StereoMode = true;
+
+    sf::Color _FrontColor = sf::Color(0, 255, 255, 128);
+    sf::Color _BackColor  = sf::Color(255, 255, 0, 96);
 };

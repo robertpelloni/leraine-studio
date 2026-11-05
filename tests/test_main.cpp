@@ -7,6 +7,9 @@
 #include "../source/modules/chart-parser-module.h"
 #include "../source/modules/shortcut-menu-module.h"
 #include "../source/structures/skin.h"
+#include "../source/modules/waveform-module.h"
+#include "../source/modules/audio-module.h"
+#include "../source/structures/configuration.h"
 
 // Simple test framework
 #define ASSERT(cond) if(!(cond)) { std::cerr << "Assertion failed: " << #cond << std::endl; return 1; }
@@ -265,6 +268,63 @@ int TestSkinSnapColorTable()
     return 0;
 }
 
+int TestWaveformBounds()
+{
+    WaveFormModule waveform;
+    ASSERT(!waveform.HasWaveFormData());
+    ASSERT(waveform.GetSongLength() == 0);
+
+    WaveFormData dummyData[10];
+    for (int i = 0; i < 10; ++i)
+    {
+        dummyData[i].Left = 0.5f;
+        dummyData[i].Right = 0.5f;
+    }
+
+    waveform.SetWaveFormData(dummyData, 10);
+    ASSERT(waveform.HasWaveFormData());
+    ASSERT(waveform.GetSongLength() == 10);
+
+    return 0;
+}
+
+int TestAudioFFTData()
+{
+    AudioModule audio;
+    float fftBuffer[1024] = { 0 };
+    int samplesRead = audio.GetFFTSpectrum(fftBuffer, 1024);
+    // Without active loaded stream, should safely return 0 without crashing
+    ASSERT(samplesRead == 0);
+    return 0;
+}
+
+int TestWaveformColorConfiguration()
+{
+    WaveFormModule waveform;
+    ASSERT(waveform.GetFrontColor().r == 0);
+    ASSERT(waveform.GetFrontColor().g == 255);
+    ASSERT(waveform.GetFrontColor().b == 255);
+
+    waveform.SetFrontColor(sf::Color(255, 128, 64, 128));
+    ASSERT(waveform.GetFrontColor().r == 255);
+    ASSERT(waveform.GetFrontColor().g == 128);
+    ASSERT(waveform.GetFrontColor().b == 64);
+
+    Configuration config;
+    ASSERT(config.WaveformColorRed == 0);
+    ASSERT(config.WaveformColorGreen == 255);
+    ASSERT(config.WaveformColorBlue == 255);
+
+    config.WaveformColorRed = 200;
+    config.WaveformColorGreen = 100;
+    config.WaveformColorBlue = 50;
+    ASSERT(config.WaveformColorRed == 200);
+    ASSERT(config.WaveformColorGreen == 100);
+    ASSERT(config.WaveformColorBlue == 50);
+
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
@@ -277,6 +337,9 @@ int main() {
     TEST(TestShortcutMappings);
     TEST(TestUnsnappedNoteValidation);
     TEST(TestSkinSnapColorTable);
+    TEST(TestWaveformBounds);
+    TEST(TestAudioFFTData);
+    TEST(TestWaveformColorConfiguration);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
