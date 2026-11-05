@@ -529,6 +529,13 @@ void Program::DisplayDashboard()
         ImGui::SameLine();
         HelpMarker("Scans entire chart for overlapping notes, out-of-range columns, and malformed hold lengths.");
 
+        if (ImGui::Button("View Keyboard Shortcuts Cheat Sheet"))
+        {
+            ShowShortCuts();
+        }
+        ImGui::SameLine();
+        HelpMarker("Displays full interactive reference cheatsheet for all navigation, placement, and transformation hotkeys.");
+
         if (hasValidated)
         {
             if (validationResult.IsValid && validationResult.WarningCount == 0)

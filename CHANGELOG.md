@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-11-04
+### Added
+- **Shortcut Registry & Mapping Engine**: Added `ShortcutDefinition` struct, dynamic shortcut lookup, modification, and query formatting in `ShortcutMenuModule` (`RegisterShortcut`, `UpdateShortcut`, `GetShortcutString`).
+- **Dashboard Shortcuts Reference**: Integrated quick-launch hotkey reference viewer into the Unified Dashboard.
+- **Automated Shortcut Unit Tests**: Added `TestShortcutMappings()` into `tests/test_main.cpp`.
+
 ## [1.2.0] - 2026-11-04
 ### Added
 - **Chart Validation & Integrity Engine**: Implemented `Chart::ValidateChart()` and `ChartValidationResult` verifying absence of overlapping notes on identical columns/timestamps, bounds checking key indices against `KeyAmount`, and validating hold/roll begin vs end timestamps.

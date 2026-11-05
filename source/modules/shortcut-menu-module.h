@@ -1,6 +1,15 @@
 #pragma once
 
 #include "base/module.h"
+#include <map>
+#include <vector>
+
+struct ShortcutDefinition
+{
+    std::string ActionName;
+    sf::Keyboard::Key ModifierKey = sf::Keyboard::Unknown;
+    sf::Keyboard::Key ActionKey = sf::Keyboard::Unknown;
+};
 
 class ShortcutMenuModule : public Module
 {
@@ -17,6 +26,11 @@ public:
 
     void ShowCheatSheet();
 
+    void RegisterShortcut(const std::string& InAction, sf::Keyboard::Key InModifier, sf::Keyboard::Key InActionKey);
+    bool UpdateShortcut(const std::string& InAction, sf::Keyboard::Key InModifier, sf::Keyboard::Key InActionKey);
+    std::string GetShortcutString(const std::string& InAction) const;
+    const std::map<std::string, ShortcutDefinition>& GetAllShortcuts() const { return _Shortcuts; }
+
 private:
 
     bool _ImGuiMenuBegin = false;
@@ -27,4 +41,6 @@ private:
 	bool _AltKey = false;
 
     bool _KeyboardPressedStates[sf::Keyboard::KeyCount];
+
+    std::map<std::string, ShortcutDefinition> _Shortcuts;
 };

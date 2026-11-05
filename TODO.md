@@ -7,6 +7,6 @@
 - [x] Provide clean quit and session management hooks in UI.
 - [x] Implement Chart Validation & Integrity Engine (`Chart::ValidateChart()`) with UI diagnostics report in dashboard.
 - [x] Add automated unit tests for chart integrity checks (`TestChartValidation`).
-- [ ] Add customizable keyboard shortcuts configuration UI.
+- [x] Add dynamic shortcut configuration mapping and test suite (`ShortcutMenuModule`, `TestShortcutMappings`).
 - [ ] Implement user skin selector preview pane.
 - [ ] Add export validation warnings for unsnapped notes.

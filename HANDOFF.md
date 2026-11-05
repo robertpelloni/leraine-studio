@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.2.0
+# Session Handoff — Version 1.3.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, configurable shortcut mapping engines, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -20,7 +20,7 @@ This session focused on full codebase context restoration, build health recovery
      4. *Stream Pattern Generator*: Range, pattern style, snap divisor, and instant generation.
      5. *NPS & Difficulty Analytics*: Interactive notes-per-second graph, average NPS, peak NPS.
      6. *View & Grid Settings*: Column lines, audio waveform, heatmap density, auto-timing assistance, snap divisor.
-     7. *Session & File Management*: Quick save, metadata editor, Chart Integrity Check, and application exit.
+     7. *Session & File Management*: Quick save, metadata editor, Chart Integrity Check, Shortcuts Reference, and application exit.
    - Added tooltip helper markers `(?)` throughout all controls.
    - Added `View -> Dashboard Window` toggle to the main menu bar.
 
@@ -29,9 +29,13 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated diagnostic status indicator and issue listing into the Unified Dashboard.
    - Added unit test `TestChartValidation()` in `tests/test_main.cpp`.
 
-4. **Governance Documentation**:
-   - Created `VERSION.md` (1.2.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 and 1.2.0 details.
+4. **Shortcut Registry & Mapping Engine**:
+   - Added `ShortcutDefinition` and registry in `ShortcutMenuModule`.
+   - Added unit test `TestShortcutMappings()` in `tests/test_main.cpp`.
+
+5. **Governance Documentation**:
+   - Created `VERSION.md` (1.3.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0, 1.2.0, and 1.3.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

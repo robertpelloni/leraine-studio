@@ -163,3 +163,33 @@ bool ShortcutMenuModule::BeginMenu(const std::string InLabel)
 
 	return _ImGuiMenuBegin || _ShouldCaptureShortcut;
 }
+
+void ShortcutMenuModule::RegisterShortcut(const std::string& InAction, sf::Keyboard::Key InModifier, sf::Keyboard::Key InActionKey)
+{
+    _Shortcuts[InAction] = ShortcutDefinition{ InAction, InModifier, InActionKey };
+}
+
+bool ShortcutMenuModule::UpdateShortcut(const std::string& InAction, sf::Keyboard::Key InModifier, sf::Keyboard::Key InActionKey)
+{
+    _Shortcuts[InAction] = ShortcutDefinition{ InAction, InModifier, InActionKey };
+    return true;
+}
+
+std::string ShortcutMenuModule::GetShortcutString(const std::string& InAction) const
+{
+    auto it = _Shortcuts.find(InAction);
+    if (it == _Shortcuts.end()) return "";
+
+    std::string modifier = "";
+    if (it->second.ModifierKey == sf::Keyboard::Key::LControl) modifier = "CTRL+";
+    else if (it->second.ModifierKey == sf::Keyboard::Key::LShift) modifier = "SHIFT+";
+    else if (it->second.ModifierKey == sf::Keyboard::Key::LAlt) modifier = "ALT+";
+
+    std::string action = "";
+    if (it->second.ActionKey == sf::Keyboard::Key::Delete) action = "DELETE";
+    else if (it->second.ActionKey == sf::Keyboard::Key::F1) action = "F1";
+    else if (it->second.ActionKey != sf::Keyboard::Key::Unknown)
+        action = std::string(1, char(it->second.ActionKey - sf::Keyboard::A + 'A'));
+
+    return modifier + action;
+}

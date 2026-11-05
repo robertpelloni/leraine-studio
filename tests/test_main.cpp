@@ -5,6 +5,7 @@
 
 #include "../source/structures/chart.h"
 #include "../source/modules/chart-parser-module.h"
+#include "../source/modules/shortcut-menu-module.h"
 
 // Simple test framework
 #define ASSERT(cond) if(!(cond)) { std::cerr << "Assertion failed: " << #cond << std::endl; return 1; }
@@ -210,6 +211,21 @@ int TestChartValidation()
     return 0;
 }
 
+int TestShortcutMappings()
+{
+    ShortcutMenuModule shortcuts;
+    shortcuts.RegisterShortcut("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Z);
+    shortcuts.RegisterShortcut("Redo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::Y);
+
+    ASSERT(shortcuts.GetShortcutString("Undo") == "CTRL+Z");
+    ASSERT(shortcuts.GetShortcutString("Redo") == "CTRL+Y");
+
+    shortcuts.UpdateShortcut("Undo", sf::Keyboard::Key::LControl, sf::Keyboard::Key::U);
+    ASSERT(shortcuts.GetShortcutString("Undo") == "CTRL+U");
+
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
@@ -219,6 +235,7 @@ int main() {
     TEST(TestStopEditing);
     TEST(TestSVEditing);
     TEST(TestChartValidation);
+    TEST(TestShortcutMappings);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
