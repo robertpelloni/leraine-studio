@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-11-04
+### Added
+- **FFT Audio Spectrum Analysis**: Implemented `AudioModule::GetFFTSpectrum` utilizing `BASS_ChannelGetData` with `BASS_DATA_FFT2048` to sample real-time frequency distribution bins.
+- **Dashboard Spectrum Visualizer**: Integrated real-time frequency spectrum histogram in the Unified Dashboard under Playback & Audio Controls.
+- **Automated Audio Spectrum Tests**: Added `TestAudioFFTData` unit test in `tests/test_main.cpp`.
+
 ## [1.6.0] - 2026-11-04
 ### Added
 - **Waveform Channel Mode Control**: Implemented Stereo vs. Monochannel waveform rendering modes and state inspection in `WaveFormModule` (`IsStereoMode`, `SetStereoMode`, `HasWaveFormData`, `GetSongLength`).

@@ -8,6 +8,7 @@
 #include "../source/modules/shortcut-menu-module.h"
 #include "../source/structures/skin.h"
 #include "../source/modules/waveform-module.h"
+#include "../source/modules/audio-module.h"
 
 // Simple test framework
 #define ASSERT(cond) if(!(cond)) { std::cerr << "Assertion failed: " << #cond << std::endl; return 1; }
@@ -286,6 +287,16 @@ int TestWaveformBounds()
     return 0;
 }
 
+int TestAudioFFTData()
+{
+    AudioModule audio;
+    float fftBuffer[1024] = { 0 };
+    int samplesRead = audio.GetFFTSpectrum(fftBuffer, 1024);
+    // Without active loaded stream, should safely return 0 without crashing
+    ASSERT(samplesRead == 0);
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
@@ -299,6 +310,7 @@ int main() {
     TEST(TestUnsnappedNoteValidation);
     TEST(TestSkinSnapColorTable);
     TEST(TestWaveformBounds);
+    TEST(TestAudioFFTData);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

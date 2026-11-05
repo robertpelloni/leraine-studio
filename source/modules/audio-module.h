@@ -40,6 +40,8 @@ public:
     void InitHitsound();
     void PlayHitsound();
 
+    int GetFFTSpectrum(float* OutFFTBuffer, int InSampleSize);
+
 	[[nodiscard]] WaveFormData* GenerateAndGetWaveformData(const std::filesystem::path& InPath);
 
 	bool UsePitch = true;

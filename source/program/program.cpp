@@ -261,6 +261,14 @@ void Program::DisplayDashboard()
         int curTime = MOD(AudioModule).GetTimeMilliSeconds();
         ImGui::Text("Current Time: %d ms (%.2fs)", curTime, curTime / 1000.0f);
 
+        // Real-Time Audio Frequency FFT Spectrum
+        float fftBuffer[64] = { 0.0f };
+        int fftSamples = MOD(AudioModule).GetFFTSpectrum(fftBuffer, 64);
+        if (fftSamples > 0)
+        {
+            ImGui::PlotHistogram("Audio Spectrum", fftBuffer, fftSamples, 0, nullptr, 0.0f, 0.5f, ImVec2(0, 48));
+        }
+
         float currentSpeed = MOD(AudioModule).GetPlaybackSpeed();
         ImGui::Text("Playback Speed: %.2fx", currentSpeed);
         ImGui::SameLine();
