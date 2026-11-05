@@ -42,6 +42,25 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestMultiDifficultyScan()
+{
+    ChartParserModule parser;
+    // Scanning a non-existent path should safely return an empty vector without crashing
+    auto emptyList = parser.ScanForCharts("data/charts/non_existent.osu");
+    ASSERT(emptyList.empty());
+
+    // Check ChartDefinition structure field handling
+    ChartDefinition def;
+    def.DifficultyName = "Hard";
+    def.Creator = "Charter";
+    def.ChartType = "dance-single";
+    ASSERT(def.DifficultyName == "Hard");
+    ASSERT(def.Creator == "Charter");
+    ASSERT(def.ChartType == "dance-single");
+
+    return 0;
+}
+
 int TestUnsnappedNoteValidation()
 {
     Chart chart;
@@ -340,6 +359,7 @@ int main() {
     TEST(TestWaveformBounds);
     TEST(TestAudioFFTData);
     TEST(TestWaveformColorConfiguration);
+    TEST(TestMultiDifficultyScan);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

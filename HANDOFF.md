@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.8.0
+# Session Handoff — Version 1.9.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -53,9 +53,14 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated interactive ImGui color editor (`ImGui::ColorEdit3`) in Unified Dashboard with real-time preview and auto-saving.
    - Added unit test `TestWaveformColorConfiguration()` in `tests/test_main.cpp`.
 
-9. **Governance Documentation**:
-   - Updated `VERSION.md` (1.8.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.8.0 details.
+9. **Multi-Chart Difficulty Tab Switching**:
+   - Added `_AvailableDifficulties` and `_CurrentChartFilePath` to `Program`.
+   - Integrated difficulty tab bar in Unified Dashboard under Session Management for instant hot-swapping between chart difficulties.
+   - Added unit test `TestMultiDifficultyScan()` in `tests/test_main.cpp`.
+
+10. **Governance Documentation**:
+   - Updated `VERSION.md` (1.9.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.9.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

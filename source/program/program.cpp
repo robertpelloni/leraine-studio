@@ -605,6 +605,29 @@ void Program::DisplayDashboard()
             }
         }
 
+        if (!_AvailableDifficulties.empty() && !_CurrentChartFilePath.empty())
+        {
+            ImGui::Separator();
+            ImGui::Text("Switch Difficulty Tab:");
+            for (const auto& diff : _AvailableDifficulties)
+            {
+                std::string btnText = diff.DifficultyName.empty() ? "Default" : diff.DifficultyName;
+                if (!diff.ChartType.empty()) btnText += " (" + diff.ChartType + ")";
+
+                if (ImGui::Button(btnText.c_str()))
+                {
+                    Chart* chart = MOD(ChartParserModule).LoadChart(_CurrentChartFilePath, diff.DifficultyName);
+                    if (chart)
+                    {
+                        InitializeChart(chart);
+                        PUSH_NOTIFICATION("Switched to difficulty: %s", diff.DifficultyName.c_str());
+                    }
+                }
+                ImGui::SameLine();
+            }
+            ImGui::NewLine();
+        }
+
         ImGui::Separator();
         if (ImGui::Button("Exit Application"))
         {
@@ -1218,6 +1241,9 @@ void Program::OpenChart(const std::string& InPath)
 		Config.Save();
 		return;
     }
+
+    _CurrentChartFilePath = InPath;
+    _AvailableDifficulties = charts;
 
     if (charts.size() == 1)
     {

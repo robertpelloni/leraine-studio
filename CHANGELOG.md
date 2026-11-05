@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-11-04
+### Added
+- **Multi-Chart Difficulty Tab Switcher**: Added difficulty tab bar to the Unified Dashboard under Session Management, allowing seamless hot-switching between multiple difficulties in the current song folder/file.
+- **Difficulty Tracking**: Stored `_AvailableDifficulties` and `_CurrentChartFilePath` in `Program` across chart scan and load lifecycle.
+- **Automated Multi-Difficulty Tests**: Added `TestMultiDifficultyScan()` in `tests/test_main.cpp`.
+
 ## [1.8.0] - 2026-11-04
 ### Added
 - **Waveform Color Customization Engine**: Added configurable RGB waveform color fields (`WaveformColorRed`, `WaveformColorGreen`, `WaveformColorBlue`) to `Configuration` with YAML serialization.

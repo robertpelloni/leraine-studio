@@ -13,7 +13,7 @@
 ## Milestone 2: Advanced Visualization & Analysis (Next)
 - [ ] Interactive FFT Spectrogram timeline rendering in `WaveFormModule`.
 - [ ] Visual warped time representation for complex Scroll Velocity (SV) segments.
-- [ ] Multi-chart tab switching within single project window.
+- [x] Multi-chart tab switching within single project window (`Program::_AvailableDifficulties`).
 
 ## Milestone 3: Format Expansion & Portability
 - [ ] Quaver (`.qua`) format reader/writer.
