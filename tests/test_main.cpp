@@ -38,6 +38,25 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestUnsnappedNoteValidation()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+    chart.InjectBpmPoint(0, 120.0, 500.0);
+
+    // Note with valid snap
+    chart.InjectNote(1000, 0, Note::EType::Common, -1, -1, 4);
+    ChartValidationResult resValid = chart.ValidateChart();
+    ASSERT(resValid.WarningCount == 0);
+
+    // Note with unsnapped / unassigned snap
+    chart.InjectNote(1123, 1, Note::EType::Common, -1, -1, -1);
+    ChartValidationResult resUnsnapped = chart.ValidateChart();
+    ASSERT(resUnsnapped.WarningCount > 0);
+
+    return 0;
+}
+
 int TestSVEditing()
 {
     Chart chart;
@@ -236,6 +255,7 @@ int main() {
     TEST(TestSVEditing);
     TEST(TestChartValidation);
     TEST(TestShortcutMappings);
+    TEST(TestUnsnappedNoteValidation);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

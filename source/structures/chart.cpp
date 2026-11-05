@@ -1699,6 +1699,12 @@ ChartValidationResult Chart::ValidateChart()
                 result.Issues.push_back("Invalid hold/roll duration: end time (" + std::to_string(note.TimePointEnd) + "ms) <= start time (" + std::to_string(note.TimePoint) + "ms)");
             }
         }
+
+        if (note.BeatSnap <= 0)
+        {
+            result.WarningCount++;
+            result.Issues.push_back("Unsnapped note detected at " + std::to_string(note.TimePoint) + "ms on column " + std::to_string(column));
+        }
     });
 
     if (_BpmPointCounter == 0)

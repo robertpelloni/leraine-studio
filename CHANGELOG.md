@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-11-04
+### Added
+- **Unsnapped Note Diagnostics**: Enhanced `Chart::ValidateChart()` to detect notes with missing or invalid beat snap metadata (`BeatSnap <= 0`), populating diagnostic warning messages and updating the Dashboard integrity report.
+- **Automated Unsnapped Note Tests**: Added `TestUnsnappedNoteValidation()` to `tests/test_main.cpp`.
+
 ## [1.3.0] - 2026-11-04
 ### Added
 - **Shortcut Registry & Mapping Engine**: Added `ShortcutDefinition` struct, dynamic shortcut lookup, modification, and query formatting in `ShortcutMenuModule` (`RegisterShortcut`, `UpdateShortcut`, `GetShortcutString`).

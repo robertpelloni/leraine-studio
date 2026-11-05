@@ -8,5 +8,5 @@
 - [x] Implement Chart Validation & Integrity Engine (`Chart::ValidateChart()`) with UI diagnostics report in dashboard.
 - [x] Add automated unit tests for chart integrity checks (`TestChartValidation`).
 - [x] Add dynamic shortcut configuration mapping and test suite (`ShortcutMenuModule`, `TestShortcutMappings`).
+- [x] Add export validation warnings for unsnapped notes (`TestUnsnappedNoteValidation`).
 - [ ] Implement user skin selector preview pane.
-- [ ] Add export validation warnings for unsnapped notes.
