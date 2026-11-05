@@ -9,4 +9,5 @@
 - [x] Add automated unit tests for chart integrity checks (`TestChartValidation`).
 - [x] Add dynamic shortcut configuration mapping and test suite (`ShortcutMenuModule`, `TestShortcutMappings`).
 - [x] Add export validation warnings for unsnapped notes (`TestUnsnappedNoteValidation`).
-- [ ] Implement user skin selector preview pane.
+- [x] Implement user skin selector and query helpers in dashboard (`Skin::GetLoadedKeyAmount`, `Skin::GetSnapColor`, `TestSkinSnapColorTable`).
+- [ ] Add skin live texture thumbnail preview.

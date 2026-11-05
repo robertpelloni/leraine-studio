@@ -9,6 +9,7 @@
 void Skin::LoadResources(const int InKeyAmount, const std::filesystem::path& InSkinFolderPath)
 {
 	ResetTexturesAndSprites();
+	_LoadedKeyAmount = InKeyAmount;
 
 	//TODO: serialize this
 	SnapColorTable[1] = sf::Color(255, 0, 0, 255);
@@ -262,6 +263,14 @@ void Skin::RenderTimeFieldBackground(sf::RenderTarget* InOutRenderTarget)
 void Skin::UpdateTimefieldMetrics(const TimefieldMetrics& InTimefieldMetrics)
 {
 	_TimefieldMetrics = InTimefieldMetrics;
+}
+
+sf::Color Skin::GetSnapColor(int InSnap) const
+{
+	auto it = SnapColorTable.find(InSnap);
+	if (it != SnapColorTable.end())
+		return it->second;
+	return sf::Color(75, 75, 75, 255);
 }
 
 void Skin::ResetTexturesAndSprites()

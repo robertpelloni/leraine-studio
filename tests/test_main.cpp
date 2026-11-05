@@ -6,6 +6,7 @@
 #include "../source/structures/chart.h"
 #include "../source/modules/chart-parser-module.h"
 #include "../source/modules/shortcut-menu-module.h"
+#include "../source/structures/skin.h"
 
 // Simple test framework
 #define ASSERT(cond) if(!(cond)) { std::cerr << "Assertion failed: " << #cond << std::endl; return 1; }
@@ -245,6 +246,25 @@ int TestShortcutMappings()
     return 0;
 }
 
+int TestSkinSnapColorTable()
+{
+    Skin skin;
+    skin.LoadResources(4, "assets/data/skins/default");
+
+    sf::Color red = skin.GetSnapColor(1);
+    ASSERT(red == sf::Color(255, 0, 0, 255));
+
+    sf::Color blue = skin.GetSnapColor(2);
+    ASSERT(blue == sf::Color(0, 0, 255, 255));
+
+    sf::Color yellow = skin.GetSnapColor(4);
+    ASSERT(yellow == sf::Color(255, 255, 0, 255));
+
+    ASSERT(skin.GetLoadedKeyAmount() == 4);
+
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
@@ -256,6 +276,7 @@ int main() {
     TEST(TestChartValidation);
     TEST(TestShortcutMappings);
     TEST(TestUnsnappedNoteValidation);
+    TEST(TestSkinSnapColorTable);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

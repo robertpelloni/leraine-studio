@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-11-04
+### Added
+- **Skin Query Helpers & Color Mapping**: Implemented `Skin::GetLoadedKeyAmount()` and `Skin::GetSnapColor()` for querying skin metrics and fallback beat snap coloration.
+- **Dashboard Skin Information**: Integrated skin asset path inspection and direct skin folder selection picker into the Unified Dashboard.
+- **Automated Skin Snap Tests**: Added `TestSkinSnapColorTable()` in `tests/test_main.cpp`.
+
 ## [1.4.0] - 2026-11-04
 ### Added
 - **Unsnapped Note Diagnostics**: Enhanced `Chart::ValidateChart()` to detect notes with missing or invalid beat snap metadata (`BeatSnap <= 0`), populating diagnostic warning messages and updating the Dashboard integrity report.

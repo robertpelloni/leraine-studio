@@ -499,6 +499,24 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Beat snap divisor used for note placement, quantization, and hold lengths (e.g. 4=1/4, 8=1/8, 16=1/16).");
+
+        ImGui::Separator();
+        std::string skinLabel = "Skin Folder: ";
+        skinLabel += Config.SkinFolderPath.empty() ? "(Default)" : Config.SkinFolderPath.filename().string();
+        ImGui::Text("%s", skinLabel.c_str());
+        if (ImGui::Button("Change Skin Folder..."))
+        {
+            MOD(DialogModule).OpenFolderDialog([this](const std::string &InPath)
+            {
+                Config.SkinFolderPath = InPath;
+                Config.Save();
+                if (SelectedChart)
+                    MOD(TimefieldRenderModule).InitializeResources(SelectedChart->KeyAmount, Config.SkinFolderPath);
+                PUSH_NOTIFICATION("Skin Changed");
+            }, true);
+        }
+        ImGui::SameLine();
+        HelpMarker("Select a custom skin assets directory containing per-key column and hold textures.");
     }
 
     if (ImGui::CollapsingHeader("7. Session & File Management"))

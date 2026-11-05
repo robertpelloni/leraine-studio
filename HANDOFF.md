@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.4.0
+# Session Handoff — Version 1.5.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying and selection, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -19,7 +19,7 @@ This session focused on full codebase context restoration, build health recovery
      3. *Timing & Synchronization Tools*: Active BPM readout, Auto BPM Estimation, Real-time Tap BPM, Move Entire Chart.
      4. *Stream Pattern Generator*: Range, pattern style, snap divisor, and instant generation.
      5. *NPS & Difficulty Analytics*: Interactive notes-per-second graph, average NPS, peak NPS.
-     6. *View & Grid Settings*: Column lines, audio waveform, heatmap density, auto-timing assistance, snap divisor.
+     6. *View & Grid Settings*: Column lines, audio waveform, heatmap density, auto-timing assistance, snap divisor, Skin folder path and selector trigger.
      7. *Session & File Management*: Quick save, metadata editor, Chart Integrity Check, Shortcuts Reference, and application exit.
    - Added tooltip helper markers `(?)` throughout all controls.
    - Added `View -> Dashboard Window` toggle to the main menu bar.
@@ -34,9 +34,13 @@ This session focused on full codebase context restoration, build health recovery
    - Added `ShortcutDefinition` and registry in `ShortcutMenuModule`.
    - Added unit test `TestShortcutMappings()` in `tests/test_main.cpp`.
 
-5. **Governance Documentation**:
-   - Created `VERSION.md` (1.4.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0, 1.2.0, 1.3.0, and 1.4.0 details.
+5. **Skin Query & Management Helpers**:
+   - Added `Skin::GetLoadedKeyAmount()` and `Skin::GetSnapColor()` to safely inspect loaded theme resources.
+   - Added unit test `TestSkinSnapColorTable()` in `tests/test_main.cpp`.
+
+6. **Governance Documentation**:
+   - Created `VERSION.md` (1.5.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0, 1.2.0, 1.3.0, 1.4.0, and 1.5.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

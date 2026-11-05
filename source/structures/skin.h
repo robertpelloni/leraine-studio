@@ -48,12 +48,15 @@ struct Skin
 public: //meta methods
 
 	void UpdateTimefieldMetrics(const TimefieldMetrics& InTimefieldMetrics);
+	int GetLoadedKeyAmount() const { return _LoadedKeyAmount; }
+	sf::Color GetSnapColor(int InSnap) const;
 
 private:
 
 	void ResetTexturesAndSprites();
 
-	bool _HasOverlay;
+	bool _HasOverlay = false;
+	int _LoadedKeyAmount = 0;
 
 	TimefieldMetrics _TimefieldMetrics;
 };
