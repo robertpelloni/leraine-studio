@@ -39,6 +39,13 @@ bool Configuration::Load()
 	if (configFile["ShowColumnHeatmap"])
 		ShowColumnHeatmap = configFile["ShowColumnHeatmap"].as<bool>();
 
+	if (configFile["WaveformColorRed"])
+		WaveformColorRed = configFile["WaveformColorRed"].as<int>();
+	if (configFile["WaveformColorGreen"])
+		WaveformColorGreen = configFile["WaveformColorGreen"].as<int>();
+	if (configFile["WaveformColorBlue"])
+		WaveformColorBlue = configFile["WaveformColorBlue"].as<int>();
+
 	return true;
 }
 
@@ -61,6 +68,12 @@ void Configuration::Save()
 	out << YAML::Value << UseAutoTiming;
 	out << YAML::Key << "ShowColumnHeatmap";
 	out << YAML::Value << ShowColumnHeatmap;
+	out << YAML::Key << "WaveformColorRed";
+	out << YAML::Value << WaveformColorRed;
+	out << YAML::Key << "WaveformColorGreen";
+	out << YAML::Value << WaveformColorGreen;
+	out << YAML::Key << "WaveformColorBlue";
+	out << YAML::Value << WaveformColorBlue;
 	out << YAML::EndMap;
 
 	std::ofstream configFile("config.yaml");

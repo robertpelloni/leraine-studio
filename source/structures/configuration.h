@@ -15,6 +15,10 @@ struct Configuration
 	bool UseAutoTiming = false;
 	bool ShowColumnHeatmap = false;
 
+	int WaveformColorRed = 0;
+	int WaveformColorGreen = 255;
+	int WaveformColorBlue = 255;
+
 	const int RecentFilePathsMaxSize = 10;
 	//FIFO, but needs to remove invalid paths on access (like if the files have moved)
 	std::vector<std::string> RecentFilePaths;

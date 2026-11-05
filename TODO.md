@@ -12,4 +12,5 @@
 - [x] Implement user skin selector and query helpers in dashboard (`Skin::GetLoadedKeyAmount`, `Skin::GetSnapColor`, `TestSkinSnapColorTable`).
 - [x] Implement stereo vs monochannel waveform visualization mode and unit test (`TestWaveformBounds`).
 - [x] Add FFT-based audio spectrum analysis in `AudioModule` and real-time dashboard visualizer (`TestAudioFFTData`).
+- [x] Provide user control over waveform color theme in configuration (`TestWaveformColorConfiguration`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

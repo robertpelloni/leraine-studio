@@ -22,6 +22,12 @@ public:
     bool IsStereoMode() const { return _StereoMode; }
     void SetStereoMode(bool InStereo) { _StereoMode = InStereo; }
 
+    sf::Color GetFrontColor() const { return _FrontColor; }
+    void SetFrontColor(const sf::Color& InColor) { _FrontColor = InColor; }
+
+    sf::Color GetBackColor() const { return _BackColor; }
+    void SetBackColor(const sf::Color& InColor) { _BackColor = InColor; }
+
 private:
 
     const int _WaveFormWidth = 256;
@@ -34,4 +40,7 @@ private:
 
     Time _SongLengthMilliSeconds = 0;
     bool _StereoMode = true;
+
+    sf::Color _FrontColor = sf::Color(0, 255, 255, 128);
+    sf::Color _BackColor  = sf::Color(255, 255, 0, 96);
 };

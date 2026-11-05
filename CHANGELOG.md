@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-11-04
+### Added
+- **Waveform Color Customization Engine**: Added configurable RGB waveform color fields (`WaveformColorRed`, `WaveformColorGreen`, `WaveformColorBlue`) to `Configuration` with YAML serialization.
+- **Waveform Module Color Hooks**: Implemented `GetFrontColor()`, `SetFrontColor()`, `GetBackColor()`, and `SetBackColor()` in `WaveFormModule`.
+- **Dashboard Waveform Color Picker**: Added interactive `ImGui::ColorEdit3` picker to the Unified Dashboard under View & Grid Settings with instant preview and auto-saving.
+- **Automated Waveform Color Tests**: Added `TestWaveformColorConfiguration()` in `tests/test_main.cpp`.
+
 ## [1.7.0] - 2026-11-04
 ### Added
 - **FFT Audio Spectrum Analysis**: Implemented `AudioModule::GetFFTSpectrum` utilizing `BASS_ChannelGetData` with `BASS_DATA_FFT2048` to sample real-time frequency distribution bins.

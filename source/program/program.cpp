@@ -497,6 +497,18 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Toggle between distinct Left/Right stereo audio channels or combined mono waveform visualization.");
+
+            float wfColor[3] = { Config.WaveformColorRed / 255.0f, Config.WaveformColorGreen / 255.0f, Config.WaveformColorBlue / 255.0f };
+            if (ImGui::ColorEdit3("Waveform Color", wfColor))
+            {
+                Config.WaveformColorRed = int(wfColor[0] * 255.0f);
+                Config.WaveformColorGreen = int(wfColor[1] * 255.0f);
+                Config.WaveformColorBlue = int(wfColor[2] * 255.0f);
+                MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, 128));
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Customize the tint color applied to the rendered audio waveform.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1314,4 +1326,5 @@ void Program::SetConfig(const Configuration& InConfig)
 	MOD(TimefieldRenderModule).GetSkin().ShowColumnLines = Config.ShowColumnLines;
 	EditMode::static_Flags.UseAutoTiming = Config.UseAutoTiming;
 	EditMode::static_Flags.ShowColumnHeatmap = Config.ShowColumnHeatmap;
+    MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, 128));
 }
