@@ -1,0 +1,10 @@
+build/
+build_output/
+binaries/leraine-studio
+binaries/test_runner
+*.o
+*.a
+*.so
+.DS_Store
+.vscode/
+binaries/
