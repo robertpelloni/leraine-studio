@@ -188,6 +188,28 @@ int TestStopEditing()
     return 0;
 }
 
+int TestChartValidation()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Normal notes
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectHold(2000, 2500, 1);
+
+    ChartValidationResult res = chart.ValidateChart();
+    ASSERT(res.IsValid);
+    ASSERT(res.ErrorCount == 0);
+
+    // Inject invalid hold (End <= Begin)
+    chart.InjectHold(3000, 3000, 2);
+    ChartValidationResult resInvalid = chart.ValidateChart();
+    ASSERT(!resInvalid.IsValid);
+    ASSERT(resInvalid.ErrorCount > 0);
+
+    return 0;
+}
+
 int main() {
     int result = 0;
     TEST(TestChartLogic);
@@ -196,6 +218,7 @@ int main() {
     TEST(TestStops);
     TEST(TestStopEditing);
     TEST(TestSVEditing);
+    TEST(TestChartValidation);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

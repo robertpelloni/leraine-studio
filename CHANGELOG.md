@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-11-04
+### Added
+- **Chart Validation & Integrity Engine**: Implemented `Chart::ValidateChart()` and `ChartValidationResult` verifying absence of overlapping notes on identical columns/timestamps, bounds checking key indices against `KeyAmount`, and validating hold/roll begin vs end timestamps.
+- **Dashboard Integrity Diagnostics**: Added "Run Chart Integrity Check" action in the Unified Dashboard under Session Management, providing real-time pass/fail status and granular diagnostic error/warning reports.
+- **Automated Validation Unit Tests**: Added `TestChartValidation()` to test suite in `tests/test_main.cpp`.
+
 ## [1.1.0] - 2026-11-04
 ### Added
 - **Unified Control Dashboard**: Implemented a comprehensive, single-page interactive control dashboard (`Program::DisplayDashboard`) consolidating playback, audio rates, note transformations, timing tools, stream generator, difficulty analytics, and session options.

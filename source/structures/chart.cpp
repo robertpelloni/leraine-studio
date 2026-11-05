@@ -1667,6 +1667,49 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+ChartValidationResult Chart::ValidateChart()
+{
+    ChartValidationResult result;
+
+    std::map<std::pair<Time, Column>, int> noteLocations;
+
+    IterateAllNotes([&](Note& note, const Column column)
+    {
+        if (column >= (size_t)KeyAmount)
+        {
+            result.ErrorCount++;
+            result.IsValid = false;
+            result.Issues.push_back("Note at " + std::to_string(note.TimePoint) + "ms has column index " + std::to_string(column) + " exceeding KeyAmount " + std::to_string(KeyAmount));
+        }
+
+        noteLocations[{note.TimePoint, column}]++;
+        if (noteLocations[{note.TimePoint, column}] > 1)
+        {
+            result.ErrorCount++;
+            result.IsValid = false;
+            result.Issues.push_back("Duplicate/overlapping note at " + std::to_string(note.TimePoint) + "ms on column " + std::to_string(column));
+        }
+
+        if (note.Type == Note::EType::HoldBegin || note.Type == Note::EType::RollBegin)
+        {
+            if (note.TimePointEnd <= note.TimePoint)
+            {
+                result.ErrorCount++;
+                result.IsValid = false;
+                result.Issues.push_back("Invalid hold/roll duration: end time (" + std::to_string(note.TimePointEnd) + "ms) <= start time (" + std::to_string(note.TimePoint) + "ms)");
+            }
+        }
+    });
+
+    if (_BpmPointCounter == 0)
+    {
+        result.WarningCount++;
+        result.Issues.push_back("No BPM points found in chart");
+    }
+
+    return result;
+}
+
 Chart::Chart()
 {
 	_OnModified = [](TimeSlice &InOutTimeSlice) {};

@@ -1,14 +1,14 @@
-# Session Handoff — Version 1.1.0
+# Session Handoff — Version 1.2.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
    - Restored and verified all core C++ sources, unit test suite, and dependencies.
    - Fixed header compilation errors: duplicate `StreamPattern` enum in `chart.h` and missing declaration of `RemoveTimeSignature`.
    - Updated CMake build configuration and vendored dependencies for Linux SFML 2.6 and ImGui integration.
-   - Compiled and ran all unit tests (`binaries/test_runner`) with 100% pass rate.
+   - Built and ran all unit tests (`binaries/test_runner`), passing 100%.
    - Compiled the main `binaries/leraine-studio` executable cleanly.
 
 2. **UI Redesign & Unified Dashboard**:
@@ -20,13 +20,18 @@ This session focused on full codebase context restoration, build health recovery
      4. *Stream Pattern Generator*: Range, pattern style, snap divisor, and instant generation.
      5. *NPS & Difficulty Analytics*: Interactive notes-per-second graph, average NPS, peak NPS.
      6. *View & Grid Settings*: Column lines, audio waveform, heatmap density, auto-timing assistance, snap divisor.
-     7. *Session & File Management*: Quick save, metadata editor, and application exit.
+     7. *Session & File Management*: Quick save, metadata editor, Chart Integrity Check, and application exit.
    - Added tooltip helper markers `(?)` throughout all controls.
    - Added `View -> Dashboard Window` toggle to the main menu bar.
 
-3. **Governance Documentation**:
-   - Created `VERSION.md` (1.1.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with version 1.1.0 details.
+3. **Chart Validation & Integrity Engine**:
+   - Added `ChartValidationResult` and `Chart::ValidateChart()` detecting overlapping notes, key bounds violations, and malformed hold note intervals.
+   - Integrated diagnostic status indicator and issue listing into the Unified Dashboard.
+   - Added unit test `TestChartValidation()` in `tests/test_main.cpp`.
+
+4. **Governance Documentation**:
+   - Created `VERSION.md` (1.2.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 and 1.2.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

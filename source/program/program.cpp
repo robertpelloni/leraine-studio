@@ -514,6 +514,41 @@ void Program::DisplayDashboard()
             ShouldSetUpMetadata = true;
         }
 
+        static bool hasValidated = false;
+        static ChartValidationResult validationResult;
+
+        if (ImGui::Button("Run Chart Integrity Check") && SelectedChart)
+        {
+            validationResult = SelectedChart->ValidateChart();
+            hasValidated = true;
+            if (validationResult.IsValid && validationResult.WarningCount == 0)
+                PUSH_NOTIFICATION("Integrity check passed cleanly");
+            else
+                PUSH_NOTIFICATION("Integrity check: %d errors, %d warnings", validationResult.ErrorCount, validationResult.WarningCount);
+        }
+        ImGui::SameLine();
+        HelpMarker("Scans entire chart for overlapping notes, out-of-range columns, and malformed hold lengths.");
+
+        if (hasValidated)
+        {
+            if (validationResult.IsValid && validationResult.WarningCount == 0)
+            {
+                ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Status: Chart is valid with 0 errors.");
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Status: %d Errors, %d Warnings", validationResult.ErrorCount, validationResult.WarningCount);
+                for (size_t i = 0; i < std::min((size_t)5, validationResult.Issues.size()); ++i)
+                {
+                    ImGui::BulletText("%s", validationResult.Issues[i].c_str());
+                }
+                if (validationResult.Issues.size() > 5)
+                {
+                    ImGui::TextDisabled("...and %zu more issues", validationResult.Issues.size() - 5);
+                }
+            }
+        }
+
         ImGui::Separator();
         if (ImGui::Button("Exit Application"))
         {

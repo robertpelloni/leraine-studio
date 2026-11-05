@@ -117,6 +117,14 @@ enum class StreamPattern
     Chordjack
 };
 
+struct ChartValidationResult
+{
+    bool IsValid = true;
+    int ErrorCount = 0;
+    int WarningCount = 0;
+    std::vector<std::string> Issues;
+};
+
 struct NoteReferenceCollection
 {
 	void PushNote(Column InColumn, Note* InNote);
@@ -189,6 +197,7 @@ public: //accessors
     void ConvertToTaps(NoteReferenceCollection& OutNotes);
     void MoveAllNotes(Time Offset);
 	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
+    ChartValidationResult ValidateChart();
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
 	float GetAverageNPS();
