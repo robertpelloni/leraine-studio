@@ -42,6 +42,22 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformAlphaConfiguration()
+{
+    WaveFormModule waveform;
+    assert(waveform.GetAlpha() == 128);
+
+    waveform.SetAlpha(200);
+    assert(waveform.GetAlpha() == 200);
+
+    Configuration config;
+    assert(config.WaveformAlpha == 128);
+    config.WaveformAlpha = 180;
+    assert(config.WaveformAlpha == 180);
+
+    return 0;
+}
+
 int TestMultiDifficultyScan()
 {
     ChartParserModule parser;
@@ -360,6 +376,7 @@ int main() {
     TEST(TestAudioFFTData);
     TEST(TestWaveformColorConfiguration);
     TEST(TestMultiDifficultyScan);
+    TEST(TestWaveformAlphaConfiguration);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

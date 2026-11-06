@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.9.0
+# Session Handoff — Version 1.10.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -58,9 +58,15 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated difficulty tab bar in Unified Dashboard under Session Management for instant hot-swapping between chart difficulties.
    - Added unit test `TestMultiDifficultyScan()` in `tests/test_main.cpp`.
 
-10. **Governance Documentation**:
-   - Updated `VERSION.md` (1.9.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.9.0 details.
+10. **Waveform Alpha Transparency Control**:
+   - Added `WaveformAlpha` field to `Configuration` with YAML serialization.
+   - Added `GetAlpha()` and `SetAlpha(uint8_t InAlpha)` in `WaveFormModule`.
+   - Added `ImGui::SliderInt` opacity slider to the Unified Dashboard View & Grid Settings panel.
+   - Added unit test `TestWaveformAlphaConfiguration()` in `tests/test_main.cpp`.
+
+11. **Governance Documentation**:
+   - Updated `VERSION.md` (1.10.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.10.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

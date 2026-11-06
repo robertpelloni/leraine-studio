@@ -504,11 +504,21 @@ void Program::DisplayDashboard()
                 Config.WaveformColorRed = int(wfColor[0] * 255.0f);
                 Config.WaveformColorGreen = int(wfColor[1] * 255.0f);
                 Config.WaveformColorBlue = int(wfColor[2] * 255.0f);
-                MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, 128));
+                MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, Config.WaveformAlpha));
                 Config.Save();
             }
             ImGui::SameLine();
             HelpMarker("Customize the tint color applied to the rendered audio waveform.");
+
+            int wfAlpha = Config.WaveformAlpha;
+            if (ImGui::SliderInt("Waveform Alpha", &wfAlpha, 10, 255))
+            {
+                Config.WaveformAlpha = wfAlpha;
+                MOD(WaveFormModule).SetAlpha(uint8_t(wfAlpha));
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Modulate the rendering opacity and blending transparency of the audio waveform overlay.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1352,5 +1362,6 @@ void Program::SetConfig(const Configuration& InConfig)
 	MOD(TimefieldRenderModule).GetSkin().ShowColumnLines = Config.ShowColumnLines;
 	EditMode::static_Flags.UseAutoTiming = Config.UseAutoTiming;
 	EditMode::static_Flags.ShowColumnHeatmap = Config.ShowColumnHeatmap;
-    MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, 128));
+    MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, Config.WaveformAlpha));
+    MOD(WaveFormModule).SetAlpha(uint8_t(Config.WaveformAlpha));
 }
