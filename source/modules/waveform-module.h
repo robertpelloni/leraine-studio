@@ -35,6 +35,12 @@ public:
         _BackColor.a = std::min(255, int(InAlpha * 0.75f));
     }
 
+    float GetResolutionMultiplier() const { return _ResolutionMultiplier; }
+    void SetResolutionMultiplier(float InMult)
+    {
+        _ResolutionMultiplier = std::max(0.25f, std::min(4.0f, InMult));
+    }
+
 private:
 
     const int _WaveFormWidth = 256;
@@ -50,4 +56,6 @@ private:
 
     sf::Color _FrontColor = sf::Color(0, 255, 255, 128);
     sf::Color _BackColor  = sf::Color(255, 255, 0, 96);
+
+    float _ResolutionMultiplier = 1.0f;
 };

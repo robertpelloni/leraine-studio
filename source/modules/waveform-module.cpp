@@ -37,11 +37,13 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
     const float windowHeight = InWindowHeight;
     const float scale = windowHeight / float(InTimeEnd - InTimeBegin);
 
-    const int lineAmount = timeHeight * 2;
+    const int maxLines = 8192;
+    const int lineAmount = std::min(maxLines, int(timeHeight * 2 * _ResolutionMultiplier));
 
     for(int i = 0; i < lineAmount; ++i)
     {
-        const size_t index = std::min(_SongLengthMilliSeconds, std::max(0, timeStartPoint + timeHeight - i));
+        const int timeOffset = int(float(i) / (2.0f * _ResolutionMultiplier));
+        const size_t index = std::min(_SongLengthMilliSeconds, std::max(0, timeStartPoint + timeHeight - timeOffset));
         const WaveFormData waveFormData = _WaveFormData[index];
 
         const float y = float(_ScalableWaveFormTexture.getSize().y - i);

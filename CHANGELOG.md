@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - 2026-11-04
+### Added
+- **Waveform Resolution Multiplier**: Added configurable waveform resolution scaling (`WaveformResolutionMultiplier`, default 1.0x, range 0.25x-4.0x) in `Configuration` with YAML serialization.
+- **Waveform Module Resolution Hooks**: Added `GetResolutionMultiplier()` and `SetResolutionMultiplier(float InMult)` in `WaveFormModule` with safe bounds clamping.
+- **Dashboard Resolution Slider**: Added `ImGui::SliderFloat` waveform resolution multiplier control in the Unified Dashboard View & Grid Settings panel.
+- **Automated Resolution Tests**: Added `TestWaveformResolutionMultiplier()` in `tests/test_main.cpp`.
+
 ## [1.11.0] - 2026-11-04
 ### Added
 - **Note Count & Distribution Analytics**: Added `ChartNoteStatistics` struct and `Chart::GetNoteStatistics()` calculating counts for total notes, common taps, holds, rolls, mines, lifts, and fakes.

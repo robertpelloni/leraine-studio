@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.11.0
+# Session Handoff — Version 1.12.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -69,9 +69,15 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated note count breakdown table into the NPS & Difficulty Analytics panel of the Unified Dashboard.
    - Added unit test `TestChartNoteStatistics()` in `tests/test_main.cpp`.
 
-12. **Governance Documentation**:
-   - Updated `VERSION.md` (1.11.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.11.0 details.
+12. **Waveform Resolution Multiplier**:
+   - Added `WaveformResolutionMultiplier` field to `Configuration` with YAML serialization.
+   - Added `GetResolutionMultiplier()` and `SetResolutionMultiplier(float InMult)` in `WaveFormModule` with safe bounds clamping [0.25, 4.0].
+   - Added `ImGui::SliderFloat` waveform resolution multiplier control in the Unified Dashboard View & Grid Settings panel.
+   - Added unit test `TestWaveformResolutionMultiplier()` in `tests/test_main.cpp`.
+
+13. **Governance Documentation**:
+   - Updated `VERSION.md` (1.12.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.12.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

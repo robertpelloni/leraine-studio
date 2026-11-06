@@ -42,6 +42,29 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformResolutionMultiplier()
+{
+    WaveFormModule waveform;
+    assert(waveform.GetResolutionMultiplier() == 1.0f);
+
+    waveform.SetResolutionMultiplier(2.5f);
+    assert(waveform.GetResolutionMultiplier() == 2.5f);
+
+    // Test bounds clamping [0.25, 4.0]
+    waveform.SetResolutionMultiplier(10.0f);
+    assert(waveform.GetResolutionMultiplier() == 4.0f);
+
+    waveform.SetResolutionMultiplier(0.01f);
+    assert(waveform.GetResolutionMultiplier() == 0.25f);
+
+    Configuration config;
+    assert(config.WaveformResolutionMultiplier == 1.0f);
+    config.WaveformResolutionMultiplier = 2.0f;
+    assert(config.WaveformResolutionMultiplier == 2.0f);
+
+    return 0;
+}
+
 int TestChartNoteStatistics()
 {
     Chart chart;
@@ -404,6 +427,7 @@ int main() {
     TEST(TestMultiDifficultyScan);
     TEST(TestWaveformAlphaConfiguration);
     TEST(TestChartNoteStatistics);
+    TEST(TestWaveformResolutionMultiplier);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

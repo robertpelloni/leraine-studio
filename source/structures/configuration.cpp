@@ -47,6 +47,8 @@ bool Configuration::Load()
 		WaveformColorBlue = configFile["WaveformColorBlue"].as<int>();
 	if (configFile["WaveformAlpha"])
 		WaveformAlpha = configFile["WaveformAlpha"].as<int>();
+	if (configFile["WaveformResolutionMultiplier"])
+		WaveformResolutionMultiplier = configFile["WaveformResolutionMultiplier"].as<float>();
 
 	return true;
 }
@@ -78,6 +80,8 @@ void Configuration::Save()
 	out << YAML::Value << WaveformColorBlue;
 	out << YAML::Key << "WaveformAlpha";
 	out << YAML::Value << WaveformAlpha;
+	out << YAML::Key << "WaveformResolutionMultiplier";
+	out << YAML::Value << WaveformResolutionMultiplier;
 	out << YAML::EndMap;
 
 	std::ofstream configFile("config.yaml");

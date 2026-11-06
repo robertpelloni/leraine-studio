@@ -531,6 +531,16 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Modulate the rendering opacity and blending transparency of the audio waveform overlay.");
+
+            float wfRes = Config.WaveformResolutionMultiplier;
+            if (ImGui::SliderFloat("Waveform Res", &wfRes, 0.25f, 4.0f, "%.2fx"))
+            {
+                Config.WaveformResolutionMultiplier = wfRes;
+                MOD(WaveFormModule).SetResolutionMultiplier(wfRes);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Scale the sample resolution multiplier for the timeline waveform visualizer.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1376,4 +1386,5 @@ void Program::SetConfig(const Configuration& InConfig)
 	EditMode::static_Flags.ShowColumnHeatmap = Config.ShowColumnHeatmap;
     MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, Config.WaveformAlpha));
     MOD(WaveFormModule).SetAlpha(uint8_t(Config.WaveformAlpha));
+    MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
 }
