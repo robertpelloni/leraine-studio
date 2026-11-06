@@ -42,6 +42,32 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartNoteStatistics()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Inject common notes, holds, rolls, mines, lifts, fakes
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Common);
+    chart.InjectHold(2000, 2500, 2);
+    chart.InjectRoll(3000, 3500, 3);
+    chart.InjectNote(4000, 0, Note::EType::Mine);
+    chart.InjectNote(4500, 1, Note::EType::Lift);
+    chart.InjectNote(5000, 2, Note::EType::Fake);
+
+    ChartNoteStatistics stats = chart.GetNoteStatistics();
+    ASSERT(stats.TotalNotes == 9); // 2 taps + 2 hold endpoints (HoldBegin+HoldEnd) + 2 roll endpoints (RollBegin+RollEnd) + 1 mine + 1 lift + 1 fake
+    ASSERT(stats.TapNotes == 2);
+    ASSERT(stats.HoldNotes == 1);
+    ASSERT(stats.RollNotes == 1);
+    ASSERT(stats.MineNotes == 1);
+    ASSERT(stats.LiftNotes == 1);
+    ASSERT(stats.FakeNotes == 1);
+
+    return 0;
+}
+
 int TestWaveformAlphaConfiguration()
 {
     WaveFormModule waveform;
@@ -377,6 +403,7 @@ int main() {
     TEST(TestWaveformColorConfiguration);
     TEST(TestMultiDifficultyScan);
     TEST(TestWaveformAlphaConfiguration);
+    TEST(TestChartNoteStatistics);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

@@ -1667,6 +1667,40 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+ChartNoteStatistics Chart::GetNoteStatistics()
+{
+    ChartNoteStatistics stats;
+
+    IterateAllNotes([&stats](Note& note, Column col) {
+        stats.TotalNotes++;
+        switch (note.Type)
+        {
+            case Note::EType::Common:
+                stats.TapNotes++;
+                break;
+            case Note::EType::HoldBegin:
+                stats.HoldNotes++;
+                break;
+            case Note::EType::RollBegin:
+                stats.RollNotes++;
+                break;
+            case Note::EType::Mine:
+                stats.MineNotes++;
+                break;
+            case Note::EType::Lift:
+                stats.LiftNotes++;
+                break;
+            case Note::EType::Fake:
+                stats.FakeNotes++;
+                break;
+            default:
+                break;
+        }
+    });
+
+    return stats;
+}
+
 ChartValidationResult Chart::ValidateChart()
 {
     ChartValidationResult result;

@@ -468,6 +468,18 @@ void Program::DisplayDashboard()
                 ImGui::PlotLines("Notes Per Sec", graph.data(), graph.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 90));
             }
             ImGui::Text("Average NPS: %.2f | Peak NPS: %.2f", SelectedChart->GetAverageNPS(), SelectedChart->GetPeakNPS());
+
+            ImGui::Separator();
+            ChartNoteStatistics stats = SelectedChart->GetNoteStatistics();
+            ImGui::Text("Note Counts & Distribution:");
+            ImGui::BulletText("Total Notes: %d", stats.TotalNotes);
+            ImGui::BulletText("Common Taps: %d", stats.TapNotes);
+            ImGui::BulletText("Holds: %d", stats.HoldNotes);
+            ImGui::BulletText("Rolls: %d", stats.RollNotes);
+            ImGui::BulletText("Mines: %d", stats.MineNotes);
+            ImGui::BulletText("Lifts: %d", stats.LiftNotes);
+            ImGui::BulletText("Fakes: %d", stats.FakeNotes);
+            HelpMarker("Comprehensive breakdown of all note objects in the active chart difficulty by type.");
         }
         else
         {

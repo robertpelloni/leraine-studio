@@ -15,4 +15,5 @@
 - [x] Provide user control over waveform color theme in configuration (`TestWaveformColorConfiguration`).
 - [x] Implement multi-chart difficulty tab switcher in Unified Dashboard (`TestMultiDifficultyScan`).
 - [x] Implement waveform alpha transparency control in Configuration and Dashboard (`TestWaveformAlphaConfiguration`).
+- [x] Implement note count and distribution breakdown analytics (`TestChartNoteStatistics`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.10.0
+# Session Handoff — Version 1.11.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -64,9 +64,14 @@ This session focused on full codebase context restoration, build health recovery
    - Added `ImGui::SliderInt` opacity slider to the Unified Dashboard View & Grid Settings panel.
    - Added unit test `TestWaveformAlphaConfiguration()` in `tests/test_main.cpp`.
 
-11. **Governance Documentation**:
-   - Updated `VERSION.md` (1.10.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.10.0 details.
+11. **Note Distribution & Count Analytics**:
+   - Added `ChartNoteStatistics` and `Chart::GetNoteStatistics()` calculating counts for total notes, taps, holds, rolls, mines, lifts, and fakes.
+   - Integrated note count breakdown table into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+   - Added unit test `TestChartNoteStatistics()` in `tests/test_main.cpp`.
+
+12. **Governance Documentation**:
+   - Updated `VERSION.md` (1.11.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.11.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

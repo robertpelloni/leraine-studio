@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2026-11-04
+### Added
+- **Note Count & Distribution Analytics**: Added `ChartNoteStatistics` struct and `Chart::GetNoteStatistics()` calculating counts for total notes, common taps, holds, rolls, mines, lifts, and fakes.
+- **Dashboard Note Breakdown Table**: Integrated a granular note distribution breakdown into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+- **Automated Note Statistics Tests**: Added `TestChartNoteStatistics()` in `tests/test_main.cpp`.
+
 ## [1.10.0] - 2026-11-04
 ### Added
 - **Waveform Alpha Transparency Control**: Added configurable alpha channel (`WaveformAlpha`) in `Configuration` and YAML serializer.
