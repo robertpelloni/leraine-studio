@@ -2,6 +2,7 @@
 
 #include "../structures/configuration.h"
 #include "../modules/manager/module-manager.h"
+#include "../modules/chart-parser-module.h"
 
 class Program
 {
@@ -59,4 +60,7 @@ private: //meta data ownership
     bool _AssistTickEnabled = false;
     Time _LastTickTime = 0;
     Time _LastAssistTickTime = 0;
+
+    std::string _CurrentChartFilePath;
+    std::vector<ChartDefinition> _AvailableDifficulties;
 };

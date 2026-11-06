@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2026-11-04
+### Added
+- **Waveform Alpha Transparency Control**: Added configurable alpha channel (`WaveformAlpha`) in `Configuration` and YAML serializer.
+- **Waveform Opacity Hooks**: Added `GetAlpha()` and `SetAlpha(uint8_t InAlpha)` in `WaveFormModule` to modulate audio waveform opacity dynamically.
+- **Dashboard Waveform Alpha Slider**: Added `ImGui::SliderInt` opacity slider to the Unified Dashboard View & Grid Settings panel.
+- **Automated Waveform Alpha Tests**: Added `TestWaveformAlphaConfiguration()` in `tests/test_main.cpp`.
+
+## [1.9.0] - 2026-11-04
+### Added
+- **Multi-Chart Difficulty Tab Switcher**: Added difficulty tab bar to the Unified Dashboard under Session Management, allowing seamless hot-switching between multiple difficulties in the current song folder/file.
+- **Difficulty Tracking**: Stored `_AvailableDifficulties` and `_CurrentChartFilePath` in `Program` across chart scan and load lifecycle.
+- **Automated Multi-Difficulty Tests**: Added `TestMultiDifficultyScan()` in `tests/test_main.cpp`.
+
 ## [1.8.0] - 2026-11-04
 ### Added
 - **Waveform Color Customization Engine**: Added configurable RGB waveform color fields (`WaveformColorRed`, `WaveformColorGreen`, `WaveformColorBlue`) to `Configuration` with YAML serialization.

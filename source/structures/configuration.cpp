@@ -45,6 +45,8 @@ bool Configuration::Load()
 		WaveformColorGreen = configFile["WaveformColorGreen"].as<int>();
 	if (configFile["WaveformColorBlue"])
 		WaveformColorBlue = configFile["WaveformColorBlue"].as<int>();
+	if (configFile["WaveformAlpha"])
+		WaveformAlpha = configFile["WaveformAlpha"].as<int>();
 
 	return true;
 }
@@ -74,6 +76,8 @@ void Configuration::Save()
 	out << YAML::Value << WaveformColorGreen;
 	out << YAML::Key << "WaveformColorBlue";
 	out << YAML::Value << WaveformColorBlue;
+	out << YAML::Key << "WaveformAlpha";
+	out << YAML::Value << WaveformAlpha;
 	out << YAML::EndMap;
 
 	std::ofstream configFile("config.yaml");

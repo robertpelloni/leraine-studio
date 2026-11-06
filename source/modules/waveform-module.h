@@ -28,6 +28,13 @@ public:
     sf::Color GetBackColor() const { return _BackColor; }
     void SetBackColor(const sf::Color& InColor) { _BackColor = InColor; }
 
+    uint8_t GetAlpha() const { return _FrontColor.a; }
+    void SetAlpha(uint8_t InAlpha)
+    {
+        _FrontColor.a = InAlpha;
+        _BackColor.a = std::min(255, int(InAlpha * 0.75f));
+    }
+
 private:
 
     const int _WaveFormWidth = 256;
