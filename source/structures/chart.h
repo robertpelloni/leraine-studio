@@ -211,6 +211,9 @@ public: //accessors
     ChartValidationResult ValidateChart();
     ChartNoteStatistics GetNoteStatistics();
     std::vector<int> GetColumnNoteDistribution();
+    Time GetFirstNoteTime();
+    Time GetLastNoteTime();
+    Time GetPlayableDuration();
     int ClearNotesByType(Note::EType InType);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);

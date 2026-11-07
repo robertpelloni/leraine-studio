@@ -500,7 +500,23 @@ void Program::DisplayDashboard()
                 for (int count : colDist) floatDist.push_back(float(count));
                 ImGui::PlotHistogram("Column Distribution", floatDist.data(), floatDist.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 50));
             }
-            HelpMarker("Comprehensive breakdown of all note objects in the active chart difficulty by type and column density distribution.");
+
+            Time firstTime = SelectedChart->GetFirstNoteTime();
+            Time lastTime = SelectedChart->GetLastNoteTime();
+            Time duration = SelectedChart->GetPlayableDuration();
+
+            if (firstTime >= 0 && lastTime >= 0)
+            {
+                int durSec = duration / 1000;
+                int min = durSec / 60;
+                int sec = durSec % 60;
+                ImGui::Text("Playable Range: %dms - %dms (%02d:%02d)", firstTime, lastTime, min, sec);
+            }
+            else
+            {
+                ImGui::Text("Playable Range: No notes present");
+            }
+            HelpMarker("Comprehensive breakdown of all note objects in the active chart difficulty by type, column density distribution, and playable duration.");
         }
         else
         {

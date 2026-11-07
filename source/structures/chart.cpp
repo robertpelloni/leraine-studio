@@ -1696,6 +1696,46 @@ int Chart::ClearNotesByType(Note::EType InType)
     return int(notesToRemove.size());
 }
 
+Time Chart::GetFirstNoteTime()
+{
+    Time minTime = -1;
+
+    IterateAllNotes([&minTime](Note& note, Column col) {
+        if (minTime == -1 || note.TimePoint < minTime)
+        {
+            minTime = note.TimePoint;
+        }
+    });
+
+    return minTime;
+}
+
+Time Chart::GetLastNoteTime()
+{
+    Time maxTime = -1;
+
+    IterateAllNotes([&maxTime](Note& note, Column col) {
+        Time noteEnd = note.TimePointEnd > note.TimePoint ? note.TimePointEnd : note.TimePoint;
+        if (maxTime == -1 || noteEnd > maxTime)
+        {
+            maxTime = noteEnd;
+        }
+    });
+
+    return maxTime;
+}
+
+Time Chart::GetPlayableDuration()
+{
+    Time first = GetFirstNoteTime();
+    Time last = GetLastNoteTime();
+
+    if (first == -1 || last == -1 || last < first)
+        return 0;
+
+    return last - first;
+}
+
 std::vector<int> Chart::GetColumnNoteDistribution()
 {
     std::vector<int> distribution(KeyAmount > 0 ? KeyAmount : 0, 0);

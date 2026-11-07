@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0] - 2026-11-04
+### Added
+- **Chart Duration & Playable Range Analytics**: Implemented `Chart::GetFirstNoteTime()`, `Chart::GetLastNoteTime()`, and `Chart::GetPlayableDuration()` tracking exact song range and active playing span.
+- **Dashboard Playable Range Readout**: Integrated formatted mm:ss duration and timestamp range into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+- **Automated Duration Tests**: Added `TestChartDurationAnalytics()` in `tests/test_main.cpp`.
+
 ## [1.14.0] - 2026-11-04
 ### Added
 - **Column Note Distribution Analytics**: Added `Chart::GetColumnNoteDistribution()` calculating total note counts across each individual column lane.

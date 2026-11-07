@@ -42,6 +42,28 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartDurationAnalytics()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Test on empty chart
+    ASSERT(chart.GetFirstNoteTime() == -1);
+    ASSERT(chart.GetLastNoteTime() == -1);
+    ASSERT(chart.GetPlayableDuration() == 0);
+
+    // Inject notes and hold
+    chart.InjectNote(1500, 0, Note::EType::Common);
+    chart.InjectHold(2000, 4500, 1);
+    chart.InjectNote(3000, 2, Note::EType::Common);
+
+    ASSERT(chart.GetFirstNoteTime() == 1500);
+    ASSERT(chart.GetLastNoteTime() == 4500); // Hold tail ends at 4500
+    ASSERT(chart.GetPlayableDuration() == 3000); // 4500 - 1500
+
+    return 0;
+}
+
 int TestColumnNoteDistribution()
 {
     Chart chart;
@@ -476,6 +498,7 @@ int main() {
     TEST(TestWaveformResolutionMultiplier);
     TEST(TestChartClearNotesByType);
     TEST(TestColumnNoteDistribution);
+    TEST(TestChartDurationAnalytics);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
