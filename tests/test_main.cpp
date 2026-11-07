@@ -42,6 +42,29 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartClearNotesByType()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Mine);
+    chart.InjectNote(2000, 2, Note::EType::Mine);
+    chart.InjectNote(2500, 3, Note::EType::Fake);
+
+    // Clear only Mine notes
+    int cleared = chart.ClearNotesByType(Note::EType::Mine);
+    ASSERT(cleared == 2);
+
+    // Verify common and fake notes remain intact
+    ASSERT(chart.FindNote(1000, 0) != nullptr);
+    ASSERT(chart.FindNote(2500, 3) != nullptr);
+    ASSERT(chart.FindNote(1500, 1) == nullptr);
+    ASSERT(chart.FindNote(2000, 2) == nullptr);
+
+    return 0;
+}
+
 int TestWaveformResolutionMultiplier()
 {
     WaveFormModule waveform;
@@ -428,6 +451,7 @@ int main() {
     TEST(TestWaveformAlphaConfiguration);
     TEST(TestChartNoteStatistics);
     TEST(TestWaveformResolutionMultiplier);
+    TEST(TestChartClearNotesByType);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

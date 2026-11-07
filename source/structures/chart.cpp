@@ -1667,6 +1667,35 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+int Chart::ClearNotesByType(Note::EType InType)
+{
+    std::vector<std::pair<Time, Column>> notesToRemove;
+    Time minTime = 1000000000;
+    Time maxTime = -1000000000;
+
+    IterateAllNotes([&notesToRemove, &minTime, &maxTime, InType](Note& note, Column col) {
+        if (note.Type == InType)
+        {
+            notesToRemove.push_back({ note.TimePoint, col });
+            minTime = std::min(minTime, note.TimePoint);
+            maxTime = std::max(maxTime, note.TimePoint);
+        }
+    });
+
+    if (notesToRemove.empty())
+        return 0;
+
+    // Register ranged history state to enable full single-step undo support
+    RegisterTimeSliceHistoryRanged(minTime, maxTime);
+
+    for (const auto& entry : notesToRemove)
+    {
+        RemoveNote(entry.first, entry.second, false, true);
+    }
+
+    return int(notesToRemove.size());
+}
+
 ChartNoteStatistics Chart::GetNoteStatistics()
 {
     ChartNoteStatistics stats;

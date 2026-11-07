@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0] - 2026-11-04
+### Added
+- **Bulk Note Filter Clearing**: Added `Chart::ClearNotesByType(Note::EType InType)` allowing selective removal of specific note types (e.g. mines, lifts, fakes, or holds) across the entire active chart.
+- **Dashboard Note Clearing Tool**: Integrated "Clear All Notes of Type" dropdown filter and action button into the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Clearing Tests**: Added `TestChartClearNotesByType()` in `tests/test_main.cpp`.
+
 ## [1.12.0] - 2026-11-04
 ### Added
 - **Waveform Resolution Multiplier**: Added configurable waveform resolution scaling (`WaveformResolutionMultiplier`, default 1.0x, range 0.25x-4.0x) in `Configuration` with YAML serialization.

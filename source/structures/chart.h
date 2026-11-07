@@ -210,6 +210,7 @@ public: //accessors
 	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
     ChartValidationResult ValidateChart();
     ChartNoteStatistics GetNoteStatistics();
+    int ClearNotesByType(Note::EType InType);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
 	float GetAverageNPS();

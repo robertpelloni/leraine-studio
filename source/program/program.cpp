@@ -388,6 +388,19 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Transforms selected tap notes into hold notes with snap duration, or hold notes into taps.");
+
+        ImGui::Separator();
+        static int clearTypeIdx = 4; // Default to Mine (enum 4)
+        const char* noteTypeNames[] = { "Common Tap", "Hold Begin", "Hold Intermediate", "Hold End", "Mine", "Roll Begin", "Roll Intermediate", "Roll End", "Lift", "Fake" };
+        ImGui::Combo("Filter Type", &clearTypeIdx, noteTypeNames, IM_ARRAYSIZE(noteTypeNames));
+        ImGui::SameLine();
+        if (ImGui::Button("Clear All Notes of Type") && SelectedChart)
+        {
+            int removed = SelectedChart->ClearNotesByType((Note::EType)clearTypeIdx);
+            PUSH_NOTIFICATION("Removed %d %s notes", removed, noteTypeNames[clearTypeIdx]);
+        }
+        ImGui::SameLine();
+        HelpMarker("Removes all notes matching the selected type from the active chart difficulty with Undo/Redo history support.");
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))
