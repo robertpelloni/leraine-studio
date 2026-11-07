@@ -19,6 +19,8 @@ struct Configuration
 	int WaveformColorGreen = 255;
 	int WaveformColorBlue = 255;
 	int WaveformAlpha = 128;
+	float WaveformResolutionMultiplier = 1.0f;
+	bool InvertWaveform = false;
 
 	const int RecentFilePathsMaxSize = 10;
 	//FIFO, but needs to remove invalid paths on access (like if the files have moved)

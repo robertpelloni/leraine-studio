@@ -388,6 +388,19 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Transforms selected tap notes into hold notes with snap duration, or hold notes into taps.");
+
+        ImGui::Separator();
+        static int clearTypeIdx = 4; // Default to Mine (enum 4)
+        const char* noteTypeNames[] = { "Common Tap", "Hold Begin", "Hold Intermediate", "Hold End", "Mine", "Roll Begin", "Roll Intermediate", "Roll End", "Lift", "Fake" };
+        ImGui::Combo("Filter Type", &clearTypeIdx, noteTypeNames, IM_ARRAYSIZE(noteTypeNames));
+        ImGui::SameLine();
+        if (ImGui::Button("Clear All Notes of Type") && SelectedChart)
+        {
+            int removed = SelectedChart->ClearNotesByType((Note::EType)clearTypeIdx);
+            PUSH_NOTIFICATION("Removed %d %s notes", removed, noteTypeNames[clearTypeIdx]);
+        }
+        ImGui::SameLine();
+        HelpMarker("Removes all notes matching the selected type from the active chart difficulty with Undo/Redo history support.");
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))
@@ -468,6 +481,42 @@ void Program::DisplayDashboard()
                 ImGui::PlotLines("Notes Per Sec", graph.data(), graph.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 90));
             }
             ImGui::Text("Average NPS: %.2f | Peak NPS: %.2f", SelectedChart->GetAverageNPS(), SelectedChart->GetPeakNPS());
+
+            ImGui::Separator();
+            ChartNoteStatistics stats = SelectedChart->GetNoteStatistics();
+            ImGui::Text("Note Counts & Distribution:");
+            ImGui::BulletText("Total Notes: %d", stats.TotalNotes);
+            ImGui::BulletText("Common Taps: %d", stats.TapNotes);
+            ImGui::BulletText("Holds: %d", stats.HoldNotes);
+            ImGui::BulletText("Rolls: %d", stats.RollNotes);
+            ImGui::BulletText("Mines: %d", stats.MineNotes);
+            ImGui::BulletText("Lifts: %d", stats.LiftNotes);
+            ImGui::BulletText("Fakes: %d", stats.FakeNotes);
+
+            std::vector<int> colDist = SelectedChart->GetColumnNoteDistribution();
+            if (!colDist.empty())
+            {
+                std::vector<float> floatDist;
+                for (int count : colDist) floatDist.push_back(float(count));
+                ImGui::PlotHistogram("Column Distribution", floatDist.data(), floatDist.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 50));
+            }
+
+            Time firstTime = SelectedChart->GetFirstNoteTime();
+            Time lastTime = SelectedChart->GetLastNoteTime();
+            Time duration = SelectedChart->GetPlayableDuration();
+
+            if (firstTime >= 0 && lastTime >= 0)
+            {
+                int durSec = duration / 1000;
+                int min = durSec / 60;
+                int sec = durSec % 60;
+                ImGui::Text("Playable Range: %dms - %dms (%02d:%02d)", firstTime, lastTime, min, sec);
+            }
+            else
+            {
+                ImGui::Text("Playable Range: No notes present");
+            }
+            HelpMarker("Comprehensive breakdown of all note objects in the active chart difficulty by type, column density distribution, and playable duration.");
         }
         else
         {
@@ -498,6 +547,17 @@ void Program::DisplayDashboard()
             ImGui::SameLine();
             HelpMarker("Toggle between distinct Left/Right stereo audio channels or combined mono waveform visualization.");
 
+            ImGui::SameLine();
+            bool isInverted = Config.InvertWaveform;
+            if (ImGui::Checkbox("Invert Waveform", &isInverted))
+            {
+                Config.InvertWaveform = isInverted;
+                MOD(WaveFormModule).SetInverted(isInverted);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Flip stereo waveform channels across the timeline axis.");
+
             float wfColor[3] = { Config.WaveformColorRed / 255.0f, Config.WaveformColorGreen / 255.0f, Config.WaveformColorBlue / 255.0f };
             if (ImGui::ColorEdit3("Waveform Color", wfColor))
             {
@@ -519,6 +579,16 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Modulate the rendering opacity and blending transparency of the audio waveform overlay.");
+
+            float wfRes = Config.WaveformResolutionMultiplier;
+            if (ImGui::SliderFloat("Waveform Res", &wfRes, 0.25f, 4.0f, "%.2fx"))
+            {
+                Config.WaveformResolutionMultiplier = wfRes;
+                MOD(WaveFormModule).SetResolutionMultiplier(wfRes);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Scale the sample resolution multiplier for the timeline waveform visualizer.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1364,4 +1434,6 @@ void Program::SetConfig(const Configuration& InConfig)
 	EditMode::static_Flags.ShowColumnHeatmap = Config.ShowColumnHeatmap;
     MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, Config.WaveformAlpha));
     MOD(WaveFormModule).SetAlpha(uint8_t(Config.WaveformAlpha));
+    MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
+    MOD(WaveFormModule).SetInverted(Config.InvertWaveform);
 }

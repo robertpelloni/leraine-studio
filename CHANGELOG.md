@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.0] - 2026-11-04
+### Added
+- **Audio Waveform Inversion Mode**: Added `InvertWaveform` boolean flag to `Configuration` with YAML serialization.
+- **Waveform Inversion Hooks**: Added `IsInverted()` and `SetInverted(bool InInvert)` in `WaveFormModule` to flip stereo channels across the timeline axis.
+- **Dashboard Invert Checkbox**: Added interactive "Invert Waveform" checkbox toggle to the Unified Dashboard View & Grid Settings panel.
+- **Automated Inversion Tests**: Added `TestWaveformInversion()` in `tests/test_main.cpp`.
+
+## [1.15.0] - 2026-11-04
+### Added
+- **Chart Duration & Playable Range Analytics**: Implemented `Chart::GetFirstNoteTime()`, `Chart::GetLastNoteTime()`, and `Chart::GetPlayableDuration()` tracking exact song range and active playing span.
+- **Dashboard Playable Range Readout**: Integrated formatted mm:ss duration and timestamp range into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+- **Automated Duration Tests**: Added `TestChartDurationAnalytics()` in `tests/test_main.cpp`.
+
+## [1.14.0] - 2026-11-04
+### Added
+- **Column Note Distribution Analytics**: Added `Chart::GetColumnNoteDistribution()` calculating total note counts across each individual column lane.
+- **Dashboard Column Distribution Histogram**: Integrated real-time column density histogram visualization into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+- **Automated Column Distribution Tests**: Added `TestColumnNoteDistribution()` in `tests/test_main.cpp`.
+
+## [1.13.0] - 2026-11-04
+### Added
+- **Bulk Note Filter Clearing**: Added `Chart::ClearNotesByType(Note::EType InType)` allowing selective removal of specific note types (e.g. mines, lifts, fakes, or holds) across the entire active chart.
+- **Dashboard Note Clearing Tool**: Integrated "Clear All Notes of Type" dropdown filter and action button into the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Clearing Tests**: Added `TestChartClearNotesByType()` in `tests/test_main.cpp`.
+
+## [1.12.0] - 2026-11-04
+### Added
+- **Waveform Resolution Multiplier**: Added configurable waveform resolution scaling (`WaveformResolutionMultiplier`, default 1.0x, range 0.25x-4.0x) in `Configuration` with YAML serialization.
+- **Waveform Module Resolution Hooks**: Added `GetResolutionMultiplier()` and `SetResolutionMultiplier(float InMult)` in `WaveFormModule` with safe bounds clamping.
+- **Dashboard Resolution Slider**: Added `ImGui::SliderFloat` waveform resolution multiplier control in the Unified Dashboard View & Grid Settings panel.
+- **Automated Resolution Tests**: Added `TestWaveformResolutionMultiplier()` in `tests/test_main.cpp`.
+
+## [1.11.0] - 2026-11-04
+### Added
+- **Note Count & Distribution Analytics**: Added `ChartNoteStatistics` struct and `Chart::GetNoteStatistics()` calculating counts for total notes, common taps, holds, rolls, mines, lifts, and fakes.
+- **Dashboard Note Breakdown Table**: Integrated a granular note distribution breakdown into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+- **Automated Note Statistics Tests**: Added `TestChartNoteStatistics()` in `tests/test_main.cpp`.
+
 ## [1.10.0] - 2026-11-04
 ### Added
 - **Waveform Alpha Transparency Control**: Added configurable alpha channel (`WaveformAlpha`) in `Configuration` and YAML serializer.

@@ -1667,6 +1667,123 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+int Chart::ClearNotesByType(Note::EType InType)
+{
+    std::vector<std::pair<Time, Column>> notesToRemove;
+    Time minTime = 1000000000;
+    Time maxTime = -1000000000;
+
+    IterateAllNotes([&notesToRemove, &minTime, &maxTime, InType](Note& note, Column col) {
+        if (note.Type == InType)
+        {
+            notesToRemove.push_back({ note.TimePoint, col });
+            minTime = std::min(minTime, note.TimePoint);
+            maxTime = std::max(maxTime, note.TimePoint);
+        }
+    });
+
+    if (notesToRemove.empty())
+        return 0;
+
+    // Register ranged history state to enable full single-step undo support
+    RegisterTimeSliceHistoryRanged(minTime, maxTime);
+
+    for (const auto& entry : notesToRemove)
+    {
+        RemoveNote(entry.first, entry.second, false, true);
+    }
+
+    return int(notesToRemove.size());
+}
+
+Time Chart::GetFirstNoteTime()
+{
+    Time minTime = -1;
+
+    IterateAllNotes([&minTime](Note& note, Column col) {
+        if (minTime == -1 || note.TimePoint < minTime)
+        {
+            minTime = note.TimePoint;
+        }
+    });
+
+    return minTime;
+}
+
+Time Chart::GetLastNoteTime()
+{
+    Time maxTime = -1;
+
+    IterateAllNotes([&maxTime](Note& note, Column col) {
+        Time noteEnd = note.TimePointEnd > note.TimePoint ? note.TimePointEnd : note.TimePoint;
+        if (maxTime == -1 || noteEnd > maxTime)
+        {
+            maxTime = noteEnd;
+        }
+    });
+
+    return maxTime;
+}
+
+Time Chart::GetPlayableDuration()
+{
+    Time first = GetFirstNoteTime();
+    Time last = GetLastNoteTime();
+
+    if (first == -1 || last == -1 || last < first)
+        return 0;
+
+    return last - first;
+}
+
+std::vector<int> Chart::GetColumnNoteDistribution()
+{
+    std::vector<int> distribution(KeyAmount > 0 ? KeyAmount : 0, 0);
+
+    IterateAllNotes([&distribution, this](Note& note, Column col) {
+        if (col < distribution.size())
+        {
+            distribution[col]++;
+        }
+    });
+
+    return distribution;
+}
+
+ChartNoteStatistics Chart::GetNoteStatistics()
+{
+    ChartNoteStatistics stats;
+
+    IterateAllNotes([&stats](Note& note, Column col) {
+        stats.TotalNotes++;
+        switch (note.Type)
+        {
+            case Note::EType::Common:
+                stats.TapNotes++;
+                break;
+            case Note::EType::HoldBegin:
+                stats.HoldNotes++;
+                break;
+            case Note::EType::RollBegin:
+                stats.RollNotes++;
+                break;
+            case Note::EType::Mine:
+                stats.MineNotes++;
+                break;
+            case Note::EType::Lift:
+                stats.LiftNotes++;
+                break;
+            case Note::EType::Fake:
+                stats.FakeNotes++;
+                break;
+            default:
+                break;
+        }
+    });
+
+    return stats;
+}
+
 ChartValidationResult Chart::ValidateChart()
 {
     ChartValidationResult result;

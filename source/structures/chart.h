@@ -125,6 +125,17 @@ struct ChartValidationResult
     std::vector<std::string> Issues;
 };
 
+struct ChartNoteStatistics
+{
+    int TotalNotes = 0;
+    int TapNotes = 0;
+    int HoldNotes = 0;
+    int RollNotes = 0;
+    int MineNotes = 0;
+    int LiftNotes = 0;
+    int FakeNotes = 0;
+};
+
 struct NoteReferenceCollection
 {
 	void PushNote(Column InColumn, Note* InNote);
@@ -198,6 +209,12 @@ public: //accessors
     void MoveAllNotes(Time Offset);
 	void GenerateStream(Time Start, Time End, int Divisor, StreamPattern Pattern);
     ChartValidationResult ValidateChart();
+    ChartNoteStatistics GetNoteStatistics();
+    std::vector<int> GetColumnNoteDistribution();
+    Time GetFirstNoteTime();
+    Time GetLastNoteTime();
+    Time GetPlayableDuration();
+    int ClearNotesByType(Note::EType InType);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
 	float GetAverageNPS();

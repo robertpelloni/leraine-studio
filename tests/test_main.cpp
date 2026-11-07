@@ -42,6 +42,142 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformInversion()
+{
+    WaveFormModule waveform;
+    ASSERT(!waveform.IsInverted());
+
+    waveform.SetInverted(true);
+    ASSERT(waveform.IsInverted());
+
+    waveform.SetInverted(false);
+    ASSERT(!waveform.IsInverted());
+
+    Configuration config;
+    ASSERT(!config.InvertWaveform);
+    config.InvertWaveform = true;
+    ASSERT(config.InvertWaveform);
+
+    return 0;
+}
+
+int TestChartDurationAnalytics()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Test on empty chart
+    ASSERT(chart.GetFirstNoteTime() == -1);
+    ASSERT(chart.GetLastNoteTime() == -1);
+    ASSERT(chart.GetPlayableDuration() == 0);
+
+    // Inject notes and hold
+    chart.InjectNote(1500, 0, Note::EType::Common);
+    chart.InjectHold(2000, 4500, 1);
+    chart.InjectNote(3000, 2, Note::EType::Common);
+
+    ASSERT(chart.GetFirstNoteTime() == 1500);
+    ASSERT(chart.GetLastNoteTime() == 4500); // Hold tail ends at 4500
+    ASSERT(chart.GetPlayableDuration() == 3000); // 4500 - 1500
+
+    return 0;
+}
+
+int TestColumnNoteDistribution()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Inject notes across specific columns
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 0, Note::EType::Common);
+    chart.InjectNote(2000, 1, Note::EType::Common);
+    chart.InjectNote(2500, 3, Note::EType::Common);
+    chart.InjectNote(3000, 3, Note::EType::Common);
+    chart.InjectNote(3500, 3, Note::EType::Common);
+
+    std::vector<int> dist = chart.GetColumnNoteDistribution();
+    ASSERT(dist.size() == 4);
+    ASSERT(dist[0] == 2);
+    ASSERT(dist[1] == 1);
+    ASSERT(dist[2] == 0); // column 2 has 0 notes
+    ASSERT(dist[3] == 3);
+
+    return 0;
+}
+
+int TestChartClearNotesByType()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Mine);
+    chart.InjectNote(2000, 2, Note::EType::Mine);
+    chart.InjectNote(2500, 3, Note::EType::Fake);
+
+    // Clear only Mine notes
+    int cleared = chart.ClearNotesByType(Note::EType::Mine);
+    ASSERT(cleared == 2);
+
+    // Verify common and fake notes remain intact
+    ASSERT(chart.FindNote(1000, 0) != nullptr);
+    ASSERT(chart.FindNote(2500, 3) != nullptr);
+    ASSERT(chart.FindNote(1500, 1) == nullptr);
+    ASSERT(chart.FindNote(2000, 2) == nullptr);
+
+    return 0;
+}
+
+int TestWaveformResolutionMultiplier()
+{
+    WaveFormModule waveform;
+    assert(waveform.GetResolutionMultiplier() == 1.0f);
+
+    waveform.SetResolutionMultiplier(2.5f);
+    assert(waveform.GetResolutionMultiplier() == 2.5f);
+
+    // Test bounds clamping [0.25, 4.0]
+    waveform.SetResolutionMultiplier(10.0f);
+    assert(waveform.GetResolutionMultiplier() == 4.0f);
+
+    waveform.SetResolutionMultiplier(0.01f);
+    assert(waveform.GetResolutionMultiplier() == 0.25f);
+
+    Configuration config;
+    assert(config.WaveformResolutionMultiplier == 1.0f);
+    config.WaveformResolutionMultiplier = 2.0f;
+    assert(config.WaveformResolutionMultiplier == 2.0f);
+
+    return 0;
+}
+
+int TestChartNoteStatistics()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Inject common notes, holds, rolls, mines, lifts, fakes
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Common);
+    chart.InjectHold(2000, 2500, 2);
+    chart.InjectRoll(3000, 3500, 3);
+    chart.InjectNote(4000, 0, Note::EType::Mine);
+    chart.InjectNote(4500, 1, Note::EType::Lift);
+    chart.InjectNote(5000, 2, Note::EType::Fake);
+
+    ChartNoteStatistics stats = chart.GetNoteStatistics();
+    ASSERT(stats.TotalNotes == 9); // 2 taps + 2 hold endpoints (HoldBegin+HoldEnd) + 2 roll endpoints (RollBegin+RollEnd) + 1 mine + 1 lift + 1 fake
+    ASSERT(stats.TapNotes == 2);
+    ASSERT(stats.HoldNotes == 1);
+    ASSERT(stats.RollNotes == 1);
+    ASSERT(stats.MineNotes == 1);
+    ASSERT(stats.LiftNotes == 1);
+    ASSERT(stats.FakeNotes == 1);
+
+    return 0;
+}
+
 int TestWaveformAlphaConfiguration()
 {
     WaveFormModule waveform;
@@ -377,6 +513,12 @@ int main() {
     TEST(TestWaveformColorConfiguration);
     TEST(TestMultiDifficultyScan);
     TEST(TestWaveformAlphaConfiguration);
+    TEST(TestChartNoteStatistics);
+    TEST(TestWaveformResolutionMultiplier);
+    TEST(TestChartClearNotesByType);
+    TEST(TestColumnNoteDistribution);
+    TEST(TestChartDurationAnalytics);
+    TEST(TestWaveformInversion);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
