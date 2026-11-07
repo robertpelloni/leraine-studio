@@ -1810,6 +1810,22 @@ Time Chart::GetPlayableDuration()
     return last - first;
 }
 
+int Chart::GetNoteCountForColumn(Column InColumn)
+{
+    if (KeyAmount <= 0 || InColumn >= size_t(KeyAmount))
+        return 0;
+
+    int count = 0;
+    IterateAllNotes([&count, InColumn](Note& note, Column col) {
+        if (col == InColumn)
+        {
+            count++;
+        }
+    });
+
+    return count;
+}
+
 std::vector<int> Chart::GetColumnNoteDistribution()
 {
     std::vector<int> distribution(KeyAmount > 0 ? KeyAmount : 0, 0);

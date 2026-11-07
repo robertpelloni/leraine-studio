@@ -211,6 +211,7 @@ public: //accessors
     ChartValidationResult ValidateChart();
     ChartNoteStatistics GetNoteStatistics();
     std::vector<int> GetColumnNoteDistribution();
+    int GetNoteCountForColumn(Column InColumn);
     Time GetFirstNoteTime();
     Time GetLastNoteTime();
     Time GetPlayableDuration();

@@ -42,6 +42,27 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestNoteCountForColumn()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 0, Note::EType::Common);
+    chart.InjectNote(2000, 1, Note::EType::Common);
+    chart.InjectNote(2500, 3, Note::EType::Common);
+
+    ASSERT(chart.GetNoteCountForColumn(0) == 2);
+    ASSERT(chart.GetNoteCountForColumn(1) == 1);
+    ASSERT(chart.GetNoteCountForColumn(2) == 0);
+    ASSERT(chart.GetNoteCountForColumn(3) == 1);
+    // Out of bounds check
+    ASSERT(chart.GetNoteCountForColumn(4) == 0);
+    ASSERT(chart.GetNoteCountForColumn(99) == 0);
+
+    return 0;
+}
+
 int TestChartClampNotesToTimeRange()
 {
     Chart chart;
@@ -591,6 +612,7 @@ int main() {
     TEST(TestChartShiftNotesByColumn);
     TEST(TestWaveformWidthScale);
     TEST(TestChartClampNotesToTimeRange);
+    TEST(TestNoteCountForColumn);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

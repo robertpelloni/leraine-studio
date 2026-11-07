@@ -24,4 +24,5 @@
 - [x] Implement bulk note column shifting controls (`TestChartShiftNotesByColumn`).
 - [x] Implement audio waveform width scale control (`TestWaveformWidthScale`).
 - [x] Implement note range trimming and clamping (`TestChartClampNotesToTimeRange`).
+- [x] Implement per-column note count query and lane metrics (`TestNoteCountForColumn`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

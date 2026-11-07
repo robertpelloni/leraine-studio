@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.19.0
+# Session Handoff — Version 1.20.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, per-column lane metrics query, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -113,9 +113,14 @@ This session focused on full codebase context restoration, build health recovery
    - Added "Trim Notes to Range" inputs and action trigger into the Note Editing & Transformations panel of the Unified Dashboard.
    - Added unit test `TestChartClampNotesToTimeRange()` in `tests/test_main.cpp`.
 
-20. **Governance Documentation**:
-   - Updated `VERSION.md` (1.19.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.19.0 details.
+20. **Per-Column Note Lane Counts**:
+   - Implemented `Chart::GetNoteCountForColumn(Column InColumn)` in `source/structures/chart.cpp`.
+   - Integrated textual lane count summary ("L1: X | L2: Y | ...") into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+   - Added unit test `TestNoteCountForColumn()` in `tests/test_main.cpp`.
+
+21. **Governance Documentation**:
+   - Updated `VERSION.md` (1.20.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.20.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

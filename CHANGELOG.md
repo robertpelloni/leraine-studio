@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.20.0] - 2026-11-04
+### Added
+- **Per-Column Note Lane Counts**: Implemented `Chart::GetNoteCountForColumn(Column InColumn)` to query exact note counts per lane with bounds checking.
+- **Dashboard Lane Metrics Display**: Added textual lane count readout ("L1: X | L2: Y | ...") alongside the Column Distribution histogram in the Unified Dashboard NPS panel.
+- **Automated Column Count Tests**: Added `TestNoteCountForColumn()` in `tests/test_main.cpp`.
+
 ## [1.19.0] - 2026-11-04
 ### Added
 - **Note Range Trimming & Clamping**: Implemented `Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)` allowing entire charts to be trimmed to a specific time interval with Undo/Redo history tracking.

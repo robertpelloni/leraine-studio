@@ -524,8 +524,14 @@ void Program::DisplayDashboard()
             if (!colDist.empty())
             {
                 std::vector<float> floatDist;
-                for (int count : colDist) floatDist.push_back(float(count));
+                std::string laneSummary = "Lane Counts: ";
+                for (size_t c = 0; c < colDist.size(); ++c)
+                {
+                    floatDist.push_back(float(colDist[c]));
+                    laneSummary += "L" + std::to_string(c + 1) + ":" + std::to_string(colDist[c]) + (c + 1 < colDist.size() ? " | " : "");
+                }
                 ImGui::PlotHistogram("Column Distribution", floatDist.data(), floatDist.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 50));
+                ImGui::TextDisabled("%s", laneSummary.c_str());
             }
 
             Time firstTime = SelectedChart->GetFirstNoteTime();
