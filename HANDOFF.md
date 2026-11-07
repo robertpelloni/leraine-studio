@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.16.0
+# Session Handoff — Version 1.17.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -96,9 +96,14 @@ This session focused on full codebase context restoration, build health recovery
    - Added interactive "Invert Waveform" checkbox toggle in Unified Dashboard View & Grid Settings.
    - Added unit test `TestWaveformInversion()` in `tests/test_main.cpp`.
 
-17. **Governance Documentation**:
-   - Updated `VERSION.md` (1.16.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.16.0 details.
+17. **Bulk Column Note Shifting**:
+   - Implemented `Chart::ShiftNotesByColumn(int InColumnDelta)` in `source/structures/chart.cpp` allowing transposition of notes left or right across columns with single-step Undo/Redo history tracking.
+   - Added "Shift Left (-1 Col)" and "Shift Right (+1 Col)" buttons in the Unified Dashboard Note Editing & Transformations panel.
+   - Added unit test `TestChartShiftNotesByColumn()` in `tests/test_main.cpp`.
+
+18. **Governance Documentation**:
+   - Updated `VERSION.md` (1.17.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.17.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

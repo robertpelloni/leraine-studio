@@ -1667,6 +1667,51 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+int Chart::ShiftNotesByColumn(int InColumnDelta)
+{
+    if (InColumnDelta == 0 || KeyAmount <= 0)
+        return 0;
+
+    struct NoteMoveEntry
+    {
+        Time TimePoint;
+        Column FromCol;
+        Column ToCol;
+        Note NoteData;
+    };
+
+    std::vector<NoteMoveEntry> moves;
+    Time minTime = 1000000000;
+    Time maxTime = -1000000000;
+
+    IterateAllNotes([&moves, &minTime, &maxTime, InColumnDelta, this](Note& note, Column col) {
+        int targetCol = int(col) + InColumnDelta;
+        if (targetCol >= 0 && targetCol < KeyAmount)
+        {
+            moves.push_back({ note.TimePoint, col, Column(targetCol), note });
+            minTime = std::min(minTime, note.TimePoint);
+            maxTime = std::max(maxTime, note.TimePoint);
+        }
+    });
+
+    if (moves.empty())
+        return 0;
+
+    RegisterTimeSliceHistoryRanged(minTime, maxTime);
+
+    for (const auto& m : moves)
+    {
+        RemoveNote(m.TimePoint, m.FromCol, true, true);
+    }
+
+    for (const auto& m : moves)
+    {
+        InjectNote(m.TimePoint, m.ToCol, m.NoteData.Type, m.NoteData.TimePointBegin, m.NoteData.TimePointEnd, m.NoteData.BeatSnap);
+    }
+
+    return int(moves.size());
+}
+
 int Chart::ClearNotesByType(Note::EType InType)
 {
     std::vector<std::pair<Time, Column>> notesToRemove;

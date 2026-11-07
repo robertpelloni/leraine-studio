@@ -401,6 +401,20 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Removes all notes matching the selected type from the active chart difficulty with Undo/Redo history support.");
+
+        if (ImGui::Button("Shift Left (-1 Col)") && SelectedChart)
+        {
+            int shifted = SelectedChart->ShiftNotesByColumn(-1);
+            PUSH_NOTIFICATION("Shifted %d notes left", shifted);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Shift Right (+1 Col)") && SelectedChart)
+        {
+            int shifted = SelectedChart->ShiftNotesByColumn(1);
+            PUSH_NOTIFICATION("Shifted %d notes right", shifted);
+        }
+        ImGui::SameLine();
+        HelpMarker("Moves all active notes across column lanes with single-step Undo/Redo support.");
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))

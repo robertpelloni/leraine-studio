@@ -21,4 +21,5 @@
 - [x] Implement column note density distribution histogram (`TestColumnNoteDistribution`).
 - [x] Implement playable duration and first/last note time analytics (`TestChartDurationAnalytics`).
 - [x] Implement audio waveform invert mode in Configuration and Dashboard (`TestWaveformInversion`).
+- [x] Implement bulk note column shifting controls (`TestChartShiftNotesByColumn`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

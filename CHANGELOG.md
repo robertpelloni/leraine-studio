@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.17.0] - 2026-11-04
+### Added
+- **Bulk Column Note Shifting**: Implemented `Chart::ShiftNotesByColumn(int InColumnDelta)` allowing whole-chart notes to be transposed left or right across columns with single-step Undo/Redo history tracking.
+- **Dashboard Column Shift Buttons**: Added "Shift Left (-1 Col)" and "Shift Right (+1 Col)" triggers in the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Column Shifting Tests**: Added `TestChartShiftNotesByColumn()` in `tests/test_main.cpp`.
+
 ## [1.16.0] - 2026-11-04
 ### Added
 - **Audio Waveform Inversion Mode**: Added `InvertWaveform` boolean flag to `Configuration` with YAML serialization.

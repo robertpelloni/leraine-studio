@@ -42,6 +42,31 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartShiftNotesByColumn()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 1, Note::EType::Common);
+    chart.InjectNote(2000, 2, Note::EType::Common);
+
+    // Shift right (+1)
+    int shiftedRight = chart.ShiftNotesByColumn(1);
+    ASSERT(shiftedRight == 2);
+    ASSERT(chart.FindNote(1000, 1) == nullptr);
+    ASSERT(chart.FindNote(1000, 2) != nullptr);
+    ASSERT(chart.FindNote(2000, 2) == nullptr);
+    ASSERT(chart.FindNote(2000, 3) != nullptr);
+
+    // Shift left (-2) -> col 2->0, col 3->1
+    int shiftedLeft = chart.ShiftNotesByColumn(-2);
+    ASSERT(shiftedLeft == 2);
+    ASSERT(chart.FindNote(1000, 0) != nullptr);
+    ASSERT(chart.FindNote(2000, 1) != nullptr);
+
+    return 0;
+}
+
 int TestWaveformInversion()
 {
     WaveFormModule waveform;
@@ -519,6 +544,7 @@ int main() {
     TEST(TestColumnNoteDistribution);
     TEST(TestChartDurationAnalytics);
     TEST(TestWaveformInversion);
+    TEST(TestChartShiftNotesByColumn);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
