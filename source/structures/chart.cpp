@@ -1667,6 +1667,35 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+void Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)
+{
+    if (MinTime > MaxTime)
+        return;
+
+    std::vector<std::pair<Time, Column>> notesToRemove;
+    Time overallMin = 1000000000;
+    Time overallMax = -1000000000;
+
+    IterateAllNotes([&notesToRemove, &overallMin, &overallMax, MinTime, MaxTime](Note& note, Column col) {
+        if (note.TimePoint < MinTime || note.TimePoint > MaxTime)
+        {
+            notesToRemove.push_back({ note.TimePoint, col });
+            overallMin = std::min(overallMin, note.TimePoint);
+            overallMax = std::max(overallMax, note.TimePoint);
+        }
+    });
+
+    if (notesToRemove.empty())
+        return;
+
+    RegisterTimeSliceHistoryRanged(overallMin, overallMax);
+
+    for (const auto& entry : notesToRemove)
+    {
+        RemoveNote(entry.first, entry.second, false, true);
+    }
+}
+
 int Chart::ShiftNotesByColumn(int InColumnDelta)
 {
     if (InColumnDelta == 0 || KeyAmount <= 0)

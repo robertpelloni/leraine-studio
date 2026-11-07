@@ -23,4 +23,5 @@
 - [x] Implement audio waveform invert mode in Configuration and Dashboard (`TestWaveformInversion`).
 - [x] Implement bulk note column shifting controls (`TestChartShiftNotesByColumn`).
 - [x] Implement audio waveform width scale control (`TestWaveformWidthScale`).
+- [x] Implement note range trimming and clamping (`TestChartClampNotesToTimeRange`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

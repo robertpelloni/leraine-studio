@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.18.0
+# Session Handoff — Version 1.19.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -108,9 +108,14 @@ This session focused on full codebase context restoration, build health recovery
    - Added interactive width scale slider in Unified Dashboard View & Grid Settings panel.
    - Added unit test `TestWaveformWidthScale()` in `tests/test_main.cpp`.
 
-19. **Governance Documentation**:
-   - Updated `VERSION.md` (1.18.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.18.0 details.
+19. **Note Range Trimming & Clamping**:
+   - Implemented `Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)` in `source/structures/chart.cpp` allowing entire charts to be trimmed to a specific time interval with Undo/Redo history tracking.
+   - Added "Trim Notes to Range" inputs and action trigger into the Note Editing & Transformations panel of the Unified Dashboard.
+   - Added unit test `TestChartClampNotesToTimeRange()` in `tests/test_main.cpp`.
+
+20. **Governance Documentation**:
+   - Updated `VERSION.md` (1.19.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.19.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

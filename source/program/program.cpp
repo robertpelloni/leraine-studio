@@ -415,6 +415,19 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Moves all active notes across column lanes with single-step Undo/Redo support.");
+
+        ImGui::Separator();
+        static int trimStart = 0;
+        static int trimEnd = 100000;
+        ImGui::InputInt("Trim Start (ms)", &trimStart);
+        ImGui::InputInt("Trim End (ms)", &trimEnd);
+        if (ImGui::Button("Trim Notes to Range") && SelectedChart)
+        {
+            SelectedChart->ClampNotesToTimeRange(trimStart, trimEnd);
+            PUSH_NOTIFICATION("Trimmed chart notes to [%d, %d]ms", trimStart, trimEnd);
+        }
+        ImGui::SameLine();
+        HelpMarker("Deletes all notes occurring outside the specified [Start, End] time window with Undo/Redo support.");
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))

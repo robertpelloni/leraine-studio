@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.19.0] - 2026-11-04
+### Added
+- **Note Range Trimming & Clamping**: Implemented `Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)` allowing entire charts to be trimmed to a specific time interval with Undo/Redo history tracking.
+- **Dashboard Note Trimming Tool**: Added "Trim Notes to Range" inputs and action trigger into the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Clamping Tests**: Added `TestChartClampNotesToTimeRange()` in `tests/test_main.cpp`.
+
 ## [1.18.0] - 2026-11-04
 ### Added
 - **Audio Waveform Width Scaling**: Added configurable waveform width scale (`WaveformWidthScale`, default 1.0x, range 0.5x-2.0x) in `Configuration` with YAML serialization.

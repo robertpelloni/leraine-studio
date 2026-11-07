@@ -216,6 +216,7 @@ public: //accessors
     Time GetPlayableDuration();
     int ClearNotesByType(Note::EType InType);
     int ShiftNotesByColumn(int InColumnDelta);
+    void ClampNotesToTimeRange(Time MinTime, Time MaxTime);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
 	float GetAverageNPS();

@@ -42,6 +42,27 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartClampNotesToTimeRange()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(500, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Common);
+    chart.InjectNote(2500, 2, Note::EType::Common);
+    chart.InjectNote(3500, 3, Note::EType::Common);
+
+    // Clamp to [1000, 3000] -> removes 500 and 3500
+    chart.ClampNotesToTimeRange(1000, 3000);
+
+    ASSERT(chart.FindNote(500, 0) == nullptr);
+    ASSERT(chart.FindNote(3500, 3) == nullptr);
+    ASSERT(chart.FindNote(1500, 1) != nullptr);
+    ASSERT(chart.FindNote(2500, 2) != nullptr);
+
+    return 0;
+}
+
 int TestWaveformWidthScale()
 {
     WaveFormModule waveform;
@@ -569,6 +590,7 @@ int main() {
     TEST(TestWaveformInversion);
     TEST(TestChartShiftNotesByColumn);
     TEST(TestWaveformWidthScale);
+    TEST(TestChartClampNotesToTimeRange);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
