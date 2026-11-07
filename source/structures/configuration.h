@@ -21,6 +21,7 @@ struct Configuration
 	int WaveformAlpha = 128;
 	float WaveformResolutionMultiplier = 1.0f;
 	bool InvertWaveform = false;
+	float WaveformWidthScale = 1.0f;
 
 	const int RecentFilePathsMaxSize = 10;
 	//FIFO, but needs to remove invalid paths on access (like if the files have moved)

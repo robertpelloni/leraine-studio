@@ -401,6 +401,20 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Removes all notes matching the selected type from the active chart difficulty with Undo/Redo history support.");
+
+        if (ImGui::Button("Shift Left (-1 Col)") && SelectedChart)
+        {
+            int shifted = SelectedChart->ShiftNotesByColumn(-1);
+            PUSH_NOTIFICATION("Shifted %d notes left", shifted);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Shift Right (+1 Col)") && SelectedChart)
+        {
+            int shifted = SelectedChart->ShiftNotesByColumn(1);
+            PUSH_NOTIFICATION("Shifted %d notes right", shifted);
+        }
+        ImGui::SameLine();
+        HelpMarker("Moves all active notes across column lanes with single-step Undo/Redo support.");
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))
@@ -589,6 +603,16 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Scale the sample resolution multiplier for the timeline waveform visualizer.");
+
+            float wfWidth = Config.WaveformWidthScale;
+            if (ImGui::SliderFloat("Waveform Width", &wfWidth, 0.5f, 2.0f, "%.2fx"))
+            {
+                Config.WaveformWidthScale = wfWidth;
+                MOD(WaveFormModule).SetWidthScale(wfWidth);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Adjust the horizontal scale width of the rendered audio waveform overlay.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1436,4 +1460,5 @@ void Program::SetConfig(const Configuration& InConfig)
     MOD(WaveFormModule).SetAlpha(uint8_t(Config.WaveformAlpha));
     MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
     MOD(WaveFormModule).SetInverted(Config.InvertWaveform);
+    MOD(WaveFormModule).SetWidthScale(Config.WaveformWidthScale);
 }

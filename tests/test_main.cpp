@@ -42,6 +42,54 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformWidthScale()
+{
+    WaveFormModule waveform;
+    ASSERT(waveform.GetWidthScale() == 1.0f);
+
+    waveform.SetWidthScale(1.5f);
+    ASSERT(waveform.GetWidthScale() == 1.5f);
+
+    // Test bounds clamping [0.5, 2.0]
+    waveform.SetWidthScale(5.0f);
+    ASSERT(waveform.GetWidthScale() == 2.0f);
+
+    waveform.SetWidthScale(0.1f);
+    ASSERT(waveform.GetWidthScale() == 0.5f);
+
+    Configuration config;
+    ASSERT(config.WaveformWidthScale == 1.0f);
+    config.WaveformWidthScale = 1.25f;
+    ASSERT(config.WaveformWidthScale == 1.25f);
+
+    return 0;
+}
+
+int TestChartShiftNotesByColumn()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 1, Note::EType::Common);
+    chart.InjectNote(2000, 2, Note::EType::Common);
+
+    // Shift right (+1)
+    int shiftedRight = chart.ShiftNotesByColumn(1);
+    ASSERT(shiftedRight == 2);
+    ASSERT(chart.FindNote(1000, 1) == nullptr);
+    ASSERT(chart.FindNote(1000, 2) != nullptr);
+    ASSERT(chart.FindNote(2000, 2) == nullptr);
+    ASSERT(chart.FindNote(2000, 3) != nullptr);
+
+    // Shift left (-2) -> col 2->0, col 3->1
+    int shiftedLeft = chart.ShiftNotesByColumn(-2);
+    ASSERT(shiftedLeft == 2);
+    ASSERT(chart.FindNote(1000, 0) != nullptr);
+    ASSERT(chart.FindNote(2000, 1) != nullptr);
+
+    return 0;
+}
+
 int TestWaveformInversion()
 {
     WaveFormModule waveform;
@@ -519,6 +567,8 @@ int main() {
     TEST(TestColumnNoteDistribution);
     TEST(TestChartDurationAnalytics);
     TEST(TestWaveformInversion);
+    TEST(TestChartShiftNotesByColumn);
+    TEST(TestWaveformWidthScale);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

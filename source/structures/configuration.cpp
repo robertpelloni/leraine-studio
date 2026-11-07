@@ -51,6 +51,8 @@ bool Configuration::Load()
 		WaveformResolutionMultiplier = configFile["WaveformResolutionMultiplier"].as<float>();
 	if (configFile["InvertWaveform"])
 		InvertWaveform = configFile["InvertWaveform"].as<bool>();
+	if (configFile["WaveformWidthScale"])
+		WaveformWidthScale = configFile["WaveformWidthScale"].as<float>();
 
 	return true;
 }
@@ -86,6 +88,8 @@ void Configuration::Save()
 	out << YAML::Value << WaveformResolutionMultiplier;
 	out << YAML::Key << "InvertWaveform";
 	out << YAML::Value << InvertWaveform;
+	out << YAML::Key << "WaveformWidthScale";
+	out << YAML::Value << WaveformWidthScale;
 	out << YAML::EndMap;
 
 	std::ofstream configFile("config.yaml");

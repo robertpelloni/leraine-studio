@@ -44,6 +44,12 @@ public:
     bool IsInverted() const { return _Inverted; }
     void SetInverted(bool InInvert) { _Inverted = InInvert; }
 
+    float GetWidthScale() const { return _WidthScale; }
+    void SetWidthScale(float InScale)
+    {
+        _WidthScale = std::max(0.5f, std::min(2.0f, InScale));
+    }
+
 private:
 
     const int _WaveFormWidth = 256;
@@ -62,4 +68,5 @@ private:
 
     float _ResolutionMultiplier = 1.0f;
     bool _Inverted = false;
+    float _WidthScale = 1.0f;
 };

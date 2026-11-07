@@ -92,15 +92,15 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
     {
         float positionY = float(InScreenY);
 
-        _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - _WaveFormWidth / 2, positionY);
-        _ScalableWaveFormSprite.setScale(1.0f, scale);
+        _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - (_WaveFormWidth * _WidthScale) / 2, positionY);
+        _ScalableWaveFormSprite.setScale(1.0f * _WidthScale, scale);
         _ScalableWaveFormSprite.setColor(_BackColor);
 
         InRenderTarget->draw(_ScalableWaveFormSprite);
 
         _ScalableWaveFormSprite.setColor(_FrontColor);
-        _ScalableWaveFormSprite.setScale(0.375, scale);
-        _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - _WaveFormWidth / 8 - _WaveFormWidth / 16, positionY);
+        _ScalableWaveFormSprite.setScale(0.375f * _WidthScale, scale);
+        _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - (_WaveFormWidth * _WidthScale) / 8 - (_WaveFormWidth * _WidthScale) / 16, positionY);
 
         InRenderTarget->draw(_ScalableWaveFormSprite);
     });
