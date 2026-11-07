@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.14.0] - 2026-11-04
+### Added
+- **Column Note Distribution Analytics**: Added `Chart::GetColumnNoteDistribution()` calculating total note counts across each individual column lane.
+- **Dashboard Column Distribution Histogram**: Integrated real-time column density histogram visualization into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+- **Automated Column Distribution Tests**: Added `TestColumnNoteDistribution()` in `tests/test_main.cpp`.
+
 ## [1.13.0] - 2026-11-04
 ### Added
 - **Bulk Note Filter Clearing**: Added `Chart::ClearNotesByType(Note::EType InType)` allowing selective removal of specific note types (e.g. mines, lifts, fakes, or holds) across the entire active chart.

@@ -42,6 +42,29 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestColumnNoteDistribution()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    // Inject notes across specific columns
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 0, Note::EType::Common);
+    chart.InjectNote(2000, 1, Note::EType::Common);
+    chart.InjectNote(2500, 3, Note::EType::Common);
+    chart.InjectNote(3000, 3, Note::EType::Common);
+    chart.InjectNote(3500, 3, Note::EType::Common);
+
+    std::vector<int> dist = chart.GetColumnNoteDistribution();
+    ASSERT(dist.size() == 4);
+    ASSERT(dist[0] == 2);
+    ASSERT(dist[1] == 1);
+    ASSERT(dist[2] == 0); // column 2 has 0 notes
+    ASSERT(dist[3] == 3);
+
+    return 0;
+}
+
 int TestChartClearNotesByType()
 {
     Chart chart;
@@ -452,6 +475,7 @@ int main() {
     TEST(TestChartNoteStatistics);
     TEST(TestWaveformResolutionMultiplier);
     TEST(TestChartClearNotesByType);
+    TEST(TestColumnNoteDistribution);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

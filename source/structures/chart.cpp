@@ -1696,6 +1696,20 @@ int Chart::ClearNotesByType(Note::EType InType)
     return int(notesToRemove.size());
 }
 
+std::vector<int> Chart::GetColumnNoteDistribution()
+{
+    std::vector<int> distribution(KeyAmount > 0 ? KeyAmount : 0, 0);
+
+    IterateAllNotes([&distribution, this](Note& note, Column col) {
+        if (col < distribution.size())
+        {
+            distribution[col]++;
+        }
+    });
+
+    return distribution;
+}
+
 ChartNoteStatistics Chart::GetNoteStatistics()
 {
     ChartNoteStatistics stats;

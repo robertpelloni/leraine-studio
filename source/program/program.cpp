@@ -492,7 +492,15 @@ void Program::DisplayDashboard()
             ImGui::BulletText("Mines: %d", stats.MineNotes);
             ImGui::BulletText("Lifts: %d", stats.LiftNotes);
             ImGui::BulletText("Fakes: %d", stats.FakeNotes);
-            HelpMarker("Comprehensive breakdown of all note objects in the active chart difficulty by type.");
+
+            std::vector<int> colDist = SelectedChart->GetColumnNoteDistribution();
+            if (!colDist.empty())
+            {
+                std::vector<float> floatDist;
+                for (int count : colDist) floatDist.push_back(float(count));
+                ImGui::PlotHistogram("Column Distribution", floatDist.data(), floatDist.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 50));
+            }
+            HelpMarker("Comprehensive breakdown of all note objects in the active chart difficulty by type and column density distribution.");
         }
         else
         {

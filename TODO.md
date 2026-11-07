@@ -18,4 +18,5 @@
 - [x] Implement note count and distribution breakdown analytics (`TestChartNoteStatistics`).
 - [x] Implement waveform resolution multiplier in Configuration and Dashboard (`TestWaveformResolutionMultiplier`).
 - [x] Implement bulk note filter clearing by note type (`TestChartClearNotesByType`).
+- [x] Implement column note density distribution histogram (`TestColumnNoteDistribution`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

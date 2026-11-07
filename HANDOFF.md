@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.13.0
+# Session Handoff — Version 1.14.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -80,9 +80,14 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated dropdown selector and action button in the Note Editing & Transformations panel of the Unified Dashboard.
    - Added unit test `TestChartClearNotesByType()` in `tests/test_main.cpp`.
 
-14. **Governance Documentation**:
-   - Updated `VERSION.md` (1.13.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.13.0 details.
+14. **Column Note Distribution Analytics**:
+   - Added `Chart::GetColumnNoteDistribution()` calculating total note counts across each individual column lane.
+   - Integrated real-time column density histogram visualization into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+   - Added unit test `TestColumnNoteDistribution()` in `tests/test_main.cpp`.
+
+15. **Governance Documentation**:
+   - Updated `VERSION.md` (1.14.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.14.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.
