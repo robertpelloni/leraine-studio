@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.0] - 2026-11-04
+### Added
+- **Audio Waveform Inversion Mode**: Added `InvertWaveform` boolean flag to `Configuration` with YAML serialization.
+- **Waveform Inversion Hooks**: Added `IsInverted()` and `SetInverted(bool InInvert)` in `WaveFormModule` to flip stereo channels across the timeline axis.
+- **Dashboard Invert Checkbox**: Added interactive "Invert Waveform" checkbox toggle to the Unified Dashboard View & Grid Settings panel.
+- **Automated Inversion Tests**: Added `TestWaveformInversion()` in `tests/test_main.cpp`.
+
 ## [1.15.0] - 2026-11-04
 ### Added
 - **Chart Duration & Playable Range Analytics**: Implemented `Chart::GetFirstNoteTime()`, `Chart::GetLastNoteTime()`, and `Chart::GetPlayableDuration()` tracking exact song range and active playing span.

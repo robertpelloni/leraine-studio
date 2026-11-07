@@ -547,6 +547,17 @@ void Program::DisplayDashboard()
             ImGui::SameLine();
             HelpMarker("Toggle between distinct Left/Right stereo audio channels or combined mono waveform visualization.");
 
+            ImGui::SameLine();
+            bool isInverted = Config.InvertWaveform;
+            if (ImGui::Checkbox("Invert Waveform", &isInverted))
+            {
+                Config.InvertWaveform = isInverted;
+                MOD(WaveFormModule).SetInverted(isInverted);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Flip stereo waveform channels across the timeline axis.");
+
             float wfColor[3] = { Config.WaveformColorRed / 255.0f, Config.WaveformColorGreen / 255.0f, Config.WaveformColorBlue / 255.0f };
             if (ImGui::ColorEdit3("Waveform Color", wfColor))
             {
@@ -1424,4 +1435,5 @@ void Program::SetConfig(const Configuration& InConfig)
     MOD(WaveFormModule).SetFrontColor(sf::Color(Config.WaveformColorRed, Config.WaveformColorGreen, Config.WaveformColorBlue, Config.WaveformAlpha));
     MOD(WaveFormModule).SetAlpha(uint8_t(Config.WaveformAlpha));
     MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
+    MOD(WaveFormModule).SetInverted(Config.InvertWaveform);
 }

@@ -49,13 +49,27 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
         const float y = float(_ScalableWaveFormTexture.getSize().y - i);
         const int pointIndex = i * 2;
 
+        float leftAmp = abs(waveFormData.Left * _WaveFormWidth / 2);
+        float rightAmp = abs(waveFormData.Right * _WaveFormWidth / 2);
+
         if (_StereoMode)
         {
-            _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - abs(waveFormData.Left * _WaveFormWidth / 2);
-            _WaveFormLines[pointIndex].position.y = y;
+            if (_Inverted)
+            {
+                _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - rightAmp;
+                _WaveFormLines[pointIndex].position.y = y;
 
-            _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + abs(waveFormData.Right * _WaveFormWidth / 2);
-            _WaveFormLines[pointIndex + 1].position.y = y;
+                _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + leftAmp;
+                _WaveFormLines[pointIndex + 1].position.y = y;
+            }
+            else
+            {
+                _WaveFormLines[pointIndex].position.x = _WaveFormWidth / 2 - leftAmp;
+                _WaveFormLines[pointIndex].position.y = y;
+
+                _WaveFormLines[pointIndex + 1].position.x = _WaveFormWidth / 2 + rightAmp;
+                _WaveFormLines[pointIndex + 1].position.y = y;
+            }
         }
         else
         {

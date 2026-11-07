@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.15.0
+# Session Handoff — Version 1.16.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -90,9 +90,15 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated formatted duration (mm:ss) and timestamp range display into the NPS & Difficulty Analytics panel of the Unified Dashboard.
    - Added unit test `TestChartDurationAnalytics()` in `tests/test_main.cpp`.
 
-16. **Governance Documentation**:
-   - Updated `VERSION.md` (1.15.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.15.0 details.
+16. **Audio Waveform Inversion Mode**:
+   - Added `InvertWaveform` boolean flag in `Configuration` with YAML serialization.
+   - Added `IsInverted()` and `SetInverted(bool InInvert)` in `WaveFormModule` to flip stereo channels across the timeline axis.
+   - Added interactive "Invert Waveform" checkbox toggle in Unified Dashboard View & Grid Settings.
+   - Added unit test `TestWaveformInversion()` in `tests/test_main.cpp`.
+
+17. **Governance Documentation**:
+   - Updated `VERSION.md` (1.16.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.16.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

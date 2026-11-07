@@ -42,6 +42,25 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformInversion()
+{
+    WaveFormModule waveform;
+    ASSERT(!waveform.IsInverted());
+
+    waveform.SetInverted(true);
+    ASSERT(waveform.IsInverted());
+
+    waveform.SetInverted(false);
+    ASSERT(!waveform.IsInverted());
+
+    Configuration config;
+    ASSERT(!config.InvertWaveform);
+    config.InvertWaveform = true;
+    ASSERT(config.InvertWaveform);
+
+    return 0;
+}
+
 int TestChartDurationAnalytics()
 {
     Chart chart;
@@ -499,6 +518,7 @@ int main() {
     TEST(TestChartClearNotesByType);
     TEST(TestColumnNoteDistribution);
     TEST(TestChartDurationAnalytics);
+    TEST(TestWaveformInversion);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

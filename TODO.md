@@ -20,4 +20,5 @@
 - [x] Implement bulk note filter clearing by note type (`TestChartClearNotesByType`).
 - [x] Implement column note density distribution histogram (`TestColumnNoteDistribution`).
 - [x] Implement playable duration and first/last note time analytics (`TestChartDurationAnalytics`).
+- [x] Implement audio waveform invert mode in Configuration and Dashboard (`TestWaveformInversion`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.
