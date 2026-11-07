@@ -22,4 +22,5 @@
 - [x] Implement playable duration and first/last note time analytics (`TestChartDurationAnalytics`).
 - [x] Implement audio waveform invert mode in Configuration and Dashboard (`TestWaveformInversion`).
 - [x] Implement bulk note column shifting controls (`TestChartShiftNotesByColumn`).
+- [x] Implement audio waveform width scale control (`TestWaveformWidthScale`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

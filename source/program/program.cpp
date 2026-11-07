@@ -603,6 +603,16 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Scale the sample resolution multiplier for the timeline waveform visualizer.");
+
+            float wfWidth = Config.WaveformWidthScale;
+            if (ImGui::SliderFloat("Waveform Width", &wfWidth, 0.5f, 2.0f, "%.2fx"))
+            {
+                Config.WaveformWidthScale = wfWidth;
+                MOD(WaveFormModule).SetWidthScale(wfWidth);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Adjust the horizontal scale width of the rendered audio waveform overlay.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1450,4 +1460,5 @@ void Program::SetConfig(const Configuration& InConfig)
     MOD(WaveFormModule).SetAlpha(uint8_t(Config.WaveformAlpha));
     MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
     MOD(WaveFormModule).SetInverted(Config.InvertWaveform);
+    MOD(WaveFormModule).SetWidthScale(Config.WaveformWidthScale);
 }

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.18.0] - 2026-11-04
+### Added
+- **Audio Waveform Width Scaling**: Added configurable waveform width scale (`WaveformWidthScale`, default 1.0x, range 0.5x-2.0x) in `Configuration` with YAML serialization.
+- **Waveform Width Hooks**: Added `GetWidthScale()` and `SetWidthScale(float InScale)` in `WaveFormModule` with bounds clamping.
+- **Dashboard Width Scale Slider**: Added interactive `ImGui::SliderFloat` width scale slider to the Unified Dashboard View & Grid Settings panel.
+- **Automated Width Scale Tests**: Added `TestWaveformWidthScale()` in `tests/test_main.cpp`.
+
 ## [1.17.0] - 2026-11-04
 ### Added
 - **Bulk Column Note Shifting**: Implemented `Chart::ShiftNotesByColumn(int InColumnDelta)` allowing whole-chart notes to be transposed left or right across columns with single-step Undo/Redo history tracking.

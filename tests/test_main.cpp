@@ -42,6 +42,29 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformWidthScale()
+{
+    WaveFormModule waveform;
+    ASSERT(waveform.GetWidthScale() == 1.0f);
+
+    waveform.SetWidthScale(1.5f);
+    ASSERT(waveform.GetWidthScale() == 1.5f);
+
+    // Test bounds clamping [0.5, 2.0]
+    waveform.SetWidthScale(5.0f);
+    ASSERT(waveform.GetWidthScale() == 2.0f);
+
+    waveform.SetWidthScale(0.1f);
+    ASSERT(waveform.GetWidthScale() == 0.5f);
+
+    Configuration config;
+    ASSERT(config.WaveformWidthScale == 1.0f);
+    config.WaveformWidthScale = 1.25f;
+    ASSERT(config.WaveformWidthScale == 1.25f);
+
+    return 0;
+}
+
 int TestChartShiftNotesByColumn()
 {
     Chart chart;
@@ -545,6 +568,7 @@ int main() {
     TEST(TestChartDurationAnalytics);
     TEST(TestWaveformInversion);
     TEST(TestChartShiftNotesByColumn);
+    TEST(TestWaveformWidthScale);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;
