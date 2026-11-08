@@ -63,6 +63,38 @@ int TestChartClearAllNotes()
     return 0;
 }
 
+int TestChartTimeSignatures()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+    chart.PlaceBpmPoint(0, 120.0, 500.0); // 1 beat = 500ms
+
+    // Initially no time signatures, default is 4/4
+    ASSERT(chart.GetTimeSignatureCount() == 0);
+    TimeSignature defTS = chart.GetTimeSignatureAtBeat(0.0);
+    ASSERT(defTS.Numerator == 4 && defTS.Denominator == 4);
+
+    // Inject 4/4 at beat 0 (0ms) and 3/4 at beat 4 (2000ms)
+    chart.InjectTimeSignature(0, 4, 4);
+    chart.InjectTimeSignature(2000, 3, 4);
+
+    ASSERT(chart.GetTimeSignatureCount() == 2);
+
+    TimeSignature ts0 = chart.GetTimeSignatureAtBeat(0.0);
+    ASSERT(ts0.Numerator == 4 && ts0.Denominator == 4);
+
+    TimeSignature ts2 = chart.GetTimeSignatureAtBeat(2.0);
+    ASSERT(ts2.Numerator == 4 && ts2.Denominator == 4);
+
+    TimeSignature ts4 = chart.GetTimeSignatureAtBeat(4.0);
+    ASSERT(ts4.Numerator == 3 && ts4.Denominator == 4);
+
+    TimeSignature ts8 = chart.GetTimeSignatureAtBeat(8.0);
+    ASSERT(ts8.Numerator == 3 && ts8.Denominator == 4);
+
+    return 0;
+}
+
 int TestWaveformCenterOffset()
 {
     WaveFormModule waveform;
@@ -659,6 +691,7 @@ int main() {
     TEST(TestNoteCountForColumn);
     TEST(TestWaveformCenterOffset);
     TEST(TestChartClearAllNotes);
+    TEST(TestChartTimeSignatures);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.23.0] - 2026-11-04
+### Added
+- **Time Signature Metrics & Query Engine**: Implemented `Chart::GetTimeSignatureCount()` and `Chart::GetTimeSignatureAtBeat(double InBeat)` in `source/structures/chart.cpp`.
+- **Dashboard Time Signature Display**: Integrated real-time meter display (`Time Signatures: N | Active Meter: Num/Den (Beat X.XX)`) in the Unified Dashboard Timing & Synchronization panel with guidance tooltips.
+- **Automated Time Signature Unit Tests**: Added `TestChartTimeSignatures()` in `tests/test_main.cpp`.
+
 ## [1.22.0] - 2026-11-04
 ### Added
 - **Chart Clear All Notes Feature**: Implemented `Chart::ClearAllNotes()` with ranged history snapshot for single-step Undo/Redo recovery.

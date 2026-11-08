@@ -27,4 +27,5 @@
 - [x] Implement per-column note count query and lane metrics (`TestNoteCountForColumn`).
 - [x] Implement waveform horizontal center alignment offset control (`TestWaveformCenterOffset`).
 - [x] Implement clear all notes feature with confirmation dialog (`TestChartClearAllNotes`).
+- [x] Implement Time Signature metrics and active meter query (`TestChartTimeSignatures`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

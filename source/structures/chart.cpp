@@ -1667,6 +1667,54 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+int Chart::GetTimeSignatureCount()
+{
+    int count = 0;
+    IterateAllTimeSignatures([&count](TimeSignature& ts) {
+        count++;
+    });
+    return count;
+}
+
+TimeSignature Chart::GetTimeSignatureAtBeat(double InBeat)
+{
+    std::vector<TimeSignature> signatures;
+    IterateAllTimeSignatures([&signatures](TimeSignature& ts) {
+        signatures.push_back(ts);
+    });
+
+    if (signatures.empty())
+    {
+        TimeSignature defTS;
+        defTS.TimePoint = 0;
+        defTS.Numerator = 4;
+        defTS.Denominator = 4;
+        return defTS;
+    }
+
+    std::sort(signatures.begin(), signatures.end(), [this](const TimeSignature& a, const TimeSignature& b) {
+        return a.TimePoint < b.TimePoint;
+    });
+
+    Time targetTime = GetTimeFromBeat(InBeat);
+    // If GetTimeFromBeat isn't fully integrated, check beats using GetBeatFromTime:
+    TimeSignature activeTS = signatures[0];
+    for (const auto& ts : signatures)
+    {
+        double tsBeat = GetBeatFromTime(ts.TimePoint);
+        if (tsBeat <= InBeat)
+        {
+            activeTS = ts;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return activeTS;
+}
+
 int Chart::ClearAllNotes()
 {
     std::vector<std::pair<Time, Column>> notesToRemove;

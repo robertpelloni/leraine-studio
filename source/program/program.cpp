@@ -477,6 +477,13 @@ void Program::DisplayDashboard()
                 ImGui::Text("Active BPM: %.2f (BeatLength: %.1fms)", curBpm->Bpm, curBpm->BeatLength);
             else
                 ImGui::Text("Active BPM: None detected before cursor");
+
+            double currentBeat = SelectedChart->GetBeatFromTime(cur);
+            TimeSignature activeTS = SelectedChart->GetTimeSignatureAtBeat(currentBeat);
+            int totalTSCount = SelectedChart->GetTimeSignatureCount();
+            ImGui::Text("Time Signatures: %d | Active Meter: %d/%d (Beat %.2f)", totalTSCount, activeTS.Numerator, activeTS.Denominator, currentBeat);
+            ImGui::SameLine();
+            HelpMarker("Shows the total time signature events in the chart and the active meter (Numerator/Denominator) at current playback beat position.");
         }
 
         if (ImGui::Button("Estimate BPM (Ctrl+B)") && SelectedChart)
