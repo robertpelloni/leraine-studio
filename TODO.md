@@ -25,4 +25,5 @@
 - [x] Implement audio waveform width scale control (`TestWaveformWidthScale`).
 - [x] Implement note range trimming and clamping (`TestChartClampNotesToTimeRange`).
 - [x] Implement per-column note count query and lane metrics (`TestNoteCountForColumn`).
+- [x] Implement waveform horizontal center alignment offset control (`TestWaveformCenterOffset`).
 - [ ] Implement FFT spectrogram timeline visualization in `WaveFormModule`.

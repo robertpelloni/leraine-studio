@@ -50,6 +50,12 @@ public:
         _WidthScale = std::max(0.5f, std::min(2.0f, InScale));
     }
 
+    int GetCenterOffset() const { return _CenterOffset; }
+    void SetCenterOffset(int InOffset)
+    {
+        _CenterOffset = std::max(-128, std::min(128, InOffset));
+    }
+
 private:
 
     const int _WaveFormWidth = 256;
@@ -69,4 +75,5 @@ private:
     float _ResolutionMultiplier = 1.0f;
     bool _Inverted = false;
     float _WidthScale = 1.0f;
+    int _CenterOffset = 0;
 };

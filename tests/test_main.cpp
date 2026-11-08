@@ -42,6 +42,29 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestWaveformCenterOffset()
+{
+    WaveFormModule waveform;
+    ASSERT(waveform.GetCenterOffset() == 0);
+
+    waveform.SetCenterOffset(50);
+    ASSERT(waveform.GetCenterOffset() == 50);
+
+    // Test bounds clamping [-128, 128]
+    waveform.SetCenterOffset(200);
+    ASSERT(waveform.GetCenterOffset() == 128);
+
+    waveform.SetCenterOffset(-300);
+    ASSERT(waveform.GetCenterOffset() == -128);
+
+    Configuration config;
+    ASSERT(config.WaveformCenterOffset == 0);
+    config.WaveformCenterOffset = 25;
+    ASSERT(config.WaveformCenterOffset == 25);
+
+    return 0;
+}
+
 int TestNoteCountForColumn()
 {
     Chart chart;
@@ -613,6 +636,7 @@ int main() {
     TEST(TestWaveformWidthScale);
     TEST(TestChartClampNotesToTimeRange);
     TEST(TestNoteCountForColumn);
+    TEST(TestWaveformCenterOffset);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

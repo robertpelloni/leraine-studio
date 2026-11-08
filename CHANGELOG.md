@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.21.0] - 2026-11-04
+### Added
+- **Waveform Center Offset Alignment Control**: Added `WaveformCenterOffset` (range -128 to 128) in `Configuration` with YAML serialization.
+- **Waveform Center Positioning Hooks**: Added `GetCenterOffset()` and `SetCenterOffset(int InOffset)` in `WaveFormModule` with bounds clamping.
+- **Dynamic Waveform Positioning**: Updated `WaveFormModule::RenderWaveForm` to offset timeline waveform rendering horizontally.
+- **Dashboard Waveform Offset Slider**: Added `ImGui::SliderInt` offset slider to the Unified Dashboard View & Grid Settings panel.
+- **Automated Center Offset Tests**: Added `TestWaveformCenterOffset()` in `tests/test_main.cpp`.
+
 ## [1.20.0] - 2026-11-04
 ### Added
 - **Per-Column Note Lane Counts**: Implemented `Chart::GetNoteCountForColumn(Column InColumn)` to query exact note counts per lane with bounds checking.

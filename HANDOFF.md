@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.20.0
+# Session Handoff — Version 1.21.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, per-column lane metrics query, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, per-column lane metrics query, waveform center offset alignment control, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -118,9 +118,16 @@ This session focused on full codebase context restoration, build health recovery
    - Integrated textual lane count summary ("L1: X | L2: Y | ...") into the NPS & Difficulty Analytics panel of the Unified Dashboard.
    - Added unit test `TestNoteCountForColumn()` in `tests/test_main.cpp`.
 
-21. **Governance Documentation**:
-   - Updated `VERSION.md` (1.20.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.20.0 details.
+21. **Waveform Center Offset Alignment Control**:
+   - Added `WaveformCenterOffset` field in `Configuration` with YAML serialization.
+   - Added `GetCenterOffset()` and `SetCenterOffset(int InOffset)` in `WaveFormModule` with bounds clamping `[-128, 128]`.
+   - Offset waveform sprites dynamically in `WaveFormModule::RenderWaveForm`.
+   - Added `ImGui::SliderInt` offset slider in Unified Dashboard View & Grid Settings.
+   - Added unit test `TestWaveformCenterOffset()` in `tests/test_main.cpp`.
+
+22. **Governance Documentation**:
+   - Updated `VERSION.md` (1.21.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.21.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

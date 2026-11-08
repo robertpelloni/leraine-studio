@@ -632,6 +632,16 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Adjust the horizontal scale width of the rendered audio waveform overlay.");
+
+            int wfOffset = Config.WaveformCenterOffset;
+            if (ImGui::SliderInt("Waveform Offset", &wfOffset, -128, 128))
+            {
+                Config.WaveformCenterOffset = wfOffset;
+                MOD(WaveFormModule).SetCenterOffset(wfOffset);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Shift the horizontal center alignment offset of the audio waveform relative to the playfield track.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1480,4 +1490,5 @@ void Program::SetConfig(const Configuration& InConfig)
     MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
     MOD(WaveFormModule).SetInverted(Config.InvertWaveform);
     MOD(WaveFormModule).SetWidthScale(Config.WaveformWidthScale);
+    MOD(WaveFormModule).SetCenterOffset(Config.WaveformCenterOffset);
 }
