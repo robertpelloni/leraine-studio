@@ -428,6 +428,43 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Deletes all notes occurring outside the specified [Start, End] time window with Undo/Redo support.");
+
+        ImGui::Separator();
+        static bool showClearAllModal = false;
+        if (ImGui::Button("Clear All Notes (Chart)") && SelectedChart)
+        {
+            showClearAllModal = true;
+        }
+        ImGui::SameLine();
+        HelpMarker("Deletes every note object in the active chart with full Undo/Redo support.");
+
+        if (showClearAllModal)
+        {
+            ImGui::OpenPopup("Confirm Clear All Notes");
+            if (ImGui::BeginPopupModal("Confirm Clear All Notes", &showClearAllModal, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Are you sure you want to delete ALL notes in this chart?\nThis operation can be reversed with Undo (Ctrl+Z).");
+                ImGui::Separator();
+
+                if (ImGui::Button("Yes, Clear Everything", ImVec2(180, 0)))
+                {
+                    if (SelectedChart)
+                    {
+                        int cleared = SelectedChart->ClearAllNotes();
+                        PUSH_NOTIFICATION("Cleared all %d notes from chart", cleared);
+                    }
+                    showClearAllModal = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    showClearAllModal = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))

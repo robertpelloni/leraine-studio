@@ -42,6 +42,27 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartClearAllNotes()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Common);
+    chart.InjectNote(2000, 2, Note::EType::Mine);
+    chart.InjectHold(2500, 3000, 3);
+
+    ASSERT(chart.GetNoteStatistics().TotalNotes == 5); // 2 taps + 1 mine + 2 hold endpoints
+
+    int cleared = chart.ClearAllNotes();
+    ASSERT(cleared > 0);
+    ASSERT(chart.GetNoteStatistics().TotalNotes == 0);
+    ASSERT(chart.GetFirstNoteTime() == -1);
+    ASSERT(chart.GetLastNoteTime() == -1);
+
+    return 0;
+}
+
 int TestWaveformCenterOffset()
 {
     WaveFormModule waveform;
@@ -637,6 +658,7 @@ int main() {
     TEST(TestChartClampNotesToTimeRange);
     TEST(TestNoteCountForColumn);
     TEST(TestWaveformCenterOffset);
+    TEST(TestChartClearAllNotes);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.22.0] - 2026-11-04
+### Added
+- **Chart Clear All Notes Feature**: Implemented `Chart::ClearAllNotes()` with ranged history snapshot for single-step Undo/Redo recovery.
+- **Dashboard Modal Confirmation**: Added "Clear All Notes (Chart)" button with a safety modal confirmation dialog in the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Clear All Tests**: Added `TestChartClearAllNotes()` in `tests/test_main.cpp`.
+
 ## [1.21.0] - 2026-11-04
 ### Added
 - **Waveform Center Offset Alignment Control**: Added `WaveformCenterOffset` (range -128 to 128) in `Configuration` with YAML serialization.

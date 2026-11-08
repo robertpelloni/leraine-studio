@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.21.0
+# Session Handoff — Version 1.22.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, per-column lane metrics query, waveform center offset alignment control, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, per-column lane metrics query, waveform center offset alignment control, clear all notes with safety confirmation, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -125,9 +125,14 @@ This session focused on full codebase context restoration, build health recovery
    - Added `ImGui::SliderInt` offset slider in Unified Dashboard View & Grid Settings.
    - Added unit test `TestWaveformCenterOffset()` in `tests/test_main.cpp`.
 
-22. **Governance Documentation**:
-   - Updated `VERSION.md` (1.21.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.21.0 details.
+22. **Clear All Notes with Safety Confirmation**:
+   - Implemented `Chart::ClearAllNotes()` in `source/structures/chart.cpp` allowing complete note wiping with full Undo/Redo history support.
+   - Integrated "Clear All Notes (Chart)" button with safety modal confirmation popup ("Clear All Notes Confirmation") in Unified Dashboard Note Transformations panel.
+   - Added unit test `TestChartClearAllNotes()` in `tests/test_main.cpp`.
+
+23. **Governance Documentation**:
+   - Updated `VERSION.md` (1.22.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.22.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.
