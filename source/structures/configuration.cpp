@@ -53,6 +53,8 @@ bool Configuration::Load()
 		InvertWaveform = configFile["InvertWaveform"].as<bool>();
 	if (configFile["WaveformWidthScale"])
 		WaveformWidthScale = configFile["WaveformWidthScale"].as<float>();
+	if (configFile["WaveformCenterOffset"])
+		WaveformCenterOffset = configFile["WaveformCenterOffset"].as<int>();
 
 	return true;
 }
@@ -90,6 +92,8 @@ void Configuration::Save()
 	out << YAML::Value << InvertWaveform;
 	out << YAML::Key << "WaveformWidthScale";
 	out << YAML::Value << WaveformWidthScale;
+	out << YAML::Key << "WaveformCenterOffset";
+	out << YAML::Value << WaveformCenterOffset;
 	out << YAML::EndMap;
 
 	std::ofstream configFile("config.yaml");

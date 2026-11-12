@@ -1667,6 +1667,108 @@ BpmPoint *Chart::GetNextBpmPointFromTimePoint(const Time InTime)
 	return nullptr;
 }
 
+int Chart::GetTimeSignatureCount()
+{
+    int count = 0;
+    IterateAllTimeSignatures([&count](TimeSignature& ts) {
+        count++;
+    });
+    return count;
+}
+
+TimeSignature Chart::GetTimeSignatureAtBeat(double InBeat)
+{
+    std::vector<TimeSignature> signatures;
+    IterateAllTimeSignatures([&signatures](TimeSignature& ts) {
+        signatures.push_back(ts);
+    });
+
+    if (signatures.empty())
+    {
+        TimeSignature defTS;
+        defTS.TimePoint = 0;
+        defTS.Numerator = 4;
+        defTS.Denominator = 4;
+        return defTS;
+    }
+
+    std::sort(signatures.begin(), signatures.end(), [this](const TimeSignature& a, const TimeSignature& b) {
+        return a.TimePoint < b.TimePoint;
+    });
+
+    Time targetTime = GetTimeFromBeat(InBeat);
+    // If GetTimeFromBeat isn't fully integrated, check beats using GetBeatFromTime:
+    TimeSignature activeTS = signatures[0];
+    for (const auto& ts : signatures)
+    {
+        double tsBeat = GetBeatFromTime(ts.TimePoint);
+        if (tsBeat <= InBeat)
+        {
+            activeTS = ts;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return activeTS;
+}
+
+int Chart::ClearAllNotes()
+{
+    std::vector<std::pair<Time, Column>> notesToRemove;
+    Time overallMin = 1000000000;
+    Time overallMax = -1000000000;
+
+    IterateAllNotes([&notesToRemove, &overallMin, &overallMax](Note& note, Column col) {
+        notesToRemove.push_back({ note.TimePoint, col });
+        overallMin = std::min(overallMin, note.TimePoint);
+        overallMax = std::max(overallMax, note.TimePoint);
+    });
+
+    if (notesToRemove.empty())
+        return 0;
+
+    RegisterTimeSliceHistoryRanged(overallMin, overallMax);
+
+    for (const auto& entry : notesToRemove)
+    {
+        RemoveNote(entry.first, entry.second, false, true);
+    }
+
+    return int(notesToRemove.size());
+}
+
+void Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)
+{
+    if (MinTime > MaxTime)
+        return;
+
+    std::vector<std::pair<Time, Column>> notesToRemove;
+    Time overallMin = 1000000000;
+    Time overallMax = -1000000000;
+
+    IterateAllNotes([&notesToRemove, &overallMin, &overallMax, MinTime, MaxTime](Note& note, Column col) {
+        if (note.TimePoint < MinTime || note.TimePoint > MaxTime)
+        {
+            notesToRemove.push_back({ note.TimePoint, col });
+            overallMin = std::min(overallMin, note.TimePoint);
+            overallMax = std::max(overallMax, note.TimePoint);
+        }
+    });
+
+    if (notesToRemove.empty())
+        return;
+
+    RegisterTimeSliceHistoryRanged(overallMin, overallMax);
+
+    for (const auto& entry : notesToRemove)
+    {
+        RemoveNote(entry.first, entry.second, false, true);
+    }
+}
+
 int Chart::ShiftNotesByColumn(int InColumnDelta)
 {
     if (InColumnDelta == 0 || KeyAmount <= 0)
@@ -1779,6 +1881,22 @@ Time Chart::GetPlayableDuration()
         return 0;
 
     return last - first;
+}
+
+int Chart::GetNoteCountForColumn(Column InColumn)
+{
+    if (KeyAmount <= 0 || InColumn >= size_t(KeyAmount))
+        return 0;
+
+    int count = 0;
+    IterateAllNotes([&count, InColumn](Note& note, Column col) {
+        if (col == InColumn)
+        {
+            count++;
+        }
+    });
+
+    return count;
 }
 
 std::vector<int> Chart::GetColumnNoteDistribution()

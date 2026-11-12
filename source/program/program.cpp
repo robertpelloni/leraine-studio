@@ -415,6 +415,56 @@ void Program::DisplayDashboard()
         }
         ImGui::SameLine();
         HelpMarker("Moves all active notes across column lanes with single-step Undo/Redo support.");
+
+        ImGui::Separator();
+        static int trimStart = 0;
+        static int trimEnd = 100000;
+        ImGui::InputInt("Trim Start (ms)", &trimStart);
+        ImGui::InputInt("Trim End (ms)", &trimEnd);
+        if (ImGui::Button("Trim Notes to Range") && SelectedChart)
+        {
+            SelectedChart->ClampNotesToTimeRange(trimStart, trimEnd);
+            PUSH_NOTIFICATION("Trimmed chart notes to [%d, %d]ms", trimStart, trimEnd);
+        }
+        ImGui::SameLine();
+        HelpMarker("Deletes all notes occurring outside the specified [Start, End] time window with Undo/Redo support.");
+
+        ImGui::Separator();
+        static bool showClearAllModal = false;
+        if (ImGui::Button("Clear All Notes (Chart)") && SelectedChart)
+        {
+            showClearAllModal = true;
+        }
+        ImGui::SameLine();
+        HelpMarker("Deletes every note object in the active chart with full Undo/Redo support.");
+
+        if (showClearAllModal)
+        {
+            ImGui::OpenPopup("Confirm Clear All Notes");
+            if (ImGui::BeginPopupModal("Confirm Clear All Notes", &showClearAllModal, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Are you sure you want to delete ALL notes in this chart?\nThis operation can be reversed with Undo (Ctrl+Z).");
+                ImGui::Separator();
+
+                if (ImGui::Button("Yes, Clear Everything", ImVec2(180, 0)))
+                {
+                    if (SelectedChart)
+                    {
+                        int cleared = SelectedChart->ClearAllNotes();
+                        PUSH_NOTIFICATION("Cleared all %d notes from chart", cleared);
+                    }
+                    showClearAllModal = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    showClearAllModal = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
     }
 
     if (ImGui::CollapsingHeader("3. Timing & Synchronization Tools", ImGuiTreeNodeFlags_DefaultOpen))
@@ -427,6 +477,13 @@ void Program::DisplayDashboard()
                 ImGui::Text("Active BPM: %.2f (BeatLength: %.1fms)", curBpm->Bpm, curBpm->BeatLength);
             else
                 ImGui::Text("Active BPM: None detected before cursor");
+
+            double currentBeat = SelectedChart->GetBeatFromTime(cur);
+            TimeSignature activeTS = SelectedChart->GetTimeSignatureAtBeat(currentBeat);
+            int totalTSCount = SelectedChart->GetTimeSignatureCount();
+            ImGui::Text("Time Signatures: %d | Active Meter: %d/%d (Beat %.2f)", totalTSCount, activeTS.Numerator, activeTS.Denominator, currentBeat);
+            ImGui::SameLine();
+            HelpMarker("Shows the total time signature events in the chart and the active meter (Numerator/Denominator) at current playback beat position.");
         }
 
         if (ImGui::Button("Estimate BPM (Ctrl+B)") && SelectedChart)
@@ -511,8 +568,14 @@ void Program::DisplayDashboard()
             if (!colDist.empty())
             {
                 std::vector<float> floatDist;
-                for (int count : colDist) floatDist.push_back(float(count));
+                std::string laneSummary = "Lane Counts: ";
+                for (size_t c = 0; c < colDist.size(); ++c)
+                {
+                    floatDist.push_back(float(colDist[c]));
+                    laneSummary += "L" + std::to_string(c + 1) + ":" + std::to_string(colDist[c]) + (c + 1 < colDist.size() ? " | " : "");
+                }
                 ImGui::PlotHistogram("Column Distribution", floatDist.data(), floatDist.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0, 50));
+                ImGui::TextDisabled("%s", laneSummary.c_str());
             }
 
             Time firstTime = SelectedChart->GetFirstNoteTime();
@@ -613,6 +676,16 @@ void Program::DisplayDashboard()
             }
             ImGui::SameLine();
             HelpMarker("Adjust the horizontal scale width of the rendered audio waveform overlay.");
+
+            int wfOffset = Config.WaveformCenterOffset;
+            if (ImGui::SliderInt("Waveform Offset", &wfOffset, -128, 128))
+            {
+                Config.WaveformCenterOffset = wfOffset;
+                MOD(WaveFormModule).SetCenterOffset(wfOffset);
+                Config.Save();
+            }
+            ImGui::SameLine();
+            HelpMarker("Shift the horizontal center alignment offset of the audio waveform relative to the playfield track.");
         }
 
         if (ImGui::Checkbox("Column Heatmap Density", &Config.ShowColumnHeatmap))
@@ -1461,4 +1534,5 @@ void Program::SetConfig(const Configuration& InConfig)
     MOD(WaveFormModule).SetResolutionMultiplier(Config.WaveformResolutionMultiplier);
     MOD(WaveFormModule).SetInverted(Config.InvertWaveform);
     MOD(WaveFormModule).SetWidthScale(Config.WaveformWidthScale);
+    MOD(WaveFormModule).SetCenterOffset(Config.WaveformCenterOffset);
 }

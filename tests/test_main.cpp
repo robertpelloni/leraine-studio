@@ -42,6 +42,124 @@ int TestChartLogic() {
     return 0;
 }
 
+int TestChartClearAllNotes()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Common);
+    chart.InjectNote(2000, 2, Note::EType::Mine);
+    chart.InjectHold(2500, 3000, 3);
+
+    ASSERT(chart.GetNoteStatistics().TotalNotes == 5); // 2 taps + 1 mine + 2 hold endpoints
+
+    int cleared = chart.ClearAllNotes();
+    ASSERT(cleared > 0);
+    ASSERT(chart.GetNoteStatistics().TotalNotes == 0);
+    ASSERT(chart.GetFirstNoteTime() == -1);
+    ASSERT(chart.GetLastNoteTime() == -1);
+
+    return 0;
+}
+
+int TestChartTimeSignatures()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+    chart.PlaceBpmPoint(0, 120.0, 500.0); // 1 beat = 500ms
+
+    // Initially no time signatures, default is 4/4
+    ASSERT(chart.GetTimeSignatureCount() == 0);
+    TimeSignature defTS = chart.GetTimeSignatureAtBeat(0.0);
+    ASSERT(defTS.Numerator == 4 && defTS.Denominator == 4);
+
+    // Inject 4/4 at beat 0 (0ms) and 3/4 at beat 4 (2000ms)
+    chart.InjectTimeSignature(0, 4, 4);
+    chart.InjectTimeSignature(2000, 3, 4);
+
+    ASSERT(chart.GetTimeSignatureCount() == 2);
+
+    TimeSignature ts0 = chart.GetTimeSignatureAtBeat(0.0);
+    ASSERT(ts0.Numerator == 4 && ts0.Denominator == 4);
+
+    TimeSignature ts2 = chart.GetTimeSignatureAtBeat(2.0);
+    ASSERT(ts2.Numerator == 4 && ts2.Denominator == 4);
+
+    TimeSignature ts4 = chart.GetTimeSignatureAtBeat(4.0);
+    ASSERT(ts4.Numerator == 3 && ts4.Denominator == 4);
+
+    TimeSignature ts8 = chart.GetTimeSignatureAtBeat(8.0);
+    ASSERT(ts8.Numerator == 3 && ts8.Denominator == 4);
+
+    return 0;
+}
+
+int TestWaveformCenterOffset()
+{
+    WaveFormModule waveform;
+    ASSERT(waveform.GetCenterOffset() == 0);
+
+    waveform.SetCenterOffset(50);
+    ASSERT(waveform.GetCenterOffset() == 50);
+
+    // Test bounds clamping [-128, 128]
+    waveform.SetCenterOffset(200);
+    ASSERT(waveform.GetCenterOffset() == 128);
+
+    waveform.SetCenterOffset(-300);
+    ASSERT(waveform.GetCenterOffset() == -128);
+
+    Configuration config;
+    ASSERT(config.WaveformCenterOffset == 0);
+    config.WaveformCenterOffset = 25;
+    ASSERT(config.WaveformCenterOffset == 25);
+
+    return 0;
+}
+
+int TestNoteCountForColumn()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(1000, 0, Note::EType::Common);
+    chart.InjectNote(1500, 0, Note::EType::Common);
+    chart.InjectNote(2000, 1, Note::EType::Common);
+    chart.InjectNote(2500, 3, Note::EType::Common);
+
+    ASSERT(chart.GetNoteCountForColumn(0) == 2);
+    ASSERT(chart.GetNoteCountForColumn(1) == 1);
+    ASSERT(chart.GetNoteCountForColumn(2) == 0);
+    ASSERT(chart.GetNoteCountForColumn(3) == 1);
+    // Out of bounds check
+    ASSERT(chart.GetNoteCountForColumn(4) == 0);
+    ASSERT(chart.GetNoteCountForColumn(99) == 0);
+
+    return 0;
+}
+
+int TestChartClampNotesToTimeRange()
+{
+    Chart chart;
+    chart.KeyAmount = 4;
+
+    chart.InjectNote(500, 0, Note::EType::Common);
+    chart.InjectNote(1500, 1, Note::EType::Common);
+    chart.InjectNote(2500, 2, Note::EType::Common);
+    chart.InjectNote(3500, 3, Note::EType::Common);
+
+    // Clamp to [1000, 3000] -> removes 500 and 3500
+    chart.ClampNotesToTimeRange(1000, 3000);
+
+    ASSERT(chart.FindNote(500, 0) == nullptr);
+    ASSERT(chart.FindNote(3500, 3) == nullptr);
+    ASSERT(chart.FindNote(1500, 1) != nullptr);
+    ASSERT(chart.FindNote(2500, 2) != nullptr);
+
+    return 0;
+}
+
 int TestWaveformWidthScale()
 {
     WaveFormModule waveform;
@@ -569,6 +687,11 @@ int main() {
     TEST(TestWaveformInversion);
     TEST(TestChartShiftNotesByColumn);
     TEST(TestWaveformWidthScale);
+    TEST(TestChartClampNotesToTimeRange);
+    TEST(TestNoteCountForColumn);
+    TEST(TestWaveformCenterOffset);
+    TEST(TestChartClearAllNotes);
+    TEST(TestChartTimeSignatures);
 
     if (result == 0) std::cout << "All tests passed!" << std::endl;
     return result;

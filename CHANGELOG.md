@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.23.0] - 2026-11-04
+### Added
+- **Time Signature Metrics & Query Engine**: Implemented `Chart::GetTimeSignatureCount()` and `Chart::GetTimeSignatureAtBeat(double InBeat)` in `source/structures/chart.cpp`.
+- **Dashboard Time Signature Display**: Integrated real-time meter display (`Time Signatures: N | Active Meter: Num/Den (Beat X.XX)`) in the Unified Dashboard Timing & Synchronization panel with guidance tooltips.
+- **Automated Time Signature Unit Tests**: Added `TestChartTimeSignatures()` in `tests/test_main.cpp`.
+
+## [1.22.0] - 2026-11-04
+### Added
+- **Chart Clear All Notes Feature**: Implemented `Chart::ClearAllNotes()` with ranged history snapshot for single-step Undo/Redo recovery.
+- **Dashboard Modal Confirmation**: Added "Clear All Notes (Chart)" button with a safety modal confirmation dialog in the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Clear All Tests**: Added `TestChartClearAllNotes()` in `tests/test_main.cpp`.
+
+## [1.21.0] - 2026-11-04
+### Added
+- **Waveform Center Offset Alignment Control**: Added `WaveformCenterOffset` (range -128 to 128) in `Configuration` with YAML serialization.
+- **Waveform Center Positioning Hooks**: Added `GetCenterOffset()` and `SetCenterOffset(int InOffset)` in `WaveFormModule` with bounds clamping.
+- **Dynamic Waveform Positioning**: Updated `WaveFormModule::RenderWaveForm` to offset timeline waveform rendering horizontally.
+- **Dashboard Waveform Offset Slider**: Added `ImGui::SliderInt` offset slider to the Unified Dashboard View & Grid Settings panel.
+- **Automated Center Offset Tests**: Added `TestWaveformCenterOffset()` in `tests/test_main.cpp`.
+
+## [1.20.0] - 2026-11-04
+### Added
+- **Per-Column Note Lane Counts**: Implemented `Chart::GetNoteCountForColumn(Column InColumn)` to query exact note counts per lane with bounds checking.
+- **Dashboard Lane Metrics Display**: Added textual lane count readout ("L1: X | L2: Y | ...") alongside the Column Distribution histogram in the Unified Dashboard NPS panel.
+- **Automated Column Count Tests**: Added `TestNoteCountForColumn()` in `tests/test_main.cpp`.
+
+## [1.19.0] - 2026-11-04
+### Added
+- **Note Range Trimming & Clamping**: Implemented `Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)` allowing entire charts to be trimmed to a specific time interval with Undo/Redo history tracking.
+- **Dashboard Note Trimming Tool**: Added "Trim Notes to Range" inputs and action trigger into the Note Editing & Transformations panel of the Unified Dashboard.
+- **Automated Clamping Tests**: Added `TestChartClampNotesToTimeRange()` in `tests/test_main.cpp`.
+
 ## [1.18.0] - 2026-11-04
 ### Added
 - **Audio Waveform Width Scaling**: Added configurable waveform width scale (`WaveformWidthScale`, default 1.0x, range 0.5x-2.0x) in `Configuration` with YAML serialization.

@@ -91,8 +91,9 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
     InOutRenderGraph.SubmitTimefieldRenderCommand(0, InTimeEnd + timeHeight - timeOffsetPosition, [this, scale, InTimeEnd, InWindowHeight](sf::RenderTarget* const InRenderTarget, const TimefieldMetrics& InTimefieldMetrics, const int InScreenX, const int InScreenY)
     {
         float positionY = float(InScreenY);
+        float centerX = InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf + _CenterOffset;
 
-        _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - (_WaveFormWidth * _WidthScale) / 2, positionY);
+        _ScalableWaveFormSprite.setPosition(centerX - (_WaveFormWidth * _WidthScale) / 2, positionY);
         _ScalableWaveFormSprite.setScale(1.0f * _WidthScale, scale);
         _ScalableWaveFormSprite.setColor(_BackColor);
 
@@ -100,7 +101,7 @@ void WaveFormModule::RenderWaveForm(TimefieldRenderGraph& InOutRenderGraph, cons
 
         _ScalableWaveFormSprite.setColor(_FrontColor);
         _ScalableWaveFormSprite.setScale(0.375f * _WidthScale, scale);
-        _ScalableWaveFormSprite.setPosition(InTimefieldMetrics.LeftSidePosition + InTimefieldMetrics.FieldWidthHalf - (_WaveFormWidth * _WidthScale) / 8 - (_WaveFormWidth * _WidthScale) / 16, positionY);
+        _ScalableWaveFormSprite.setPosition(centerX - (_WaveFormWidth * _WidthScale) / 8 - (_WaveFormWidth * _WidthScale) / 16, positionY);
 
         InRenderTarget->draw(_ScalableWaveFormSprite);
     });

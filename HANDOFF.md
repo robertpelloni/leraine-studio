@@ -1,7 +1,7 @@
-# Session Handoff — Version 1.18.0
+# Session Handoff — Version 1.23.0
 
 ## Overview
-This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, and complete governance documentation.
+This session focused on full codebase context restoration, build health recovery, UI redesign and dashboard consolidation, chart validation/integrity diagnostics, unsnapped note warnings, configurable shortcut mapping engines, skin resource querying, stereo/mono waveform visualization modes, FFT frequency spectrum analysis with real-time dashboard visualizer, waveform color customization, multi-chart difficulty tab switching, waveform alpha transparency control, note count and type distribution analytics, waveform resolution multiplier, bulk note filter clearing by type, column note distribution density analytics, chart playable duration analytics, audio waveform inversion mode, bulk column note shifting, audio waveform width scaling, note range trimming/clamping, per-column lane metrics query, waveform center offset alignment control, clear all notes with safety confirmation, time signature query and active meter display, and complete governance documentation.
 
 ## Achievements in this Session
 1. **Repository Health & Compilation**:
@@ -108,9 +108,36 @@ This session focused on full codebase context restoration, build health recovery
    - Added interactive width scale slider in Unified Dashboard View & Grid Settings panel.
    - Added unit test `TestWaveformWidthScale()` in `tests/test_main.cpp`.
 
-19. **Governance Documentation**:
-   - Updated `VERSION.md` (1.18.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
-   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.18.0 details.
+19. **Note Range Trimming & Clamping**:
+   - Implemented `Chart::ClampNotesToTimeRange(Time MinTime, Time MaxTime)` in `source/structures/chart.cpp` allowing entire charts to be trimmed to a specific time interval with Undo/Redo history tracking.
+   - Added "Trim Notes to Range" inputs and action trigger into the Note Editing & Transformations panel of the Unified Dashboard.
+   - Added unit test `TestChartClampNotesToTimeRange()` in `tests/test_main.cpp`.
+
+20. **Per-Column Note Lane Counts**:
+   - Implemented `Chart::GetNoteCountForColumn(Column InColumn)` in `source/structures/chart.cpp`.
+   - Integrated textual lane count summary ("L1: X | L2: Y | ...") into the NPS & Difficulty Analytics panel of the Unified Dashboard.
+   - Added unit test `TestNoteCountForColumn()` in `tests/test_main.cpp`.
+
+21. **Waveform Center Offset Alignment Control**:
+   - Added `WaveformCenterOffset` field in `Configuration` with YAML serialization.
+   - Added `GetCenterOffset()` and `SetCenterOffset(int InOffset)` in `WaveFormModule` with bounds clamping `[-128, 128]`.
+   - Offset waveform sprites dynamically in `WaveFormModule::RenderWaveForm`.
+   - Added `ImGui::SliderInt` offset slider in Unified Dashboard View & Grid Settings.
+   - Added unit test `TestWaveformCenterOffset()` in `tests/test_main.cpp`.
+
+22. **Clear All Notes with Safety Confirmation**:
+   - Implemented `Chart::ClearAllNotes()` in `source/structures/chart.cpp` allowing complete note wiping with full Undo/Redo history support.
+   - Integrated "Clear All Notes (Chart)" button with safety modal confirmation popup ("Clear All Notes Confirmation") in Unified Dashboard Note Transformations panel.
+   - Added unit test `TestChartClearAllNotes()` in `tests/test_main.cpp`.
+
+23. **Time Signature Metrics & Active Meter Readout**:
+   - Implemented `Chart::GetTimeSignatureCount()` and `Chart::GetTimeSignatureAtBeat(double InBeat)` in `source/structures/chart.cpp`.
+   - Integrated real-time meter display (`Time Signatures: N | Active Meter: Num/Den (Beat X.XX)`) in Unified Dashboard Timing Tools panel with guidance tooltips.
+   - Added unit test `TestChartTimeSignatures()` in `tests/test_main.cpp`.
+
+24. **Governance Documentation**:
+   - Updated `VERSION.md` (1.23.0), `VISION.md`, `MEMORY.md`, `DEPLOY.md`, `ROADMAP.md`, `TODO.md`, `IDEAS.md`.
+   - Updated `CHANGELOG.md` with versions 1.1.0 through 1.23.0 details.
 
 ## Instructions for Next Session
 - Run the test suite: `cd build && ctest --output-on-failure`.

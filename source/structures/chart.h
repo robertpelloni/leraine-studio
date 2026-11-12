@@ -211,11 +211,16 @@ public: //accessors
     ChartValidationResult ValidateChart();
     ChartNoteStatistics GetNoteStatistics();
     std::vector<int> GetColumnNoteDistribution();
+    int GetNoteCountForColumn(Column InColumn);
     Time GetFirstNoteTime();
     Time GetLastNoteTime();
     Time GetPlayableDuration();
     int ClearNotesByType(Note::EType InType);
     int ShiftNotesByColumn(int InColumnDelta);
+    void ClampNotesToTimeRange(Time MinTime, Time MaxTime);
+    int ClearAllNotes();
+    int GetTimeSignatureCount();
+    TimeSignature GetTimeSignatureAtBeat(double InBeat);
 
 	std::vector<float> CalculateNPSGraph(int WindowSizeMs);
 	float GetAverageNPS();
